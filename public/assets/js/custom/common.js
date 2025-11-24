@@ -134,7 +134,7 @@ $('.online-admission-form,.create-form-with-captcha').on('submit', function (e) 
         }
         // noinspection JSUnusedLocalSymbols
         function successCallback(response) {
-            if ($(formElement).hasClass('reload-window')) {
+            if ($(formElement).hasClass('reload-window')) { 
                 try {
                     setTimeout(() => {
                         location.reload();
