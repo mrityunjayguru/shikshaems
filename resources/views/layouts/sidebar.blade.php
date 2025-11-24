@@ -820,7 +820,6 @@
             </li>
         @endcanany
 
-
         {{-- package --}}
         @canany(['package-list', 'package-create', 'package-edit', 'package-delete'])
             <li class="nav-item">

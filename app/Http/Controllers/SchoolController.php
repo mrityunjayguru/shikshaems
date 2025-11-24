@@ -1028,7 +1028,6 @@ class SchoolController extends Controller
                 );
 
 
-
                 // Call store function of Schools Repository
                 $schoolData = $this->schoolsRepository->create($school_data);
                 $admin_data = array(
