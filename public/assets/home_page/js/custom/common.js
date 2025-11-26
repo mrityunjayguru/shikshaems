@@ -44,7 +44,11 @@ $('#create-form,.create-form,.create-form-without-reset').on('submit', function 
     }
 
     let submitButtonText = submitButtonElement.val();
-    submitButtonElement.val(window.trans["Please Wait..."]).attr('disabled', true);
+    // submitButtonElement.val(window.trans["Please Wait..."]).attr('disabled', true);
+    submitButtonElement
+    .val(window.trans && window.trans["Please Wait..."] ? window.trans["Please Wait..."] : "Please Wait...")
+    .attr('disabled', true);
+
 
     setTimeout(() => {
         let data = new FormData(this);
@@ -119,7 +123,11 @@ $('.online-admission-form,.create-form-with-captcha').on('submit', function (e) 
     let submitButtonElement = $(this).find(':submit');
     let url = $(this).attr('action');
     let submitButtonText = submitButtonElement.val();
-    submitButtonElement.val(window.trans["Please Wait..."]).attr('disabled', true);
+    // submitButtonElement.val(window.trans["Please Wait..."]).attr('disabled', true);
+    submitButtonElement
+    .val(window.trans && window.trans["Please Wait..."] ? window.trans["Please Wait..."] : "Please Wait...")
+    .attr('disabled', true);
+
     setTimeout(() => {
         let data = new FormData(this);
         // Add CSRF token to form data
@@ -298,7 +306,11 @@ $('#edit-form,.edit-form,.edit-form-without-reset,.edit-form-staff-payroll-setti
     let submitButtonElement = $(this).find(':submit');
 
     let submitButtonText = submitButtonElement.val();
-    submitButtonElement.val(window.trans["Please Wait..."]).attr('disabled', true);
+    // submitButtonElement.val(window.trans["Please Wait..."]).attr('disabled', true);
+    submitButtonElement
+    .val(window.trans && window.trans["Please Wait..."] ? window.trans["Please Wait..."] : "Please Wait...")
+    .attr('disabled', true);
+
     let status = 1;
     if ($(formElement).hasClass('edit-form-staff-payroll-setting')) {
         let allowance_id = [];
