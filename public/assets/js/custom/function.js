@@ -110,8 +110,15 @@ function formAjaxRequest(type, url, data, formElement, submitButtonElement, succ
         let submitButtonText = submitButtonElement.val();
 
         function beforeSendCallback() {
-            submitButtonElement.val(window.trans["Please Wait..."]).attr('disabled', true);
+            let text = "Please Wait...";
+
+            if (window.trans && window.trans["Please Wait..."]) {
+                text = window.trans["Please Wait..."];
+            }
+
+            submitButtonElement.val(text).attr('disabled', true);
         }
+
 
         function mainSuccessCallback(response) {
             if (response.warning) {
