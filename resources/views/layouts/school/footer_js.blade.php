@@ -32,7 +32,7 @@
 <script src="{{ asset('/assets/js/custom/validate.js') }}"></script>
 
 
-<script src="{{ asset('/assets/js/custom/function.js') }}"></script>
+<script src="{{ asset('/assets/js/custom/function.js') }}?v={{ time() }}"></script>
 <script>
     // annaouncementSlider
     $(document).ready(function() {
