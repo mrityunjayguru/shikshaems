@@ -793,3 +793,5 @@
 [2025-11-26 16:57:05] local.INFO: Switched to database: eschool_saas_2_shikshaems  
 [2025-11-26 16:57:05] local.INFO: User authenticated successfully. {"user_id":4,"email":"sapnadas810@gmail.com"} 
 [2025-11-26 16:57:31] local.INFO: 2FA code sent to: sapnadas810@gmail.com  
+[2025-11-27 12:00:49] local.INFO: Switched to database: eschool_saas_2_shikshaems  
+[2025-11-27 12:00:49] local.INFO: User authenticated successfully. {"user_id":4,"email":"sapnadas810@gmail.com"} 
