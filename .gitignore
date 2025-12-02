@@ -14,6 +14,7 @@ public/hot
 # Laravel 5 & Lumen specific with changed public path
 public_html/storage
 public_html/hot
+storage/*.json
 
 storage/*.key
 .env
@@ -29,6 +30,5 @@ Homestead.json
 #/_ide_helper_models.php
 .vscode
 /qodana.yaml
-
 
 .cursor/rules/my-laravel-rules.mdc

@@ -152,6 +152,7 @@ class ParentApiController extends Controller
 
             // $auth->assignRole('Guardian');
             if (!$auth->hasRole('Guardian')) {
+                ResponseService::logErrorResponse($e, "parent Controller -> login Method");
                 ResponseService::errorResponse('Invalid Login Credentials', null, config('constants.RESPONSE_CODE.INVALID_LOGIN'));
             }
 
