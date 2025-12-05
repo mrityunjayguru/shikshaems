@@ -38,9 +38,11 @@ return new class extends Migration
             $table->dropUnique(['name', 'guard_name']);
             $table->unique(['name', 'guard_name', 'school_id']);
         });
+
         Schema::table('users', static function (Blueprint $table) {
             $table->foreignId('school_id')->nullable()->after('fcm_id')->references('id')->on('schools')->onDelete('cascade');
         });
+        
         /*TODO : Review this*/
         Schema::create('categories', static function (Blueprint $table) {
             $table->id();
@@ -98,6 +100,7 @@ return new class extends Migration
             $table->tinyInteger('is_rtl')->default(0);
             $table->timestamps();
         });
+
         Schema::create('sliders', static function (Blueprint $table) {
             $table->id();
             $table->string('image', 1024);
@@ -176,6 +179,7 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
         });
+
         Schema::create('staffs', static function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');

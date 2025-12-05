@@ -1,4 +1,4 @@
-1764599367s:82660:"{
+1764943768s:82796:"{
     "The :attribute must contain at least one letter.": "The :attribute must contain at least one letter.",
     "The :attribute must contain at least one number.": "The :attribute must contain at least one number.",
     "The :attribute must contain at least one symbol.": "The :attribute must contain at least one symbol.",
@@ -987,6 +987,7 @@
     "have_a_question_or_just_want_to_say_hi_Wed_love_to_hear_from_you" : "Have a question or just want to say hi? We'd love to hear from you.",
     "register_your_school" : "Register Your School",
     "explore_our_top_features" : "Explore Our Top Features",
+    "our_core_features" : "Our Core Features",
     "view_more_features" : "View More Features",
     "view_less_features" : "View Less Features",
     "per_student_charges" : "Per Student Charges",
@@ -1521,7 +1522,10 @@
     "vehicle_name" : "Vehicle Name",
     "vehicle_number" : "Vehicle Number",
     "vehicle_capacity" : "Vehicle Capacity",
+    "vehicle_icon" : "Vehicle Icon",
     "capacity": "Capacity",
+    "iemi" : "IEMI",
+    "is_device" : "Is Device",
     "vehicle_schedule" : "Vehicle Schedule",
     "manage_vehicles" : "Manage Vehicles",
     "create_vehicle" : "Create Vehicle",

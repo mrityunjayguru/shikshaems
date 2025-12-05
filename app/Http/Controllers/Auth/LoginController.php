@@ -289,7 +289,7 @@ class LoginController extends Controller
             '{super_admin_name}' => $settings['super_admin_name'] ?? 'Super Admin',
             '{support_email}' => $settings['mail_send_from'] ?? 'example@gmail.com',
             '{support_contact}' => $systemSettings['mobile'] ?? '9876543210',
-            '{system_name}' => $settings['system_name'] ?? 'eSchool Saas',
+            '{system_name}' => $settings['system_name'] ?? 'ShikshaEMS',
             '{expiration_time}' => '5',
             '{url}' => url('/'),
 

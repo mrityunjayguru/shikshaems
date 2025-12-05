@@ -315,7 +315,6 @@ class NotificationController extends Controller
         }
         $sql->orderBy($sort, $order)->skip($offset)->take($limit);
         $res = $sql->get();
-
         $bulkData = array();
         $bulkData['total'] = $total;
         $rows = array();
