@@ -28,7 +28,8 @@ class RouteController extends Controller
         ResponseService::noAnyPermissionThenRedirect(['route-list', 'route-create']);
         $pickupPoints = PickupPoint::all()->where('status', 1);
         $shifts = Shift::owner()->where('status', 1)->get();
-        return view('routes.index', compact('pickupPoints', 'shifts'));
+        $routes = Route::with('pickupPoints')->get();
+        return view('routes.index', compact('pickupPoints', 'shifts', 'routes'));
     }
 
     public function create()

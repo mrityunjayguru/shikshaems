@@ -12,8 +12,11 @@ class Vehicle extends Model
     protected $fillable = [
         'name',
         'vehicle_number',
+        'vehicle_icon',
         'capacity',
         'status',
+        'is_device',
+        'iemi'
     ];
 
     public function routeVehicles()

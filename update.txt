@@ -1,0 +1,32 @@
+04/12/2025
+->migration
+->actionEvents.js (public\assets\js\custom\bootstrap-table\actionEvents.js)
+
+VEHICLE
+->controller
+->view
+->model
+
+Pickup point 
+->controller
+->view
+
+Routes
+->controller
+->view
+
+05/12/2025
+Website
+
+->home.blade.php 
+->public\assets\home_page\css\style.css
+->resources\views\layouts\home_page\footer.blade.php
+
+
+change eSchool to ShikshaEMS(DONE)
+->.env.example
+->app\Http\Controllers\Auth\LoginController.php
+->app\Jobs\SetupSchoolDatabase.php
+->database\migrations\2024_01_30_092228_version1_2_0.php
+->database\seeders\AddSuperAdminSeeder.php
+->app\Http\Controllers\SchoolController.php

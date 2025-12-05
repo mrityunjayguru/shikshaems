@@ -1086,7 +1086,7 @@ window.schoolEvents = {
                         } else {
                             $('#edit_' + fieldName).val(value.data);
                         }
-                       
+
                     }
                 });
             } else {
@@ -1859,7 +1859,7 @@ window.tableDescriptionEvents = {
 
 
         if (row.student) {
-            $('.modal-title').html('<h3>'+ window.trans['student'] +'</h3>');
+            $('.modal-title').html('<h3>' + window.trans['student'] + '</h3>');
             var listStudents = '';
             let currURL = window.location.href;
             let students = row.diary_students;
@@ -2115,9 +2115,18 @@ window.vehicleEvents = {
         $('#edit_vehicle_id').val(row.id);
         $('#edit_vehicle_name').val(row.name);
         $('#edit_vehicle_number').val(row.vehicle_number);
+        $('#edit_iemi').val(row.iemi);
         $('#edit_capacity').val(row.capacity);
         let statusValue = row.status === 'Active' ? '1' : '0';
         $('#edit_status').val(statusValue);
+
+        if (row.is_device == 1) {
+            $('#deviceYesEdit').prop('checked', true);
+            showIemiInputEdit(1); // show IMEI input
+        } else {
+            $('#deviceNoEdit').prop('checked', true);
+            showIemiInputEdit(0); // hide IMEI input
+        }
     }
 };
 
@@ -2366,7 +2375,13 @@ window.pickupPointEvents = {
     'click .edit-data': function (e, value, row) {
         $('#edit_id').val(row.id);
         $('#edit_name').val(row.name);
+        $('#edit_lat').val(row.latitude);
+        $('#edit_lng').val(row.longitude);
         $('#edit_status').val(row.status);
+
+        setTimeout(() => {
+            initEditMap();
+        }, 300); // wait for modal open
     }
 };
 
