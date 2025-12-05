@@ -33,6 +33,20 @@
                                         <option value="0">{{ __('Inactive') }}</option>
                                     </select>
                                 </div>
+                                <div class="form-group col-md-6">
+                                    <label>Latitude<span class="text-danger">*</span></label>
+                                    <input type="text" id="lat" placeholder="Latitude" name="latitude"
+                                        class="form-control mt-2" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Longitude<span class="text-danger">*</span></label>
+                                    <input type="text" id="lng" placeholder="Longitude" name="longitude"
+                                        class="form-control mt-2" required>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <div id="map" style="height: 400px; width: 100%;"></div>
+                                </div>
+
                             </div>
                             <input class="btn btn-theme float-right" id="create-btn" type="submit"
                                 value={{ __('submit') }}>
@@ -64,9 +78,9 @@
                                         {{ __('id') }}</th>
                                     <th scope="col" data-field="no">{{ __('no.') }}</th>
                                     <th scope="col" data-field="name" data-sortable="true">{{ __('name') }}</th>
-                                    <th scope="col" data-field="transportation_fees"
+                                    {{-- <th scope="col" data-field="transportation_fees"
                                         data-formatter="transportationFeesFormatter" data-escape="false"
-                                        data-sortable="false">{{ __('transportation_fees') }}</th>
+                                        data-sortable="false">{{ __('transportation_fees') }}</th> --}}
                                     <th scope="col" data-field="status" data-formatter="activeStatusFormatter"
                                         data-sortable="false">{{ __('status') }}</th>
                                     <th scope="col" data-field="operate" data-formatter="actionColumnFormatter"
@@ -107,6 +121,19 @@
                                             <option value="0">{{ __('Inactive') }}</option>
                                         </select>
                                     </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Latitude<span class="text-danger">*</span></label>
+                                        <input type="text" id="edit_lat" placeholder="Latitude" name="latitude"
+                                            class="form-control mt-2" required>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Longitude<span class="text-danger">*</span></label>
+                                        <input type="text" id="edit_lng" placeholder="Longitude" name="longitude"
+                                            class="form-control mt-2" required>
+                                    </div>
+                                    <div class="form-group col-md-12">
+                                        <div id="edit_map" style="height: 400px; width: 100%;"></div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -120,4 +147,79 @@
             </div>
         </div>
     </div>
+@endsection
+@section('js')
+    <script>
+        let map, marker, editMap, editMarker;
+
+        function initMap() {
+            // Default India center
+            const defaultPosition = {
+                lat: 20.5937,
+                lng: 78.9629
+            };
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: defaultPosition,
+                zoom: 5,
+            });
+
+            // Create Draggable Marker
+            marker = new google.maps.Marker({
+                position: defaultPosition,
+                map: map,
+                draggable: true,
+                title: "Drag Me"
+            });
+
+            // Update lat/lng on marker drag
+            google.maps.event.addListener(marker, 'dragend', function(event) {
+                document.getElementById("lat").value = event.latLng.lat().toFixed(6);
+                document.getElementById("lng").value = event.latLng.lng().toFixed(6);
+            });
+        }
+
+        function initEditMap() {
+            let lat = parseFloat($('#edit_lat').val());
+            let lng = parseFloat($('#edit_lng').val());
+
+            // If empty, use India center
+            if (!lat || !lng) {
+                lat = 20.5937;
+                lng = 78.9629;
+            }
+
+            const position = {
+                lat: lat,
+                lng: lng
+            };
+
+            editMap = new google.maps.Map(document.getElementById("edit_map"), {
+                center: position,
+                zoom: lat === 20.5937 ? 5 : 12, // If default India → zoom out
+            });
+
+            editMarker = new google.maps.Marker({
+                position: position,
+                map: editMap,
+                draggable: true,
+                title: "Edit Location",
+            });
+
+            // Update inputs on drag
+            google.maps.event.addListener(editMarker, 'dragend', function(event) {
+                $('#edit_lat').val(event.latLng.lat().toFixed(6));
+                $('#edit_lng').val(event.latLng.lng().toFixed(6));
+            });
+
+            // Click on map to move marker
+            google.maps.event.addListener(editMap, 'click', function(event) {
+                editMarker.setPosition(event.latLng);
+                $('#edit_lat').val(event.latLng.lat().toFixed(6));
+                $('#edit_lng').val(event.latLng.lng().toFixed(6));
+            });
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOdT7uQebSHbnuZcqpWSYFtM8mryin4o&callback=initMap" async
+        defer></script>
 @endsection

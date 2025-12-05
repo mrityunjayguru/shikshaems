@@ -31,6 +31,8 @@ class PickupPointController extends Controller
             'status' => 'required|in:1,0'
         ]);
 
+        // dd($request->all());
+
         if ($validator->fails()) {
             ResponseService::errorResponse($validator->errors()->first());
         }

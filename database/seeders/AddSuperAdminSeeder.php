@@ -51,7 +51,7 @@ class AddSuperAdminSeeder extends Seeder {
             ["name" => "currency_code", "data" => "USD", "type" => "string"],
             ["name" => "currency_symbol", "data" => "$", "type" => "string"],
             ["name" => "additional_billing_days", "data" => "5", "type" => "integer"],
-            ["name" => "system_name", "data" => "eSchool Saas - School Management System", "type" => "string"],
+            ["name" => "system_name", "data" => "ShikshaEMS - School Management System", "type" => "string"],
             ["name" => "address", "data" => "#262-263, Time Square Empire, SH 42 Mirjapar highway, Bhuj - Kutch 370001 Gujarat India.", "type" => "string"],
             ["name" => "billing_cycle_in_days", "data" => "30", "type" => "integer"],
             ["name" => "current_plan_expiry_warning_days", "data" => "7", "type" => "integer"],
@@ -76,7 +76,7 @@ class AddSuperAdminSeeder extends Seeder {
         $systemSettings = [
             [
                 'name' => 'hero_title_1',
-                'data' => 'Opt for eSchool Saas 14+ robust features for an enhanced educational experience.',
+                'data' => 'Opt for ShikshaEMS 14+ robust features for an enhanced educational experience.',
                 'type' => 'text'
             ],
             [
@@ -146,7 +146,7 @@ class AddSuperAdminSeeder extends Seeder {
             ],
             [
                 'name' => 'tag_line',
-                'data' => 'Transform School Management With eSchool SaaS',
+                'data' => 'Transform School Management With ShikshaEMS',
                 'type' => 'text'
             ],
             [
@@ -156,7 +156,7 @@ class AddSuperAdminSeeder extends Seeder {
             ],
             [
                 'name' => 'hero_description',
-                'data' => 'Experience the future of education with our eSchool SaaS platform. Streamline attendance, assignments, exams, and more. Elevate your school\'s efficiency and engagement.',
+                'data' => 'Experience the future of education with our ShikshaEMS platform. Streamline attendance, assignments, exams, and more. Elevate your school\'s efficiency and engagement.',
                 'type' => 'text'
             ],
             [

@@ -18,12 +18,14 @@ return new class extends Migration
                 $table->id();
                 $table->string('name');
                 $table->string('vehicle_number');
+                $table->string('vehicle_icon');
                 $table->integer('capacity');
                 $table->tinyInteger('status'); // 0 = inactive, 1 = active
+                $table->tinyInteger('is_device'); // 0 = no, 1 = yes
+                $table->bigInteger('iemi')->nullable();
                 $table->softDeletes();
                 $table->timestamps();
             });
-
 
             // Create routes table with shift_id included from the start
             Schema::create('routes', function (Blueprint $table) {
@@ -39,6 +41,8 @@ return new class extends Migration
             Schema::create('pickup_points', function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
+                $table->string('latitude');
+                $table->string('longitude');
                 $table->tinyInteger('status')->default(1);
                 $table->timestamps();
             });

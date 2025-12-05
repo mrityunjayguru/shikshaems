@@ -16,7 +16,7 @@ a {
 }
 
 .navbar {
-    background-color: #F4FBFF;
+    background-color: #F8F7F3;
     position: sticky !important;
     top: 0px;
     z-index: 12;
@@ -38,7 +38,7 @@ a {
 
 .logo {
     width: auto;
-    height: 50px;
+    height: 60px;
 }
 
 .navbar .menuListWrapper {
@@ -188,26 +188,26 @@ a {
 /* navbar end here  */
 
 .heroSection {
-    background-color: #F4FBFF;
+    background-color: #F8F7F3;
     background-size: contain;
     background-repeat: no-repeat;
     padding: 50px 0px;
 }
 
-.heroSection .linesBg {
+/* .heroSection .linesBg {
     background: url('../../landing_page_images/heroLines.png');
     background-size: 108% 100%;
     background-repeat: no-repeat;
-}
+} */
 
 @media screen and (max-width: 991px) {
-    .heroSection .linesBg {
+    /* .heroSection .linesBg {
         background: transparent;
-    }
+    } */
 }
 
 .heroSection .colorBg {
-    background-color: #f4fbffde;
+    background-color: #F8F7F3;
 }
 
 .heroSection .heroImg {
@@ -256,7 +256,7 @@ a {
 }
 
 .commonTitle {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--secondary-color);
 }
 
@@ -283,15 +283,15 @@ a {
 }
 
 .commonDesc {
-    font-size: 45px;
-    font-weight: 700;
+    font-size: 40px;
+    font-weight: 500;
     color: #000000;
 }
 
 .commonText {
     color: #898989;
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 400;
 }
 
 @media screen and (max-width: 575px) {
@@ -514,6 +514,7 @@ a {
     margin-top: 20px;
     font-size: 18px;
     font-weight: 700;
+    border-radius: 10px;
 }
 
 @media screen and (min-width: 992px) and (max-width: 1199px) {
@@ -794,7 +795,7 @@ a {
     overflow: hidden;
 }
 
-.whyBest .whyBestTextWrapper::before {
+/* .whyBest .whyBestTextWrapper::before {
     content: "";
     position: absolute;
     left: 0px;
@@ -802,17 +803,17 @@ a {
     width: 4px;
     height: 100%;
     background-color: var(--secondary-color);
-}
+} */
 
 .whyBest .whyBestTextWrapper p {
     margin: 4px 0px;
     color: #000000;
-    margin-left: 18px;
+    /* margin-left: 18px; */
 }
 
 .whyBest .whyBestTextWrapper p:first-child {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .whyBest .whyBestTextWrapper p:last-child {
@@ -822,9 +823,9 @@ a {
 
 .whyBest .whyBestPara {
     color: #000000;
-    font-size: 22px;
+    font-size: 16px;
     font-weight: 400;
-    margin: 30px 0px;
+    /* margin: 30px 0px; */
     padding-right: 30px;
 }
 
@@ -835,7 +836,7 @@ a {
 }
 
 .listWrapper span {
-    font-size: 24px;
+    font-size: 16px;
     font-weight: 400;
     color: #000000;
 }
@@ -869,7 +870,7 @@ a {
     }
 
     .whyBest .listWrapper span {
-        font-size: 18px;
+        font-size: 16px;
     }
 }
 
@@ -1278,7 +1279,7 @@ a {
 /* faqs ends here  */
 
 .getInTouch {
-    background-color: #F4FBFF;
+    background-color: #F8F7F3;
     padding: 20px;
     padding-bottom: 120px;
 }
@@ -1511,7 +1512,8 @@ a {
 }
 
 footer {
-    background: rgba(56, 163, 165, 0.08);
+    /* background: rgba(56, 163, 165, 0.08); */
+    background-color: #F8F7F3;
     padding: 50px 0px;
     padding-bottom: 34px;
 }
@@ -1536,7 +1538,7 @@ footer .row {
 
 footer .commonDesc {
     color: #000;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 footer .socialIcons span {
