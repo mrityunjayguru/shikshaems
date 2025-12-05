@@ -97,13 +97,13 @@ final class SetupSchoolDatabase implements ShouldQueue
             $email_body = $this->replacePlaceholders($school, $school->user, $settings, $school->code);
             
             $data = [
-                'subject'     => 'Welcome to ' . ($settings['system_name'] ?? 'eSchool Saas'),
+                'subject'     => 'Welcome to ' . ($settings['system_name'] ?? 'ShikshaEMS'),
                 'email'       => $school->support_email,
                 'email_body'  => $email_body
             ];
 
             Mail::send('schools.email', $data, static function ($message) use ($data, $settings) {
-                $message->to($data['email'])->from($settings['mail_username'] ?? 'eSchool Saas')->subject($data['subject']);
+                $message->to($data['email'])->from($settings['mail_username'] ?? 'ShikshaEMS')->subject($data['subject']);
             });
 
             // Send email verification if not already verified
@@ -146,7 +146,7 @@ final class SetupSchoolDatabase implements ShouldQueue
             '{super_admin_name}' => $settings['super_admin_name'] ?? 'Super Admin',
             '{support_email}' => $settings['mail_username'] ?? '',
             '{contact}' => $settings['mobile'] ?? '',
-            '{system_name}' => $settings['system_name'] ?? 'eSchool Saas',
+            '{system_name}' => $settings['system_name'] ?? 'ShikshaEMS',
             '{url}' => url('/'),
         ];
 

@@ -4,20 +4,15 @@
     <style>
         :root {
             --primary-color:
-                {{ $settings['theme_primary_color'] ?? '#56cc99' }}
-            ;
+                {{ $settings['theme_primary_color'] ?? '#56cc99' }};
             --secondary-color:
-                {{ $settings['theme_secondary_color'] ?? '#215679' }}
-            ;
+                {{ $settings['theme_secondary_color'] ?? '#215679' }};
             --secondary-color1:
-                {{ $settings['theme_secondary_color_1'] ?? '#38a3a5' }}
-            ;
+                {{ $settings['theme_secondary_color_1'] ?? '#38a3a5' }};
             --primary-background-color:
-                {{ $settings['theme_primary_background_color'] ?? '#f2f5f7' }}
-            ;
+                {{ $settings['theme_primary_background_color'] ?? '#f2f5f7' }};
             --text--secondary-color:
-                {{ $settings['theme_text_secondary_color'] ?? '#5c788c' }}
-            ;
+                {{ $settings['theme_text_secondary_color'] ?? '#5c788c' }};
 
         }
     </style>
@@ -29,8 +24,8 @@
                 <div class="navLogoWrapper">
                     <div class="navLogo">
                         <a href="{{ url('/') }}">
-                            <img src="{{ $settings['horizontal_logo'] ?? asset('assets/landing_page_images/Logo1.svg') }}"
-                                class="logo" alt="">
+                            <img src="{{ $settings['horizontal_logo'] ?? asset('assets/landing_page_images/sems-logo-main.svg') }}"
+                                class="logo" alt="" style="height: 45px">
                         </a>
 
                     </div>
@@ -60,14 +55,15 @@
                         @if (count($guidances))
                             <li>
                                 <div class="dropdown">
-                                    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
+                                        id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                                         {{ __('guidance') }}
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                                         @foreach ($guidances as $key => $guidance)
-                                            <li><a class="dropdown-item" href="{{ $guidance->link }}">{{ $guidance->name }}</a></li>
-                                            @if (count($guidances) > ($key + 1))
+                                            <li><a class="dropdown-item"
+                                                    href="{{ $guidance->link }}">{{ $guidance->name }}</a></li>
+                                            @if (count($guidances) > $key + 1)
                                                 <hr>
                                             @endif
                                         @endforeach
@@ -77,8 +73,8 @@
                         @endif
                         <li>
                             <div class="dropdown">
-                                <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
+                                    id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                                     {{ __('language') }}
                                 </a>
 
@@ -87,7 +83,7 @@
                                         <li><a class="dropdown-item"
                                                 href="{{ url('set-language') . '/' . $language->code }}">{{ $language->name }}</a>
                                         </li>
-                                        @if (count($languages) > ($key + 1))
+                                        @if (count($languages) > $key + 1)
                                             <hr>
                                         @endif
                                     @endforeach
@@ -146,14 +142,15 @@
                         @if (count($guidances))
                             <li>
                                 <div class="dropdown">
-                                    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
+                                        id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                                         {{ __('guidance') }}
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                                         @foreach ($guidances as $key => $guidance)
-                                            <li><a class="dropdown-item" href="{{ $guidance->link }}">{{ $guidance->name }}</a></li>
-                                            @if (count($guidances) > ($key + 1))
+                                            <li><a class="dropdown-item"
+                                                    href="{{ $guidance->link }}">{{ $guidance->name }}</a></li>
+                                            @if (count($guidances) > $key + 1)
                                                 <hr>
                                             @endif
                                         @endforeach
@@ -163,8 +160,8 @@
                         @endif
                         <li>
                             <div class="dropdown">
-                                <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
+                                    id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                                     {{ __('language') }}
                                 </a>
 
@@ -173,7 +170,7 @@
                                         <li><a class="dropdown-item"
                                                 href="{{ url('set-language') . '/' . $language->code }}">{{ $language->name }}</a>
                                         </li>
-                                        @if (count($languages) > ($key + 1))
+                                        @if (count($languages) > $key + 1)
                                             <hr>
                                         @endif
                                     @endforeach
@@ -184,10 +181,10 @@
                     </ul>
 
                     {{-- <div class="loginBtnsWrapper"> --}}
-                        <button class="commonBtn redirect-login">{{ __('login') }}</button>
-                        <button class="commonBtn" data-bs-toggle="modal" data-bs-dismiss="offcanvas"
-                            data-bs-target="#staticBackdrop">{{ __('start_trial') }}</button>
-                        {{--
+                    <button class="commonBtn redirect-login">{{ __('login') }}</button>
+                    <button class="commonBtn" data-bs-toggle="modal" data-bs-dismiss="offcanvas"
+                        data-bs-target="#staticBackdrop">{{ __('start_trial') }}</button>
+                    {{--
                     </div> --}}
                 </div>
             </div>
@@ -205,7 +202,7 @@
                         <div class="row">
                             <div class="col-md-12 col-lg-6">
                                 <div class="flex_column_start">
-                                    <span class="commonTitle">{{ $settings['system_name'] ?? 'eSchool SaaS' }}</span>
+                                    <span class="commonTitle">{{ $settings['system_name'] ?? 'ShikshaEMS' }}</span>
                                     <span class="commonDesc">
                                         {{ $settings['tag_line'] }}
                                     </span>
@@ -221,6 +218,7 @@
                                     </div>
                                 </div>
                             </div>
+
                             <div class="col-md-12 col-lg-6 heroImgWrapper">
                                 <div class="heroImg">
                                     <img src="{{ $settings['home_image'] ?? asset('assets/landing_page_images/heroImg.png') }}"
@@ -230,13 +228,13 @@
                                             <img src="{{ $settings['hero_title_2_image'] ?? asset('assets/landing_page_images/user.png') }}"
                                                 alt="">
                                         </div>
-                                        @if(!empty($settings['hero_title_2']))
+                                        @if (!empty($settings['hero_title_2']))
                                             <div>
                                                 <span>{{ $settings['hero_title_2'] }}</span>
                                             </div>
                                         @endif
                                     </div>
-                                    @if(!empty($settings['hero_title_1']))
+                                    @if (!empty($settings['hero_title_1']))
                                         <div class="textWrapper">
                                             <span>{{ $settings['hero_title_1'] }}</span>
                                         </div>
@@ -258,8 +256,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="sectionTitle">
-                        <span>{{ __('explore_our_top_features') }}</span>
-
+                        <span>{{ __('our_core_features') }}</span>
                     </div>
                 </div>
                 <div class="col-12">
@@ -286,10 +283,10 @@
                                     </div>
                                 </div>
                             @endif
-
                         @endforeach
                         <div class="col-12">
-                            <button class="commonBtn view-more-feature" value="1">{{ __('view_more_features') }}</button>
+                            <button class="commonBtn view-more-feature"
+                                value="1">{{ __('view_more_features') }}</button>
                         </div>
                     </div>
                 </div>
@@ -349,7 +346,7 @@
         @endif --}}
 
         <!-- School logos section starts here -->
-        @if ($settings['display_school_logos'] ?? '1')
+        {{-- @if ($settings['display_school_logos'] ?? '1')
             <input type="hidden" id="school-count" value="{{ count($allSchools) }}">
             <section class="container">
                 <div class="row py-3">
@@ -367,12 +364,12 @@
                     </div>
                 </div>
             </section>
-        @endif
+        @endif --}}
         <!-- School logos section ends here -->
+
 
         @foreach ($featureSections as $key => $section)
             @if (($key + 1) % 2 != 0)
-
                 <section class="left-section-{{ $section->id }} commonMT container">
                     <div class="row">
                         <div class="col-12">
@@ -416,9 +413,7 @@
                         </div>
                     </div>
                 </section>
-
             @else
-
                 <section class="right-section-{{ $section->id }} right-feature-section commonMT">
                     <div class="container">
                         <div class="row">
@@ -464,7 +459,6 @@
                     </div>
 
                 </section>
-
             @endif
         @endforeach
 
@@ -497,7 +491,7 @@
         </section>
         <!-- whyBest ends here  -->
 
-        <section class="pricing" id="pricing">
+        {{-- <section class="pricing" id="pricing">
             <div class="container commonMT">
                 <div class="row">
                     <div class="col-12">
@@ -506,7 +500,7 @@
 
                         </div>
                     </div>
-                    @if($packages->isNotEmpty())
+                    @if ($packages->isNotEmpty())
                         <div class="col-12 swiperWrapper h-full">
                             <div class="commonSlider">
                                 <div class="slider-content owl-carousel">
@@ -665,12 +659,12 @@
                     @endif
                 </div>
             </div>
-        </section>
+        </section> --}}
         <!-- pricing ends here  -->
 
         @if (isset($settings['custom_package_status']) && $settings['custom_package_status'])
             <section class="customPack container commonMT">
-                <div class="wrapper">
+                <div class="wrapper mb-4">
                     <div class="row">
                         <div class="col-sm-12 col-md-6 col-lg-6">
                             <div>
@@ -685,6 +679,70 @@
                             <a href="#contact-us" class="commonBtn text-center">{{ __('get_in_touch') }}</a>
                         </div>
 
+                    </div>
+                </div>
+            </section>
+        @endif
+
+        @if ($settings['display_school_logos'] ?? '1')
+            <section class="commonMT" id="school-logo">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="sectionTitle" style="margin-top: 20px;">
+                                {{-- <span>{{ __('frequently_asked_questions') }}</span> --}}
+                                <span>Registered Schools</span>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <div class="row py-3 gap-2 pe-0">
+                                <div class="owl-carousel owl-theme school-logo-owl-carousel">
+                                    <div class="item">
+                                        <div class="p-3 d-flex justify-content-center align-items-center">
+                                            <img src="{{ asset('assets/landing_page_images/slogo1.jpg') }}"
+                                                style="border-radius: 50%; width: 100px; height: 100px;" alt=""
+                                                onerror="onErrorImage(event)">
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="p-3 d-flex justify-content-center align-items-center">
+                                            <img src="{{ asset('assets/landing_page_images/Sarguja_University_new_logo.png') }}"
+                                                style="border-radius: 50%; width: 100px; height: 100px;" alt=""
+                                                onerror="onErrorImage(event)">
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="p-3 d-flex justify-content-center align-items-center">
+                                            <img src="{{ asset('assets/landing_page_images/slogo3.jpg') }}"
+                                                style="border-radius: 50%; width: 100px; height: 100px;" alt=""
+                                                onerror="onErrorImage(event)">
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="p-3 d-flex justify-content-center align-items-center">
+                                            <img src="{{ asset('assets/landing_page_images/csvtu.png') }}"
+                                                style="border-radius: 50%; width: 100px; height: 100px;" alt=""
+                                                onerror="onErrorImage(event)">
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="p-3 d-flex justify-content-center align-items-center">
+                                            <img src="{{ asset('assets/landing_page_images/slogo4.jpg') }}"
+                                                style="border-radius: 50%; width: 100px; height: 100px;" alt=""
+                                                onerror="onErrorImage(event)">
+                                        </div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="p-3 d-flex justify-content-center align-items-center">
+                                            <img src="{{ asset('assets/landing_page_images/slogo2.jpg') }}"
+                                                style="border-radius: 50%; width: 100px; height: 100px;" alt=""
+                                                onerror="onErrorImage(event)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -706,7 +764,8 @@
                                 @foreach ($faqs as $faq)
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingOne">
-                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse"
                                                 data-bs-target="#collapseOne-{{ $faq->id }}" aria-expanded="true"
                                                 aria-controls="collapseOne-{{ $faq->id }}">
                                                 <span>
@@ -763,7 +822,8 @@
                                             </div>
                                             @if (config('services.recaptcha.key') ?? '')
                                                 <div>
-                                                    <div class="g-recaptcha" data-sitekey={{config('services.recaptcha.key')}}>
+                                                    <div class="g-recaptcha"
+                                                        data-sitekey={{ config('services.recaptcha.key') }}>
                                                     </div>
                                                 </div>
                                             @endif
@@ -834,7 +894,7 @@
                     <div class="storeImgs">
                         <a href="{{ $settings['app_link'] ?? '' }}" target="_blank"> <img
                                 src="{{ asset('assets/landing_page_images/Google play.png') }}" alt=""> </a>
-                        <a href="{{ $settings['ios_app_link'] ?? ''}}" target="_blank"> <img
+                        <a href="{{ $settings['ios_app_link'] ?? '' }}" target="_blank"> <img
                                 src="{{ asset('assets/landing_page_images/iOS app Store.png') }}" alt=""> </a>
                     </div>
                 </div>

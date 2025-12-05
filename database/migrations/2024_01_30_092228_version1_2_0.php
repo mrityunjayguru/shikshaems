@@ -131,7 +131,7 @@ return new class extends Migration {
         $systemSettings = [
             [
                 'name' => 'hero_title_1',
-                'data' => 'Opt for eSchool Saas 14+ robust features for an enhanced educational experience.',
+                'data' => 'Opt for ShikshaEMS 14+ robust features for an enhanced educational experience.',
                 'type' => 'text'
             ],
             [
@@ -201,7 +201,7 @@ return new class extends Migration {
             ],
             [
                 'name' => 'tag_line',
-                'data' => 'Transform School Management With eSchool SaaS',
+                'data' => 'Transform School Management With ShikshaEMS',
                 'type' => 'text'
             ],
             [
@@ -211,7 +211,7 @@ return new class extends Migration {
             ],
             [
                 'name' => 'hero_description',
-                'data' => 'Experience the future of education with our eSchool SaaS platform. Streamline attendance, assignments, exams, and more. Elevate your school\'s efficiency and engagement.',
+                'data' => 'Experience the future of education with our ShikshaEMS platform. Streamline attendance, assignments, exams, and more. Elevate your school\'s efficiency and engagement.',
                 'type' => 'text'
             ],
         ];

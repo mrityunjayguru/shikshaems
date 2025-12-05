@@ -5,7 +5,7 @@
                 <div class="companyInfoWrapper">
                     <div>
                         <a href="{{ url('/') }}">
-                            <img src="{{ $settings['horizontal_logo'] ?? asset('assets/landing_page_images/Logo1.svg') }}"
+                            <img src="{{ $settings['horizontal_logo'] ?? asset('assets/landing_page_images/sems-logo-main.svg') }}"
                                 class="logo" alt="">
                         </a>
                     </div>

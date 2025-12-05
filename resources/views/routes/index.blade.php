@@ -100,6 +100,11 @@
                                 value={{ __('submit') }}>
                         </form>
                     </div>
+                    <div class="row">
+                        <div class=" col-md-12">
+                            <div id="map" style="height: 400px; width: 100%;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-12 grid-margin stretch-card">
@@ -137,7 +142,8 @@
                                         data-visible="false">{{ __('created_at') }}</th>
                                     <th scope="col" data-field="updated_at" data-sortable="true"
                                         data-visible="false">{{ __('updated_at') }}</th>
-                                    <th scope="col" data-field="operate" data-formatter="actionColumnFormatter" data-escape="false">{{ __('action') }}</th>
+                                    <th scope="col" data-field="operate" data-formatter="actionColumnFormatter"
+                                        data-escape="false">{{ __('action') }}</th>
                                 </tr>
                             </thead>
                         </table>
@@ -146,4 +152,81 @@
             </div>
         </div>
     </div>
+@endsection
+@section('js')
+    <script>
+        let map;
+        const routes = @json($routes);
+
+        function initMap() {
+
+            const defaultPosition = {
+                lat: 20.5937,
+                lng: 78.9629
+            };
+            const bounds = new google.maps.LatLngBounds();
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: defaultPosition,
+                zoom: 10,
+            });
+
+            routes.forEach((route) => {
+                route.pickup_points.forEach((point, index) => {
+
+                    const position = {
+                        lat: parseFloat(point.latitude),
+                        lng: parseFloat(point.longitude)
+                    };
+
+                    // Extend map area
+                    bounds.extend(position);
+
+                    // Circle
+                    new google.maps.Circle({
+                        center: position,
+                        // radius: 200,
+                        fillColor: "#4285F4",
+                        fillOpacity: 0.25,
+                        strokeColor: "#4285F4",
+                        strokeWeight: 2,
+                        map: map
+                    });
+
+                    // Numbered marker
+                    new google.maps.Marker({
+                        position: position,
+                        map: map,
+                        label: {
+                            text: `${index + 1}`,
+                            color: "#fff",
+                            fontSize: "10px",
+                            fontWeight: "bold",
+                        },
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 12,
+                            fillColor: "#4285F4",
+                            fillOpacity: 1,
+                            strokeWeight: 0,
+                        }
+                    });
+
+                });
+            });
+
+            if (routes.length > 0) {
+                map.fitBounds(bounds);
+                google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+                    let desiredZoom = 12; // your preferred zoom-out level
+
+                    if (map.getZoom() > desiredZoom) {
+                        map.setZoom(desiredZoom);
+                    }
+                });
+            }
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOdT7uQebSHbnuZcqpWSYFtM8mryin4o&callback=initMap" async
+        defer></script>
 @endsection

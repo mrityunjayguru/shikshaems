@@ -37,12 +37,13 @@ class VehicleController extends Controller
             'vehicle_number' => 'required|string|max:100|unique:vehicles,vehicle_number',
             'capacity' => 'required|numeric|min:1',
             'status' => 'required|in:0,1',
+            'icon' => 'required',
         ]);
 
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
         }
-
+        // dd($request->all());
         try {
             DB::beginTransaction();
 
@@ -50,7 +51,10 @@ class VehicleController extends Controller
                 'name' => $request->name,
                 'vehicle_number' => $request->vehicle_number,
                 'capacity' => $request->capacity,
-                'status' => $request->status ?? 1
+                'status' => $request->status ?? 1,
+                'vehicle_icon' => $request->hasFile('icon') ? $request->icon : null,
+                'is_device' => $request->is_device,
+                'iemi' => $request->iemi ?? null 
             ];
 
             $this->vehiclesRepository->create($vehicleData);
@@ -78,6 +82,7 @@ class VehicleController extends Controller
             'edit_vehicle_name' => 'required|string|max:255',
             'edit_vehicle_number' => 'required|string|max:100|unique:vehicles,vehicle_number,' . $id,
             'edit_capacity' => 'required|integer|min:1',
+            'vehicle_icon' => 'mimes:jpg,jpeg,png,svg|max:2048|nullable',
             'edit_status' => 'required|in:0,1',
         ]);
 
@@ -113,7 +118,16 @@ class VehicleController extends Controller
                 'vehicle_number' => $request->edit_vehicle_number,
                 'capacity' => $request->edit_capacity,
                 'status' => $request->edit_status,
+                'is_device' => $request->edit_is_device,
+                'iemi' => $request->edit_iemi ?? null
             ];
+
+            if ($request->hasFile('vehicle_icon')) {
+                $vehicleData = array_merge($vehicleData, [
+                    'vehicle_icon' => $request->vehicle_icon
+                ]);
+            }
+
 
             // Call repository update
             $vehicle = $this->vehiclesRepository->update($id, $vehicleData);
@@ -217,7 +231,7 @@ class VehicleController extends Controller
         }
         $sql->orderBy($sort, $order)->skip($offset)->take($limit);
         $res = $sql->get();
-
+        // dd($res);
         $bulkData = array();
         $bulkData['total'] = $total;
         $rows = array();
