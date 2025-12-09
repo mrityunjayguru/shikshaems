@@ -69,6 +69,7 @@ use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\WebSettingsController;
 use App\Http\Controllers\WizardSettingsController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProximityController;
 use App\Http\Controllers\ContactInquiryController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\AssignElectiveSubjectController;
@@ -960,7 +961,9 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
     Route::delete("vehicles/{id}/trash", [VehicleController::class, 'trash'])->name('vehicles.trash');
     Route::resource('vehicles', VehicleController::class);
 
-
+    //proximity
+    Route::get("set-proximity", [ProximityController::class, 'index'])->name('proximity.index');
+    Route::post("store-proximity", [ProximityController::class, 'store'])->name('proximity.store');
     // Student Diary Routes:::
     
     Route::delete('/diary-categories/{id}/deleted', [DiaryCategoryController::class, 'trash'])->name('diary-categories.trash');

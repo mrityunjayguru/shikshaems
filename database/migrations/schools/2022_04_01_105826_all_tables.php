@@ -19,7 +19,7 @@ return new class extends Migration
         /************ Master Tables Started *******/
         Schema::create('schools', static function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name');                     
             $table->string('address');
             $table->string('support_phone');
             $table->string('support_email');
