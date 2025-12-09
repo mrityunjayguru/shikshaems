@@ -1,4 +1,4 @@
-1764943768s:82796:"{
+1765275548s:82908:"{
     "The :attribute must contain at least one letter.": "The :attribute must contain at least one letter.",
     "The :attribute must contain at least one number.": "The :attribute must contain at least one number.",
     "The :attribute must contain at least one symbol.": "The :attribute must contain at least one symbol.",
@@ -1339,6 +1339,9 @@
     "regular" : "Regular",
     "custom_domain" : "Custom Domain",
     "default_domain" : "Default Domain",
+    "state" : "State",
+    "city" : "City",
+    "pin_code" : "Pin Code",
     "custom" : "Custom",
     "demo_school" : "Demo School",
     "inquiry" : "Inquiry",
@@ -1494,6 +1497,7 @@
     "routes" : "Routes",
     "route_pickup_points" : "Route Pickup Points",
     "transportation" : "Transportation",
+    "set_proximity" : "Set Proximity",
     "transportation_fees" : "Transportation Fees",
     "create_pickup_point" : "Create Pickup Point",
     "create_route" : "Create Route",

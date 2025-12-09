@@ -16,8 +16,7 @@ Routes
 ->view
 
 05/12/2025
-Website
-
+Website(Done)
 ->home.blade.php 
 ->public\assets\home_page\css\style.css
 ->resources\views\layouts\home_page\footer.blade.php
@@ -30,3 +29,9 @@ change eSchool to ShikshaEMS(DONE)
 ->database\migrations\2024_01_30_092228_version1_2_0.php
 ->database\seeders\AddSuperAdminSeeder.php
 ->app\Http\Controllers\SchoolController.php
+
+
+08/12/2025
+->database\migrations\2022_04_01_105826_all_tables.php
+->database\migrations\schools\2022_04_01_105826_all_tables.php
+->
