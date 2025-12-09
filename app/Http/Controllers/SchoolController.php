@@ -95,6 +95,7 @@ class SchoolController extends Controller
         }
 
         $school_code = date('Y') . (($schools->id ?? 0) + 1);
+        // $school_code = ($schools->id ?? 0) + 01;
         $settings = $this->cache->getSystemSettings();
 
         $prefix = $settings['school_code_prefix'] ?? 'SCH';
@@ -136,7 +137,7 @@ class SchoolController extends Controller
         if ($subdomain === $request->domain) {
             ResponseService::errorResponse("This Domain is already in use choose any other Domain name.");
         }
-
+        // dd($request->all());
         $validator = Validator::make($request->all(), [
             'school_name' => 'required',
             'school_support_email' => 'required|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:schools,support_email',
@@ -189,6 +190,11 @@ class SchoolController extends Controller
                 'tagline' => $request->school_tagline,
                 'logo' => $request->file('school_image'),
                 'domain' => $request->domain,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'state' => $request->state,
+                'city' => $request->city,
+                'pin_code' => $request->pin_code,
                 'code' => $school_code,
                 'type' => "custom",
                 'domain_type' => $request->domain_type,
@@ -202,7 +208,7 @@ class SchoolController extends Controller
             $school_name = str_replace('.', '_', $request->school_name);
             // remove all special characters from school_name
             $school_name = preg_replace('/[^a-zA-Z0-9]/', '', $school_name);
-            $database_name = 'eschool_saas_' . $schoolData->id . '_' . strtolower(strtok($school_name, " "));
+            $database_name = 'shikshaems_' . $schoolData->id . '_' . strtolower(strtok($school_name, " "));
 
             $admin_data = array(
                 'first_name' => "School",
@@ -1084,7 +1090,7 @@ class SchoolController extends Controller
 
                 $school_name = str_replace('.', '_', $request->school_name);
                 $school_name = preg_replace('/[^a-zA-Z0-9]/', '', $school_name);
-                $database_name = 'eschool_saas_' . $schoolData->id . '_' . strtolower(strtok($school_name, " "));
+                $database_name = 'shikshaems_' . $schoolData->id . '_' . strtolower(strtok($school_name, " "));
 
                 // Set initial status as pending
                 $this->schoolsRepository->update($schoolData->id, ['admin_id' => $user->id, 'database_name' => $database_name, 'status' => 0]);
@@ -1229,7 +1235,7 @@ class SchoolController extends Controller
             // $user->assignRole('School Admin');
 
             $school_name = str_replace('.', '_', $schoolData->name);
-            $database_name = 'eschool_saas_' . $schoolData->id . '_' . strtolower(strtok($school_name, " "));
+            $database_name = 'shikshaems_' . $schoolData->id . '_' . strtolower(strtok($school_name, " "));
 
             // Update Admin id to School Data and set status as pending
             $schoolData = $this->schoolsRepository->update($schoolData->id, ['admin_id' => $user->id, 'database_name' => $database_name, 'status' => 0]);
@@ -1414,7 +1420,7 @@ class SchoolController extends Controller
 
                 $school_name = str_replace('.', '_', $request->school_name);
                 $school_name = preg_replace('/[^a-zA-Z0-9]/', '', $school_name);
-                $database_name = 'eschool_saas_' . $schoolData->id . '_' . strtolower(strtok($school_name, " "));
+                $database_name = 'shikshaems_' . $schoolData->id . '_' . strtolower(strtok($school_name, " "));
 
                 $admin_data = array(
                     'first_name' => 'School',

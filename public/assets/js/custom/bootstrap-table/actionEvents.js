@@ -958,7 +958,7 @@ window.sliderEvents = {
 
 window.schoolEvents = {
     'click .edit-data': function (e, value, row) {
-
+        editInitMap();
         $('#edit_id').val(row.id);
         $('#edit_school_name').val(row.name);
         $('#edit-school-logo-tag').attr('src', row.logo);
@@ -966,6 +966,11 @@ window.schoolEvents = {
         $('#edit_school_support_phone').val(row.support_phone);
         $('#edit_school_address').val(row.address);
         $('#edit_school_tagline').val(row.tagline);
+        $('#edit_lat').val(row.latitude);
+        $('#edit_lng').val(row.longitude);
+        $('#edit_state').val(row.state);
+        $('#edit_city').val(row.city);
+        $('#edit_pin_code').val(row.pin_code);
 
 
         // set the school url based on the domain type
@@ -986,7 +991,7 @@ window.schoolEvents = {
 
         $('#school_code').val(row.code);
 
-        console.log(row.domain);
+        // console.log(row.domain);
         if (row.domain_type == "default") {
             $('.edit_default').prop('checked', true);
 

@@ -660,6 +660,12 @@
                                     {{ __('vehicles') }}</a>
                             </li>
                         @endcan
+                        @can('vehicles-list')
+                            <li class="nav-item">
+                                <a href="{{ route('proximity.index') }}" class="nav-link" data-access="@hasFeatureAccess('Transportation Module')">
+                                    {{ __('set_proximity') }}</a>
+                            </li>
+                        @endcan
                         @canany(['pickup-points-list'])
                             <li class="nav-item">
                                 <a href="{{ route('pickup-points.index') }}" class="nav-link"

@@ -507,6 +507,11 @@ return new class extends Migration
         Schema::table('schools', static function (Blueprint $table) {
             $table->string('database_name')->nullable(true)->after('domain');
             $table->string('code')->nullable(true)->after('database_name');
+            // $table->string('latitude')->nullable(true)->after('code');
+            // $table->string('longitude')->nullable(true)->after('latitude');
+            // $table->string('state')->nullable(true)->after('longitude');
+            // $table->string('city')->nullable(true)->after('state');
+            // $table->string('pincode')->nullable(true)->after('city');
         });
 
         $schools = School::withTrashed()->get();
@@ -565,6 +570,11 @@ return new class extends Migration
         Schema::table('schools', static function (Blueprint $table) {
             $table->dropColumn('database_name');
             $table->dropColumn('code');
+            // $table->dropColumn('latitude');
+            // $table->dropColumn('longitude');
+            // $table->dropColumn('state');
+            // $table->dropColumn('city');
+            // $table->dropColumn('pincode');
         });
         Schema::table('staffs', static function (Blueprint $table) {
             $table->dropColumn('joining_date');
