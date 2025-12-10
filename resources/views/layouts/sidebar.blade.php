@@ -821,6 +821,11 @@
                                 </a>
                             </li>
                         @endcanany
+                        <li class="nav-item">
+                            <a href="{{ route('vehicle-type.index') }}" class="nav-link">
+                                {{ __('manage_vehicle_type') }}
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </li>
