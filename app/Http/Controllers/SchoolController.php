@@ -517,6 +517,11 @@ class SchoolController extends Controller
                 'support_email' => $request->edit_school_support_email,
                 'support_phone' => $request->edit_school_support_phone,
                 'tagline' => $request->edit_school_tagline,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'state' => $request->state,
+                'city' => $request->city,
+                'pin_code' => $request->pin_code,
                 'domain_type' => $request->edit_domain_type,
                 'domain' => $request->edit_domain
             );
