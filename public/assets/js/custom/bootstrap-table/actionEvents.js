@@ -2390,3 +2390,11 @@ window.pickupPointEvents = {
     }
 };
 
+window.vehicleTypeEvents = {
+    'click .edit-data': function (e, value, row) {
+        $('#edit_vehicle_type_id').val(row.id);
+        $('#edit_vehicle_type').val(row.vehicle_type);
+        $('#edit_vehicle_icon').val(row.vehicle_icon);
+    }
+};
+
