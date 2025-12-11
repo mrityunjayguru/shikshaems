@@ -2386,9 +2386,21 @@ window.pickupPointEvents = {
         $('#edit_lng').val(row.longitude);
         $('#edit_status').val(row.status);
 
+        if (row.pickup_time) {
+            let pickupParts = row.pickup_time.split(":"); // "01:03" → ["01", "03"]
+            $('#edit_pickup_hours').val(parseInt(pickupParts[0]));   // 01 → 1
+            $('#edit_pickup_minutes').val(parseInt(pickupParts[1])); // 03 → 3
+        }
+
+        if (row.dropoff_time) {
+            let dropoffParts = row.dropoff_time.split(":");
+            $('#edit_dropoff_hours').val(parseInt(dropoffParts[0]));
+            $('#edit_dropoff_minutes').val(parseInt(dropoffParts[1]));
+        }
+
         setTimeout(() => {
-            initEditMap();
-        }, 300); // wait for modal open
+             initEditMap();
+        }, 0);
     }
 };
 

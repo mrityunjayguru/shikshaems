@@ -634,6 +634,42 @@ function bgColorFormatter(value, row) {
     return "<p style='background-color:" + row.bg_color + "; color:" + textColor + ";" + boxShadow + "' class='color-code-box'>" + row.bg_color + "</p>";
 }
 
+function routeColorFormatter(value, row) {
+    // Convert bg color to RGB to check brightness
+    let color = row.route_color;
+    console.log(color);
+    
+    let r, g, b;
+
+    // Handle hex color
+    if (color.startsWith('#')) {
+        r = parseInt(color.substr(1, 2), 16);
+        g = parseInt(color.substr(3, 2), 16);
+        b = parseInt(color.substr(5, 2), 16);
+    }
+    // Handle rgb/rgba color
+    else if (color.startsWith('rgb')) {
+        let nums = color.match(/\d+/g);
+        r = parseInt(nums[0]);
+        g = parseInt(nums[1]);
+        b = parseInt(nums[2]);
+    }
+
+    // Calculate brightness using relative luminance formula
+    let brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+    // Use white text for dark backgrounds, black for light
+    let textColor = brightness < 128 ? '#ffffff' : '#000000';
+
+    // Add box shadow for white/very light backgrounds
+    let boxShadow = '';
+    if (brightness > 240) { // Very light color
+        boxShadow = 'box-shadow: 0 0 3px rgba(0,0,0,0.2);';
+    }
+
+    return "<p style='background-color:" + row.route_color + "; color:" + textColor + ";" + boxShadow + "' class='color-code-box'>" + row.route_color + "</p>";
+}
+
 function formFieldDefaultValuesFormatter(value, row) {
     let html = '';
     if (row.default_values && row.default_values.length) {

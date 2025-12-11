@@ -24,12 +24,13 @@
                             @csrf
                             @method('PUT') --}}
                         <div class="row">
-                            <div class="col-md-12 h-100">
+                            <div class="col-md-6 h-100">
                                 <div class="border border-theme p-4">
                                     <div id="profile-list-left" class="py-2 h-100">
                                         @if (isset($route->routePickupPoints) && $route->routePickupPoints->isNotEmpty())
                                             @foreach ($route->routePickupPoints->sortBy('order') as $routePickupPoint)
-                                                <div class="card rounded mb-2 border border-secondary" data-id="{{ $routePickupPoint->id }}">
+                                                <div class="card rounded mb-2 border border-secondary"
+                                                    data-id="{{ $routePickupPoint->id }}">
                                                     <div class="card-body p-3 d-flex align-items-center">
                                                         <div class="order-pickup-point me-3">
                                                             {{ $routePickupPoint->order }}
@@ -57,8 +58,15 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class=" col-md-6">
+                                <div id="map" style="height: 400px; width: 100%;"></div>
+                            </div>
                         </div>
-
+                        {{-- <div class="row">
+                            <div class=" col-md-12">
+                                <div id="map" style="height: 400px; width: 100%;"></div>
+                            </div>
+                        </div> --}}
                         {{-- <div class="d-flex justify-content-end">
                                 <input type="submit" class="btn btn-theme mt-3" value="{{ __('update') }}">
                             </div>
@@ -126,6 +134,7 @@
                 success: function(response) {
                     if (!response.error) {
                         showSuccessToast(response.message);
+                        window.location.reload();
                     } else {
                         showErrorToast(response.message);
                     }
@@ -134,6 +143,83 @@
                     showErrorToast('Something went wrong!');
                 }
             });
+        }
+
+        let map;
+        const routes = @json($route->routePickupPoints);
+
+        function initMap() {
+
+            const defaultPosition = {
+                lat: 20.5937,
+                lng: 78.9629
+            };
+            const bounds = new google.maps.LatLngBounds();
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: defaultPosition,
+                zoom: 10,
+            });
+
+            routes.forEach((route, index) => {
+
+                // Use single pickup_point (not pickup_points)
+                const point = route.pickup_point;
+
+                // Skip if missing
+                if (!point) return;
+
+                const position = {
+                    lat: parseFloat(point.latitude),
+                    lng: parseFloat(point.longitude)
+                };
+
+                // Extend map bounds
+                bounds.extend(position);
+
+                // Create circle
+                new google.maps.Circle({
+                    center: position,
+                    fillColor: "#4285F4",
+                    fillOpacity: 0.25,
+                    strokeColor: "#4285F4",
+                    strokeWeight: 2,
+                    map: map
+                });
+
+                // Create numbered marker
+                new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    label: {
+                        text: (index + 1).toString(),
+                        color: "#fff",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                    },
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 12,
+                        fillColor: "#4285F4",
+                        fillOpacity: 1,
+                        strokeWeight: 0,
+                    }
+                });
+
+            });
+
+            // Adjust zoom to fit all points
+            if (routes.length > 0) {
+                map.fitBounds(bounds);
+
+                google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+                    let desiredZoom = 12;
+
+                    if (map.getZoom() > desiredZoom) {
+                        map.setZoom(desiredZoom);
+                    }
+                });
+            }
         }
     </script>
 @endsection

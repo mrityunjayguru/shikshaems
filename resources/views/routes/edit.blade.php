@@ -41,12 +41,19 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                
                                 <div class="form-group col-sm-6 col-md-6">
                                     <label>{{ __('status') }}</label>
                                     <select name="status" id="edit_status" class="form-control">
                                         <option value="1" {{ $route->status ? 'selected' : '' }}>{{ __('Active') }}</option>
                                         <option value="0" {{ !$route->status ? 'selected' : '' }}>{{ __('Inactive') }}</option>
                                     </select>
+                                </div>
+
+                                 <div class="form-group col-sm-6 col-md-6">
+                                    <label>{{ __('color') }}</label>
+                                     <input name="route_color" id="route_color" value="{{ $route->route_color ?? ''}}" type="text" required
+                                            placeholder="{{ __('color') }}" class="theme_primary_color color-picker" />
                                 </div>
                             </div>
                             

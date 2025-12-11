@@ -33,6 +33,43 @@
                                         <option value="0">{{ __('Inactive') }}</option>
                                     </select>
                                 </div>
+                                {{-- <div class="form-group col-md-6">
+                                    <label>Pickup Time<span class="text-danger">*</span></label>
+                                    <input type="time" id="pickup_time" placeholder="Pickup Time" name="pickup_time"
+                                        class="form-control mt-2" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Dropoff Time<span class="text-danger">*</span></label>
+                                    <input type="time" id="dropoff_time" placeholder="Dropoff Time" name="dropoff_time"
+                                        class="form-control mt-2" required>
+                                </div> --}}
+                                <div class="form-group col-md-6">
+                                    <label>Pickup Duration<span class="text-danger">*</span></label>
+                                    <div class="d-flex gap-3">
+                                        <select name="pickup_hours" id="pickup_hours" class="form-control" required>
+                                            <option value="">Hours</option>
+                                        </select>
+
+                                        <select name="pickup_minutes" id="pickup_minutes" class="form-control" required>
+                                            <option value="">Minutes</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label>Dropoff Duration<span class="text-danger">*</span></label>
+                                    <div class="d-flex gap-2">
+                                        <select name="dropoff_hours" id="dropoff_hours" class="form-control" required>
+                                            <option value="">Hours</option>
+                                        </select>
+
+                                        <select name="dropoff_minutes" id="dropoff_minutes" class="form-control" required>
+                                            <option value="">Minutes</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+
                                 <div class="form-group col-md-6">
                                     <label>Latitude<span class="text-danger">*</span></label>
                                     <input type="text" id="lat" placeholder="Latitude" name="latitude"
@@ -78,9 +115,13 @@
                                         {{ __('id') }}</th>
                                     <th scope="col" data-field="no">{{ __('no.') }}</th>
                                     <th scope="col" data-field="name" data-sortable="true">{{ __('name') }}</th>
-                                    {{-- <th scope="col" data-field="transportation_fees"
+                                    <th scope="col" data-field="pickup_time" data-sortable="true">
+                                        {{ __('pickup_time') }}</th>
+                                    <th scope="col" data-field="dropoff_time" data-sortable="true">
+                                        {{ __('dropoff_time') }}</th>
+                                    <th scope="col" data-field="transportation_fees"
                                         data-formatter="transportationFeesFormatter" data-escape="false"
-                                        data-sortable="false">{{ __('transportation_fees') }}</th> --}}
+                                        data-sortable="false">{{ __('transportation_fees') }}</th>
                                     <th scope="col" data-field="status" data-formatter="activeStatusFormatter"
                                         data-sortable="false">{{ __('status') }}</th>
                                     <th scope="col" data-field="operate" data-formatter="actionColumnFormatter"
@@ -121,6 +162,47 @@
                                             <option value="0">{{ __('Inactive') }}</option>
                                         </select>
                                     </div>
+                                    {{-- <div class="form-group col-md-6">
+                                        <label>Pickup Time<span class="text-danger">*</span></label>
+                                        <input type="time" id="edit_pickup_time" placeholder="Pickup Time"
+                                            name="pickup_time" class="form-control mt-2" required>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Dropoff Time<span class="text-danger">*</span></label>
+                                        <input type="time" id="edit_dropoff_time" placeholder="Dropoff Time"
+                                            name="dropoff_time" class="form-control mt-2" required>
+                                    </div> --}}
+                                    <div class="form-group col-md-6">
+                                        <label>Pickup Duration<span class="text-danger">*</span></label>
+                                        <div class="d-flex gap-2">
+                                            <select name="pickup_hours" id="edit_pickup_hours" class="form-control"
+                                                required>
+                                                <option value="">Hours</option>
+                                            </select>
+
+                                            <select name="pickup_minutes" id="edit_pickup_minutes" class="form-control"
+                                                required>
+                                                <option value="">Minutes</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label>Dropoff Duration<span class="text-danger">*</span></label>
+                                        <div class="d-flex gap-2">
+                                            <select name="dropoff_hours" id="edit_dropoff_hours" class="form-control"
+                                                required>
+                                                <option value="">Hours</option>
+                                            </select>
+
+                                            <select name="dropoff_minutes" id="edit_dropoff_minutes" class="form-control"
+                                                required>
+                                                <option value="">Minutes</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+
                                     <div class="form-group col-md-6">
                                         <label>Latitude<span class="text-danger">*</span></label>
                                         <input type="text" id="edit_lat" placeholder="Latitude" name="latitude"
@@ -177,6 +259,60 @@
                 document.getElementById("lat").value = event.latLng.lat().toFixed(6);
                 document.getElementById("lng").value = event.latLng.lng().toFixed(6);
             });
+
+            let input = document.createElement("input");
+            input.className = "form-control map-search mt-2";
+            input.id = "searchInput";
+            input.type = "text";
+            input.style = "width:50%; margin-left:300px;";
+            input.placeholder = "Search location…";
+
+            // Add search box inside map on TOP_LEFT
+            map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+            const autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.bindTo("bounds", map);
+
+            autocomplete.addListener("place_changed", function() {
+                const place = autocomplete.getPlace();
+
+                if (!place.geometry || !place.geometry.location) {
+                    alert("Location not found!");
+                    return;
+                }
+
+                // Move map + marker
+                map.setCenter(place.geometry.location);
+                map.setZoom(15);
+                marker.setPosition(place.geometry.location);
+
+                // Update inputs
+                document.getElementById("lat").value = place.geometry.location.lat().toFixed(6);
+                document.getElementById("lng").value = place.geometry.location.lng().toFixed(6);
+            });
+
+        }
+
+        document.getElementById("lat").addEventListener("input", updateMarkerPosition);
+        document.getElementById("lng").addEventListener("input", updateMarkerPosition);
+
+        function updateMarkerPosition() {
+            let lat = parseFloat(document.getElementById("lat").value);
+            let lng = parseFloat(document.getElementById("lng").value);
+
+            // Validate numbers
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const newPos = {
+                    lat: lat,
+                    lng: lng
+                };
+
+                // Update marker position
+                marker.setPosition(newPos);
+
+                // Recenter the map
+                map.setCenter(newPos);
+            }
         }
 
         function initEditMap() {
@@ -218,8 +354,89 @@
                 $('#edit_lat').val(event.latLng.lat().toFixed(6));
                 $('#edit_lng').val(event.latLng.lng().toFixed(6));
             });
+
+            // ---- Search box inside map ----
+            // const input = document.createElement("input");
+            // input.className = "map-search mt-2";
+            // input.placeholder = "Search location…";
+
+            // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+            // const autocomplete = new google.maps.places.Autocomplete(input);
+            // autocomplete.bindTo("bounds", map);
+
+            // autocomplete.addListener("place_changed", function() {
+            //     const place = autocomplete.getPlace();
+
+            //     if (!place.geometry || !place.geometry.location) {
+            //         alert("Location not found!");
+            //         return;
+            //     }
+
+            //     map.setCenter(place.geometry.location);
+            //     map.setZoom(15);
+            //     marker.setPosition(place.geometry.location);
+
+            //     document.getElementById("edit_lat").value = place.geometry.location.lat().toFixed(6);
+            //     document.getElementById("edit_lng").value = place.geometry.location.lng().toFixed(6);
+            // });
+        }
+
+        document.getElementById("edit_lat").addEventListener("input", updateMarkerPosition);
+        document.getElementById("edit_lng").addEventListener("input", updateMarkerPosition);
+
+        function updateMarkerPosition() {
+            let lat = parseFloat(document.getElementById("edit_lat").value);
+            let lng = parseFloat(document.getElementById("edit_lng").value);
+
+            // Validate numbers
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const newPos = {
+                    lat: lat,
+                    lng: lng
+                };
+
+                // Update marker position
+                marker.setPosition(newPos);
+
+                // Recenter the map
+                map.setCenter(newPos);
+            }
         }
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOdT7uQebSHbnuZcqpWSYFtM8mryin4o&callback=initMap" async
-        defer></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+
+            const pickupHours = document.getElementById("pickup_hours");
+            const dropoffHours = document.getElementById("dropoff_hours");
+
+            const editPickupHours = document.getElementById("edit_pickup_hours");
+            const editDropoffHours = document.getElementById("edit_dropoff_hours");
+
+            const pickupMinutes = document.getElementById("pickup_minutes");
+            const dropoffMinutes = document.getElementById("dropoff_minutes");
+
+            const editPickupMinutes = document.getElementById("edit_pickup_minutes");
+            const editDropoffMinutes = document.getElementById("edit_dropoff_minutes");
+
+            // HOURS: 1h to 12h
+            for (let i = 0; i <= 12; i++) {
+                pickupHours.innerHTML += `<option value="${i}">${i}h</option>`;
+                dropoffHours.innerHTML += `<option value="${i}">${i}h</option>`;
+
+                editPickupHours.innerHTML += `<option value="${i}">${i}h</option>`;
+                editDropoffHours.innerHTML += `<option value="${i}">${i}h</option>`;
+            }
+
+            // MINUTES: 1 to 60
+            for (let i = 0; i <= 59; i++) {
+                pickupMinutes.innerHTML += `<option value="${i}">${i}m</option>`;
+                dropoffMinutes.innerHTML += `<option value="${i}">${i}m</option>`;
+
+                editPickupMinutes.innerHTML += `<option value="${i}">${i}m</option>`;
+                editDropoffMinutes.innerHTML += `<option value="${i}">${i}m</option>`;
+            }
+
+        });
+    </script>
 @endsection
