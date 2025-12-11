@@ -78,6 +78,21 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="form-group col-md-6">
+                                    <label for="staff_id">{{ __('staff') }} <span class="text-danger">*</span></label>
+                                    <select name="staff_id" id="staff_id"
+                                        class="form-control select2-dropdown select2-hidden-accessible" required>
+                                        <option value="">{{ __('select_helper') }}</option>
+                                        @if (isset($helpers) && $helpers->count() < 1)
+                                            @if ($helpers->count() == 1)
+                                                <option value="">No records found</option>
+                                            @endif
+                                        @endif
+                                        @foreach ($helpers as $helper)
+                                            <option value="{{ $helper->id }}">{{ $helper->getFullNameAttribute() }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 <div class="form-group col-md-3">
                                     <label>{{ __('pickup_trip_start_time') }} <span class="text-danger">*</span></label>
                                     <input type="time" name="pickup_trip_start_time" class="form-control"

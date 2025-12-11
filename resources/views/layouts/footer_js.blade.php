@@ -53,7 +53,8 @@
 <script src="{{ asset('/assets/ckeditor-4/adapters/jquery.js') }}" async></script>
 <script src="{{ asset('/assets/js/dragula.min.js') }}"></script>
 
-
+ <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOdT7uQebSHbnuZcqpWSYFtM8mryin4o&callback=initMap&libraries=places" async
+        defer></script>
 <script type='text/javascript'>
     @if ($errors->any())
     @foreach ($errors->all() as $error)

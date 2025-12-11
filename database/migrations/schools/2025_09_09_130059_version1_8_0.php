@@ -34,6 +34,7 @@ return new class extends Migration
                 $table->decimal('distance', 8, 2)->nullable()->comment('Distance in kilometers');
                 $table->tinyInteger('status')->default(1);
                 $table->foreignId('shift_id')->nullable()->constrained('shifts')->onUpdate('cascade')->onDelete('set null');
+                $table->string('route_color');
                 $table->timestamps();
             });
 
@@ -43,6 +44,8 @@ return new class extends Migration
                 $table->string('name');
                 $table->string('latitude');
                 $table->string('longitude');
+                $table->time('pickup_time');
+                $table->time('dropoff_time');
                 $table->tinyInteger('status')->default(1);
                 $table->timestamps();
             });
