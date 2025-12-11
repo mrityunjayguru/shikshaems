@@ -38,7 +38,31 @@ class PickupPointController extends Controller
         }
 
         try {
-            PickupPoint::create($request->except('_token'));
+            // PickupPoint::create($request->except('_token'));
+             // Build pickup_time as HH:MM
+            $pickup_time = str_pad($request->pickup_hours, 2, '0', STR_PAD_LEFT) . ':' .
+                        str_pad($request->pickup_minutes, 2, '0', STR_PAD_LEFT);
+
+            // Build dropoff_time as HH:MM
+            $dropoff_time = str_pad($request->dropoff_hours, 2, '0', STR_PAD_LEFT) . ':' .
+                            str_pad($request->dropoff_minutes, 2, '0', STR_PAD_LEFT);
+
+            // Prepare data
+            $data = $request->except('_token');
+
+            // Override final formatted values
+            $data['pickup_time'] = $pickup_time;
+            $data['dropoff_time'] = $dropoff_time;
+
+            // Remove hour/min dropdown entries to avoid storing them
+            unset(
+                $data['pickup_hours'],
+                $data['pickup_minutes'],
+                $data['dropoff_hours'],
+                $data['dropoff_minutes']
+            );
+
+            PickupPoint::create($data);
             ResponseService::successResponse('Data Stored Successfully');
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e, "PickupPoint Controller -> Store Method");
@@ -97,6 +121,7 @@ class PickupPointController extends Controller
 
     public function update(Request $request, $id)
     {
+        // dd($request->all());
         ResponseService::noPermissionThenSendJson('pickup-points-edit');
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:pickup_points,name,' . $id,
@@ -111,7 +136,31 @@ class PickupPointController extends Controller
 
         try {
             $pickupPoint = PickupPoint::findOrFail($id);
-            $pickupPoint->update($request->except('_token'));
+            // $pickupPoint->update($request->except('_token'));
+            // Build the duration times
+            $pickup_hours   = (int) $request->pickup_hours;
+            $pickup_minutes = (int) $request->pickup_minutes;
+
+            $drop_hours   = (int) $request->dropoff_hours;
+            $drop_minutes = (int) $request->dropoff_minutes;
+
+            $pickup_time  = str_pad($pickup_hours, 2, '0', STR_PAD_LEFT)
+                        . ':' .
+                            str_pad($pickup_minutes, 2, '0', STR_PAD_LEFT);
+
+            $dropoff_time = str_pad($drop_hours, 2, '0', STR_PAD_LEFT)
+                        . ':' .
+                            str_pad($drop_minutes, 2, '0', STR_PAD_LEFT);
+
+
+            // Prepare data to update
+            $data = $request->except('_token', '_method');
+
+            // Add final formatted duration time
+            $data['pickup_time']  = $pickup_time;
+            $data['dropoff_time']    = $dropoff_time;
+            // dd($data);
+            $pickupPoint->update($data);
             ResponseService::successResponse('Data Updated Successfully');
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e, "PickupPoint Controller -> Update Method");

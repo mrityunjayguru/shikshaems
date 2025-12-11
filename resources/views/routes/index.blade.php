@@ -49,6 +49,12 @@
                                     </select>
                                 </div>
 
+                                <div class="form-group col-sm-6 col-md-6">
+                                    <label>{{ __('color') }}</label>
+                                     <input name="route_color" id="route_color" type="text" required
+                                            placeholder="{{ __('color') }}" class="theme_primary_color color-picker" />
+                                </div>
+
 
                                 <!-- Pickup Points Repeater Section -->
                                 <div class="form-group col-sm-6 col-md-12">
@@ -134,6 +140,8 @@
                                     </th>
                                     <th scope="col" data-field="shift_name" data-sortable="false">{{ __('Shift') }}
                                     </th>
+                                    <th scope="col" data-field="route_color" data-formatter="routeColorFormatter" data-sortable="false">{{ __('route_color') }}
+                                    </th>
                                     <th scope="col" data-field="status" data-formatter="activeStatusFormatter"
                                         data-sortable="false">{{ __('status') }}</th>
                                     <th scope="col" data-field="pickup_points_count" data-sortable="false">
@@ -206,7 +214,7 @@
                         icon: {
                             path: google.maps.SymbolPath.CIRCLE,
                             scale: 12,
-                            fillColor: "#4285F4",
+                            fillColor: route.route_color,
                             fillOpacity: 1,
                             strokeWeight: 0,
                         }
@@ -227,6 +235,5 @@
             }
         }
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOdT7uQebSHbnuZcqpWSYFtM8mryin4o&callback=initMap" async
-        defer></script>
+   
 @endsection

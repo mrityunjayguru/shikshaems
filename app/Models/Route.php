@@ -13,7 +13,8 @@ class Route extends Model
         'name',
         'distance',
         'status',
-        'shift_id'
+        'shift_id',
+        'route_color'
     ];
 
     protected $casts = [
