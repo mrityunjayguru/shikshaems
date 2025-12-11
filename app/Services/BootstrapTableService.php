@@ -94,6 +94,16 @@ class BootstrapTableService
         return self::button($iconClass, $url, $customClass, $customAttributes);
     }
 
+    // public static function view($url)
+    // {
+    //     $customClass = ["btn-gradient-danger", "trash-data"];
+    //     $customAttributes = [
+    //         "title" => trans("Delete Permanent"),
+    //     ];
+    //     $iconClass = "fa fa-times";
+    //     return self::button($iconClass, $url, $customClass, $customAttributes);
+    // }
+
 
     /**
      * @param $url
@@ -156,6 +166,7 @@ class BootstrapTableService
         ];
         return self::menuButton($title, $url, $customClass, $customAttributes);
     }
+
 
     public static function menuRestoreButton($title, $url)
     {

@@ -200,11 +200,9 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         //vehicle type
         Route::group(['prefix' => 'vehicle-type'], static function () {
             Route::get('/', [VehicleTypeController::class, 'index'])->name('vehicle-type.index'); 
-            Route::get('status/{id}', [VehicleTypeController::class, 'status']);
             Route::put('restore/{id}', [VehicleTypeController::class, 'restore'])->name('vehicle-type.restore');
             Route::delete('trash/{id}', [VehicleTypeController::class, 'trash'])->name('vehicle-type.trash');
             Route::delete('destroy/{id}', [VehicleTypeController::class, 'destroy'])->name('vehicle-type.destroy');
-            Route::PATCH('change/rank', [VehicleTypeController::class, 'change_rank']);
             Route::post('store', [VehicleTypeController::class, 'store'])->name('vehicle-type.store'); 
             Route::get('show', [VehicleTypeController::class, 'show'])->name('vehicle-type.show'); 
             Route::put('update/{id}', [VehicleTypeController::class, 'update'])->name('vehicle-type.update'); 

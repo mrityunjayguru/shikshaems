@@ -18,7 +18,7 @@ return new class extends Migration
                 $table->id();
                 $table->string('name');
                 $table->string('vehicle_number');
-                $table->string('vehicle_icon');
+                $table->string('vehicle_type_id');
                 $table->integer('capacity');
                 $table->tinyInteger('status'); // 0 = inactive, 1 = active
                 $table->tinyInteger('is_device'); // 0 = no, 1 = yes
