@@ -42,19 +42,14 @@
                                 </div>
 
                                 <div class="form-group col-md-4">
-                                    <label for="icon">{{ __('vehicle_icon') }}<span
+                                    <label for="vehicle_type">{{ __('vehicle_type') }}<span
                                             class="text-danger">*</span></label>
-                                    {{-- <input type="file" name="icon" id="icon" class="form-control" required> --}}
-                                    <input type="file" name="icon" accept="image/*" class="file-upload-default"
-                                        required />
-                                    <div class="input-group col-xs-12">
-                                        <input type="text" id="icon" class="form-control file-upload-info"
-                                            disabled="" placeholder="{{ __('vehicle_icon') }}" />
-                                        <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                type="button">{{ __('upload') }}</button>
-                                        </span>
-                                    </div>
+                                    <select name="vehicle_type" id="vehicle_type" class="form-control" required>
+                                        <option value="" selected>Selcte Vehicle Type</option>
+                                        @foreach ($vehicleType as $item)
+                                            <option value="{{ $item->id }}">{{ $item->vehicle_type }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
 
                                 <div class="form-group col-md-4">
@@ -64,7 +59,7 @@
                                         <option value="0">{{ __('inactive') }}</option>
                                     </select>
                                 </div>
-                                <div class="form-group col-md-4 mt-3">
+                                <div class="form-group col-md-4 mt-3" hidden>
                                     <label class="form-label">
                                         {{ __('is_device') }} <span class="text-danger">*</span>
                                     </label>
@@ -124,10 +119,11 @@
                                         {{ __('id') }}
                                     </th>
                                     <th scope="col" data-field="no">{{ __('no.') }}</th>
-                                    <th scope="col" data-field="vehicle_icon" data-formatter="imageFormatter">
-                                        {{ __('vehicle_icon') }}</th>
-
                                     <th scope="col" data-field="name">{{ __('name') }}</th>
+                                    <th scope="col" data-field="vehicle_type">
+                                        {{ __('vehicle_type') }}</th>
+                                    <th scope="col" data-field="vehicle_icon" data-formatter="vehicleImageFormatter">
+                                    {{ __('vehicle_icon') }}</th>
                                     <th scope="col" data-field="vehicle_number">{{ __('vehicle_number') }}</th>
                                     <th scope="col" data-field="capacity">{{ __('vehicle_capacity') }}</th>
                                     <th scope="col" data-field="status">
@@ -179,18 +175,14 @@
                                 </div>
 
                                 <div class="form-group col-md-12">
-                                    <label for="edit_icon">{{ __('vehicle_icon') }}<span
+                                    <label for="vehicle_type">{{ __('vehicle_type') }}<span
                                             class="text-danger">*</span></label>
-                                    <input type="file" id="edit_icon" name="vehicle_icon" class="file-upload-default"
-                                        accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/svg" />
-                                    <div class="input-group col-xs-12">
-                                        <input type="text" id="edit_icon" class="form-control" disabled=""
-                                            value="" />
-                                        <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                type="button">{{ __('upload') }}</button>
-                                        </span>
-                                    </div>
+                                    <select name="vehicle_type" id="edit_vehicle_type" class="form-control" required>
+                                        <option value="" selected>Selcte Vehicle Type</option>
+                                        @foreach ($vehicleType as $item)
+                                            <option value="{{ $item->id }}">{{ $item->vehicle_type }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
 
                                 <div class="form-group col-md-12">
@@ -200,14 +192,15 @@
                                         <option value="0">{{ __('inactive') }}</option>
                                     </select>
                                 </div>
-                                <div class="form-group col-md-12 mt-3">
+                                <div class="form-group col-md-12 mt-3" hidden>
                                     <label class="form-label">
                                         {{ __('is_device') }} <span class="text-danger">*</span>
                                     </label>
 
                                     <div class="d-flex">
-                                        <input type="radio" class="btn-check me-1" name="edit_is_device" id="deviceYesEdit"
-                                            value="1" autocomplete="off" onchange="showIemiInputEdit(1)">
+                                        <input type="radio" class="btn-check me-1" name="edit_is_device"
+                                            id="deviceYesEdit" value="1" autocomplete="off"
+                                            onchange="showIemiInputEdit(1)">
                                         <label class="" for="deviceYesEdit">Yes</label>
 
                                         <input type="radio" class="btn-check ms-3 me-1" name="edit_is_device"

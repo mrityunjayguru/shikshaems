@@ -2117,7 +2117,9 @@ window.diaryEvents = {
 
 window.vehicleEvents = {
     'click .edit-data': function (e, value, row) {
+        console.log(row);
         $('#edit_vehicle_id').val(row.id);
+        $('#edit_vehicle_type').val(row.vehicle_type_id);
         $('#edit_vehicle_name').val(row.name);
         $('#edit_vehicle_number').val(row.vehicle_number);
         $('#edit_iemi').val(row.iemi);
@@ -2384,9 +2386,21 @@ window.pickupPointEvents = {
         $('#edit_lng').val(row.longitude);
         $('#edit_status').val(row.status);
 
+        if (row.pickup_time) {
+            let pickupParts = row.pickup_time.split(":"); // "01:03" → ["01", "03"]
+            $('#edit_pickup_hours').val(parseInt(pickupParts[0]));   // 01 → 1
+            $('#edit_pickup_minutes').val(parseInt(pickupParts[1])); // 03 → 3
+        }
+
+        if (row.dropoff_time) {
+            let dropoffParts = row.dropoff_time.split(":");
+            $('#edit_dropoff_hours').val(parseInt(dropoffParts[0]));
+            $('#edit_dropoff_minutes').val(parseInt(dropoffParts[1]));
+        }
+
         setTimeout(() => {
-            initEditMap();
-        }, 300); // wait for modal open
+             initEditMap();
+        }, 0);
     }
 };
 

@@ -77,7 +77,7 @@ class RouteController extends Controller
         }
 
         try {
-            $route = Route::create($request->only(['name', 'distance', 'status', 'shift_id']));
+            $route = Route::create($request->only(['name', 'distance', 'status', 'shift_id','route_color']));
             $order = 1;
             // Attach pickup points with order
             if ($request->has('pickup_points') && is_array($request->pickup_points)) {
@@ -188,7 +188,7 @@ class RouteController extends Controller
 
         try {
             $route = Route::findOrFail($id);
-            $route->update($request->only(['name', 'distance', 'status', 'shift_id']));
+            $route->update($request->only(['name', 'distance', 'status', 'shift_id','route_color']));
 
             // ✅ Step 1: Process pickup points (no delete)
             if ($request->has('pickup_points') && is_array($request->pickup_points)) {

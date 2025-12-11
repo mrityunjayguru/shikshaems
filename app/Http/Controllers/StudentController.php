@@ -321,6 +321,7 @@ class StudentController extends Controller
                 $operate .= BootstrapTableService::button('fa fa-check', route('student.change-status', $row->user_id), ['btn-gradient-success', 'activate-student'], ['title' => __('active')]);
             }
 
+            $operate .= BootstrapTableService::viewRelatedDataButton(route('student.trash', $row->user_id));
             if (Auth::user()->can('student-delete')) {
                 $operate .= BootstrapTableService::trashButton(route('student.trash', $row->user_id));
             }
