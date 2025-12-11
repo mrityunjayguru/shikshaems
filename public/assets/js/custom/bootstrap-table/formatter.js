@@ -289,6 +289,15 @@ function imageFormatter(value) {
         return '-'
     }
 }
+function vehicleImageFormatter(value) {
+ 
+    if (value) {
+        var path = "storage/" + value;
+        return "<a data-toggle='lightbox' href='" + path + "' class=''><img src='" + path + "' class=''  alt='image'  onerror='onErrorImage(event)' /></a>";
+    } else {
+        return '-'
+    }
+}
 
 function StudentNameFormatter(value, row) {
     let html = '';

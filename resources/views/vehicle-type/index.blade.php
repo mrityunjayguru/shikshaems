@@ -55,7 +55,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
-                            {{ __('list_vehicles') }}
+                             List Vehicle Types
                         </h4>
                         {{-- <div class="col-12 text-right">
                             <b><a href="#" class="table-list-type active mr-2"
@@ -78,7 +78,7 @@
                                         {{ __('id') }}
                                     </th>
                                     <th scope="col" data-field="no">{{ __('no.') }}</th>
-                                    <th scope="col" data-field="vehicle_icon" data-formatter="imageFormatter">
+                                    <th scope="col" data-field="vehicle_icon" data-formatter="vehicleImageFormatter">
                                         {{ __('vehicle_icon') }}</th>
 
                                     <th scope="col" data-field="vehicle_type">{{ __('vehicle_type') }}</th>

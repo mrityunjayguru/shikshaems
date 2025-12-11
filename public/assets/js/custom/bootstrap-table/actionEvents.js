@@ -2117,7 +2117,9 @@ window.diaryEvents = {
 
 window.vehicleEvents = {
     'click .edit-data': function (e, value, row) {
+        console.log(row);
         $('#edit_vehicle_id').val(row.id);
+        $('#edit_vehicle_type').val(row.vehicle_type_id);
         $('#edit_vehicle_name').val(row.name);
         $('#edit_vehicle_number').val(row.vehicle_number);
         $('#edit_iemi').val(row.iemi);
