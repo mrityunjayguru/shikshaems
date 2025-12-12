@@ -1,4 +1,4 @@
-1765461682s:83295:"{
+1765525378s:83330:"{
     "The :attribute must contain at least one letter.": "The :attribute must contain at least one letter.",
     "The :attribute must contain at least one number.": "The :attribute must contain at least one number.",
     "The :attribute must contain at least one symbol.": "The :attribute must contain at least one symbol.",
@@ -1551,6 +1551,7 @@
     "select_pickup_point" : "Select Pickup Point",
     "add_pickup_point" : "Add Pickup Point",
     "pickup_time" : "Pickup Time",
+    "route_color" : "Route Color",
     "dropoff_time" : "Dropoff Time",
     "drop_time" : "Drop Time",
     "drop_off_time" : "Drop Off Time",

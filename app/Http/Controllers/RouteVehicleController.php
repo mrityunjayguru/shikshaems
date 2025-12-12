@@ -8,7 +8,9 @@ use App\Repositories\Transportation\VehicleRepositoryInterface;
 use App\Repositories\Shift\ShiftInterface;
 use App\Services\CachingService;
 use App\Repositories\User\UserInterface;
+use App\Repositories\Staff\StaffInterface;
 use App\Models\Route;
+use App\Models\Staff;
 use App\Models\TransportationPayment;
 use Carbon\Carbon;
 use Throwable;
@@ -23,14 +25,16 @@ class RouteVehicleController extends Controller
     private RouteVehicleRepositoryInterface $routeVehicle;
     private VehicleRepositoryInterface $vehicle;
     private UserInterface $user;
+    private StaffInterface $staff;
     private ShiftInterface $shift;
     private CachingService $cache;
 
-    public function __construct(RouteVehicleRepositoryInterface $routeVehicle, VehicleRepositoryInterface $vehicle, UserInterface $user, ShiftInterface $shift, CachingService $cache)
+    public function __construct(RouteVehicleRepositoryInterface $routeVehicle, VehicleRepositoryInterface $vehicle, UserInterface $user, ShiftInterface $shift, StaffInterface $staff, CachingService $cache)
     {
         $this->routeVehicle = $routeVehicle;
         $this->vehicle = $vehicle;
         $this->user = $user;
+        $this->staff = $staff;
         $this->shift = $shift;
         $this->cache = $cache;
     }
@@ -60,7 +64,16 @@ class RouteVehicleController extends Controller
                 });
             })
             ->with('staff', 'roles', 'support_school.school')->get();
-        return view('route-vehicle.index', compact('routeVehicles', 'vehicles', 'drivers', 'helpers', 'routes', 'shifts'));
+
+       $staff = $this->user->builder()
+            ->whereHas('roles', function ($q) {
+                $q->where('custom_role', 1)
+                ->whereNotIn('name', ['Driver', 'Helper']);  
+            })
+            ->with('staff', 'roles', 'support_school.school')->get();
+            // dd($staff);
+
+        return view('route-vehicle.index', compact('routeVehicles', 'vehicles', 'drivers', 'helpers', 'routes', 'shifts','staff'));
     }
 
     public function store(Request $request)
@@ -144,6 +157,7 @@ class RouteVehicleController extends Controller
                 'vehicle_id' => $request->vehicle_id,
                 'driver_id' => $request->driver_id ?? null,
                 'helper_id' => $request->helper_id ?? null,
+                'staff_id' => $request->staff_id ?? null,
                 'status' => $request->status ?? 1,
                 'pickup_start_time' => $request->pickup_trip_start_time,
                 'pickup_end_time' => $request->pickup_trip_end_time,
@@ -332,6 +346,7 @@ class RouteVehicleController extends Controller
                 'vehicle_id' => $request->edit_vehicle_id,
                 'driver_id' => $request->edit_driver_id ?? null,
                 'helper_id' => $request->edit_helper_id ?? null,
+                'staff_id' => $request->edit_staff_id ?? null,
                 'pickup_start_time' => $request->edit_pickup_trip_start_time,
                 'pickup_end_time' => $request->edit_pickup_trip_end_time,
                 'drop_start_time' => $request->edit_drop_trip_start_time,
