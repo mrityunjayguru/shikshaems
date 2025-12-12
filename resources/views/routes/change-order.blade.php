@@ -147,7 +147,8 @@
 
         let map;
         const routes = @json($route->routePickupPoints);
-
+        const routeColor = @json($route->route_color);
+        
         function initMap() {
 
             const defaultPosition = {
@@ -200,7 +201,7 @@
                     icon: {
                         path: google.maps.SymbolPath.CIRCLE,
                         scale: 12,
-                        fillColor: "#4285F4",
+                        fillColor: routeColor,
                         fillOpacity: 1,
                         strokeWeight: 0,
                     }

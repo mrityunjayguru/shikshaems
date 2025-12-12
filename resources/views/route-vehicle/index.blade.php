@@ -30,7 +30,10 @@
                                             <option value="">No records found</option>
                                         @endif
                                         @foreach ($routes as $route)
-                                            <option value="{{ $route->id }}">{{ $route->name }} @if($route->shift) - {{ $route->shift->name }} @endif</option>
+                                            <option value="{{ $route->id }}">{{ $route->name }} @if ($route->shift)
+                                                    - {{ $route->shift->name }}
+                                                @endif
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -58,7 +61,8 @@
                                             <option value="">No records found</option>
                                         @endif
                                         @foreach ($drivers as $driver)
-                                            <option value="{{ $driver->id }}">{{ $driver->getFullNameAttribute() }}</option>
+                                            <option value="{{ $driver->id }}">{{ $driver->getFullNameAttribute() }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -74,7 +78,8 @@
                                             @endif
                                         @endif
                                         @foreach ($helpers as $helper)
-                                            <option value="{{ $helper->id }}">{{ $helper->getFullNameAttribute() }}</option>
+                                            <option value="{{ $helper->id }}">{{ $helper->getFullNameAttribute() }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -82,14 +87,15 @@
                                     <label for="staff_id">{{ __('staff') }} <span class="text-danger">*</span></label>
                                     <select name="staff_id" id="staff_id"
                                         class="form-control select2-dropdown select2-hidden-accessible" required>
-                                        <option value="">{{ __('select_helper') }}</option>
-                                        @if (isset($helpers) && $helpers->count() < 1)
-                                            @if ($helpers->count() == 1)
+                                        <option value="">{{ __('select_staff') }}</option>
+                                        @if (isset($staff) && $staff->count() < 1)
+                                            @if ($staff->count() == 1)
                                                 <option value="">No records found</option>
                                             @endif
                                         @endif
-                                        @foreach ($helpers as $helper)
-                                            <option value="{{ $helper->id }}">{{ $helper->getFullNameAttribute() }}</option>
+                                        @foreach ($staff as $value)
+                                            <option value="{{ $value->id }}">{{ $value->first_name .' '. $value->last_name }} 
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -133,25 +139,31 @@
                             {{ __('list_route_vehicles') }}
                         </h4>
                         <div class="col-12 text-right">
-                            <b><a href="#" class="table-list-type active mr-2" data-id="0">{{__('all')}}</a></b> | <a
-                                href="#" class="ml-2 table-list-type" data-id="1">{{__("Trashed")}}</a>
+                            <b><a href="#" class="table-list-type active mr-2"
+                                    data-id="0">{{ __('all') }}</a></b> | <a href="#"
+                                class="ml-2 table-list-type" data-id="1">{{ __('Trashed') }}</a>
                         </div>
 
                         <table class='table' id='table_list' data-toggle="table"
                             data-url="{{ route('route-vehicle.show', [1]) }}" data-click-to-select="true"
-                            data-side-pagination="server" data-pagination="true" data-page-list="[5, 10, 20, 50, 100, 200]"
-                            data-search="true" data-toolbar="#toolbar" data-show-columns="true" data-show-refresh="true"
-                            data-trim-on-search="false" data-mobile-responsive="true" data-sort-name="id"
-                            data-sort-order="desc" data-maintain-selected="true" data-export-data-type='all'
-                            data-export-options='{ "fileName": "{{__('route_vehicle')}}-<?= date(' d-m-y') ?>" ,"ignoreColumn":["operate"]}'
+                            data-side-pagination="server" data-pagination="true"
+                            data-page-list="[5, 10, 20, 50, 100, 200]" data-search="true" data-toolbar="#toolbar"
+                            data-show-columns="true" data-show-refresh="true" data-trim-on-search="false"
+                            data-mobile-responsive="true" data-sort-name="id" data-sort-order="desc"
+                            data-maintain-selected="true" data-export-data-type='all'
+                            data-export-options='{ "fileName": "{{ __('route_vehicle') }}-<?= date(' d-m-y') ?>"
+                            ,"ignoreColumn":["operate"]}'
                             data-show-export="true" data-query-params="schoolQueryParams" data-escape="true">
                             <thead>
                                 <tr>
-                                    <th scope="col" data-field="id" data-sortable="true" data-visible="false">{{ __('id') }}
+                                    <th scope="col" data-field="id" data-sortable="true" data-visible="false">
+                                        {{ __('id') }}
                                     </th>
                                     <th scope="col" data-field="no" data-sortable="true">{{ __('no.') }}</th>
-                                    <th scope="col" data-field="route" data-formatter="RouteNameFormatter" data-sortable="true">{{ __('route') }}</th>
-                                    <th scope="col" data-field="vehicle.name" data-sortable="true">{{ __('vehicle') }}</th>
+                                    <th scope="col" data-field="route" data-formatter="RouteNameFormatter"
+                                        data-sortable="true">{{ __('route') }}</th>
+                                    <th scope="col" data-field="vehicle.name" data-sortable="true">
+                                        {{ __('vehicle') }}</th>
                                     <th scope="col" data-field="driver.full_name" data-formatter="DriverNameFormatter"
                                         data-sortable="true">{{ __('driver') }}</th>
                                     <th scope="col" data-field="helper.full_name" data-formatter="HelperNameFormatter"
@@ -190,7 +202,10 @@
                                         class="form-control select2-dropdown select2-hidden-accessible" required>
                                         <option value="">{{ __('select_route') }}</option>
                                         @foreach ($routes as $route)
-                                            <option value="{{ $route->id }}">{{ $route->name }} @if($route->shift) - {{ $route->shift->name }} @endif</option>
+                                            <option value="{{ $route->id }}">{{ $route->name }} @if ($route->shift)
+                                                    - {{ $route->shift->name }}
+                                                @endif
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -207,51 +222,78 @@
                                 </div>
 
                                 <div class="form-group col-md-6">
-                                    <label for="edit_driver_id">{{ __('Driver') }} <span class="text-danger">*</span></label>
+                                    <label for="edit_driver_id">{{ __('Driver') }} <span
+                                            class="text-danger">*</span></label>
                                     <select name="edit_driver_id" id="edit_driver_id"
                                         class="form-control select2-dropdown select2-hidden-accessible" required>
                                         <option value="">{{ __('select_driver') }}</option>
                                         @foreach ($drivers as $driver)
-                                            <option value="{{ $driver->id }}">{{ $driver->getFullNameAttribute() }}</option>
+                                            <option value="{{ $driver->id }}">{{ $driver->getFullNameAttribute() }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
 
                                 <div class="form-group col-md-6">
-                                    <label for="edit_helper_id">{{ __('Helper') }} <span class="text-danger">*</span></label>
+                                    <label for="edit_helper_id">{{ __('Helper') }} <span
+                                            class="text-danger">*</span></label>
                                     <select name="edit_helper_id" id="edit_helper_id"
                                         class="form-control select2-dropdown select2-hidden-accessible" required>
                                         <option value="">{{ __('select_helper') }}</option>
                                         @foreach ($helpers as $helper)
-                                            <option value="{{ $helper->id }}">{{ $helper->getFullNameAttribute() }}</option>
+                                            <option value="{{ $helper->id }}">{{ $helper->getFullNameAttribute() }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="edit_staff_id">{{ __('staff') }} <span class="text-danger">*</span></label>
+                                    <select name="edit_staff_id" id="edit_staff_id"
+                                        class="form-control select2-dropdown select2-hidden-accessible" required>
+                                        <option value="">{{ __('select_staff') }}</option>
+                                        @if (isset($staff) && $staff->count() < 1)
+                                            @if ($staff->count() == 1)
+                                                <option value="">No records found</option>
+                                            @endif
+                                        @endif
+                                        @foreach ($staff as $value)
+                                            <option value="{{ $value->id }}">{{ $value->first_name .' '. $value->last_name }} 
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="form-group col-md-3">
-                                    <label>{{ __('edit_pickup_trip_start_time') }} <span class="text-danger">*</span></label>
-                                    <input type="time" name="edit_pickup_trip_start_time" id="edit_pickup_trip_start_time" class="form-control"
+                                    <label>{{ __('edit_pickup_trip_start_time') }} <span
+                                            class="text-danger">*</span></label>
+                                    <input type="time" name="edit_pickup_trip_start_time"
+                                        id="edit_pickup_trip_start_time" class="form-control"
                                         placeholder="{{ __('edit_pickup_trip_start_time') }}" required>
                                 </div>
                                 <div class="form-group col-md-3">
-                                    <label>{{ __('edit_pickup_trip_end_time') }} <span class="text-danger">*</span></label>
-                                    <input type="time" name="edit_pickup_trip_end_time" id="edit_pickup_trip_end_time" class="form-control"
-                                        placeholder="{{ __('edit_pickup_trip_end_time') }}" required>
+                                    <label>{{ __('edit_pickup_trip_end_time') }} <span
+                                            class="text-danger">*</span></label>
+                                    <input type="time" name="edit_pickup_trip_end_time" id="edit_pickup_trip_end_time"
+                                        class="form-control" placeholder="{{ __('edit_pickup_trip_end_time') }}"
+                                        required>
                                 </div>
                                 <div class="form-group col-md-3">
-                                    <label>{{ __('edit_drop_trip_start_time') }} <span class="text-danger">*</span></label>
-                                    <input type="time" name="edit_drop_trip_start_time" id="edit_drop_trip_start_time" class="form-control"
-                                        placeholder="{{ __('edit_drop_trip_start_time') }}" required>
+                                    <label>{{ __('edit_drop_trip_start_time') }} <span
+                                            class="text-danger">*</span></label>
+                                    <input type="time" name="edit_drop_trip_start_time" id="edit_drop_trip_start_time"
+                                        class="form-control" placeholder="{{ __('edit_drop_trip_start_time') }}"
+                                        required>
                                 </div>
                                 <div class="form-group col-md-3">
                                     <label>{{ __('edit_drop_trip_end_time') }} <span class="text-danger">*</span></label>
-                                    <input type="time" name="edit_drop_trip_end_time" id="edit_drop_trip_end_time" class="form-control"
-                                        placeholder="{{ __('edit_drop_trip_end_time') }}" required>
+                                    <input type="time" name="edit_drop_trip_end_time" id="edit_drop_trip_end_time"
+                                        class="form-control" placeholder="{{ __('edit_drop_trip_end_time') }}" required>
                                 </div>
                             </div>
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('close') }}</button>
+                            <button type="button" class="btn btn-secondary"
+                                data-dismiss="modal">{{ __('close') }}</button>
                             <input type="submit" class="btn btn-theme" value="{{ __('submit') }}">
                         </div>
                     </form>
