@@ -265,6 +265,7 @@ class RouteController extends Controller
     {
         ResponseService::noAnyPermissionThenRedirect(['route-edit']);
         $route = Route::with(['routePickupPoints.pickupPoint'])->findOrFail($id);
+        // dd($route); exit;
         return view('routes.change-order', compact('route'));
     }
 

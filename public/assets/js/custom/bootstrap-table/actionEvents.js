@@ -2291,6 +2291,7 @@ window.routeVehicleEvents = {
         $('#edit_vehicle_id').val(row.vehicle_id).trigger('change');
         $('#edit_driver_id').val(row.driver_id).trigger('change');
         $('#edit_helper_id').val(row.helper_id).trigger('change');
+        $('#edit_staff_id').val(row.staff_id).trigger('change');
         $('#edit_shift_id').val(row.shift_id).trigger('change');
         $('#edit_pickup_trip_start_time').val(moment(row.pickup_start_time, 'HH:mm:ss').format('HH:mm'));
         $('#edit_pickup_trip_end_time').val(moment(row.pickup_end_time, 'HH:mm:ss').format('HH:mm'));

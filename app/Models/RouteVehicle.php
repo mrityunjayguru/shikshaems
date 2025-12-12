@@ -15,6 +15,7 @@ class RouteVehicle extends Model
         'vehicle_id',
         'driver_id',
         'helper_id',
+        'staff_id',
         'shift_id',
         'status',
         'created_at',
@@ -48,6 +49,11 @@ class RouteVehicle extends Model
     public function shift()
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    public function staff()
+    {
+        return $this->belongsTo(Staff::class);
     }
 
     public function transportationPayments()

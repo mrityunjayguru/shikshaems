@@ -290,7 +290,7 @@ function imageFormatter(value) {
     }
 }
 function vehicleImageFormatter(value) {
- 
+
     if (value) {
         var path = "storage/" + value;
         return "<a data-toggle='lightbox' href='" + path + "' class=''><img src='" + path + "' class=''  alt='image'  onerror='onErrorImage(event)' /></a>";
@@ -638,36 +638,40 @@ function routeColorFormatter(value, row) {
     // Convert bg color to RGB to check brightness
     let color = row.route_color;
     console.log(color);
-    
+
     let r, g, b;
 
     // Handle hex color
-    if (color.startsWith('#')) {
-        r = parseInt(color.substr(1, 2), 16);
-        g = parseInt(color.substr(3, 2), 16);
-        b = parseInt(color.substr(5, 2), 16);
+    if (color) {
+        if (color.startsWith('#')) {
+            r = parseInt(color.substr(1, 2), 16);
+            g = parseInt(color.substr(3, 2), 16);
+            b = parseInt(color.substr(5, 2), 16);
+        }
+        // Handle rgb/rgba color
+        else if (color.startsWith('rgb')) {
+            let nums = color.match(/\d+/g);
+            r = parseInt(nums[0]);
+            g = parseInt(nums[1]);
+            b = parseInt(nums[2]);
+        }
+
+        // Calculate brightness using relative luminance formula
+        let brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+        // Use white text for dark backgrounds, black for light
+        let textColor = brightness < 128 ? '#ffffff' : '#000000';
+
+        // Add box shadow for white/very light backgrounds
+        let boxShadow = '';
+        if (brightness > 240) { // Very light color
+            boxShadow = 'box-shadow: 0 0 3px rgba(0,0,0,0.2);';
+        }
+
+        return "<p style='background-color:" + row.route_color + "; color:" + textColor + ";" + boxShadow + "' class='color-code-box'>" + row.route_color + "</p>";
+    } else {
+        return;
     }
-    // Handle rgb/rgba color
-    else if (color.startsWith('rgb')) {
-        let nums = color.match(/\d+/g);
-        r = parseInt(nums[0]);
-        g = parseInt(nums[1]);
-        b = parseInt(nums[2]);
-    }
-
-    // Calculate brightness using relative luminance formula
-    let brightness = (r * 299 + g * 587 + b * 114) / 1000;
-
-    // Use white text for dark backgrounds, black for light
-    let textColor = brightness < 128 ? '#ffffff' : '#000000';
-
-    // Add box shadow for white/very light backgrounds
-    let boxShadow = '';
-    if (brightness > 240) { // Very light color
-        boxShadow = 'box-shadow: 0 0 3px rgba(0,0,0,0.2);';
-    }
-
-    return "<p style='background-color:" + row.route_color + "; color:" + textColor + ";" + boxShadow + "' class='color-code-box'>" + row.route_color + "</p>";
 }
 
 function formFieldDefaultValuesFormatter(value, row) {
@@ -717,7 +721,7 @@ function addRadioInputAttendance(value, row) {
 }
 
 function addStaffRadioInputAttendance(value, row) {
-    
+
     let html = "<input type='hidden' value=" + row.id + " name='attendance_data[" + row.no + "][id]'><input type='hidden' name='attendance_data[" + row.no + "][staff_id]' value=" + row.staff_id + ">"
     if (row.type == 1) {
         html += '<div class="d-flex"><div class="form-check mr-2"><label class="form-check-label"><input required type="radio" class="type form-check-input" name="attendance_data[' + row.no + '][type]" value="1" checked>Present<i class="input-helper"></i></label></div><div class="form-check mr-2"><label class="form-check-label"><input type="radio" class="type form-check-input" name="attendance_data[' + row.no + '][type]" value="0">Absent<i class="input-helper"></i></label></div></div>';
