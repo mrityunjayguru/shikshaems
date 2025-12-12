@@ -83,6 +83,7 @@ return new class extends Migration
                 $table->foreignId('vehicle_id')->constrained()->cascadeOnDelete();
                 $table->foreignId('driver_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->foreignId('helper_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('staff_id')->nullable()->constrained('staff')->nullOnDelete();
                 $table->time('pickup_start_time')->nullable();
                 $table->time('pickup_end_time')->nullable();
                 $table->time('drop_start_time')->nullable();
@@ -99,6 +100,7 @@ return new class extends Migration
                 $table->foreignId('vehicle_id')->constrained()->cascadeOnDelete();
                 $table->foreignId('driver_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->foreignId('helper_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('staff_id')->nullable()->constrained('staff')->nullOnDelete();
                 $table->foreignId('shift_id')->nullable()->constrained('shifts')->onDelete('set null');
                 $table->foreignId('last_pickup_point_id')->nullable()->constrained('pickup_points')->onDelete('set null');
                 $table->enum('type', ['pickup', 'drop'])->default('pickup');
