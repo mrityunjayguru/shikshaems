@@ -122,12 +122,16 @@
 
     
         function attendanceFormatter(value, row, index) {
+            // console.log(value);
+            
             if (value == 1) {
                 return '<i class="fa fa-check text-success"></i>';
             } else if(value == 0) {
                 return '<i class="fa fa-times text-danger"></i>';
             } else if(value == 3){
                 return '<i class="fa fa-power-off text-info"></i>';
+            } else if(value == 'L'){
+                return '<span class="text-danger">L</i>';
             }
             return '-'; // return empty string for no data
         }    

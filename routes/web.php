@@ -31,6 +31,7 @@ use App\Http\Controllers\InstallerController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveMasterController;
+use App\Http\Controllers\LeaveStudentController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\LessonTopicController;
 use App\Http\Controllers\MediumController;
@@ -841,6 +842,14 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::resource('leave', LeaveController::class);
         Route::resource('leave-master', LeaveMasterController::class);
 
+        //student leave
+        Route::group(['prefix' => 'student-leave'], static function () {
+            Route::get('request', [LeaveStudentController::class, 'index'])->name('student-leave.index');
+            Route::get('request/show', [LeaveStudentController::class, 'show'])->name('student-leave.request.show');
+            Route::put('status/update', [LeaveStudentController::class, 'updateStatus'])->name('student-leave.status.update');
+            // Route::put('status/update', [LeaveStudentController::class, 'updateStatus'])->name('student-leave.status.update');
+        });
+        
         // Semester
         Route::group(['prefix' => 'semester'], static function () {
             Route::put('restore/{id}', [SemesterController::class, 'restore'])->name('semester.restore');
