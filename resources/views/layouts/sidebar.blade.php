@@ -1138,6 +1138,37 @@
             </li>
         @endcan
 
+        @role(['School Admin', 'Teacher'])
+
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#student-leave-management" aria-expanded="false"
+                    aria-controls="student-leave-management-menu" 
+                    {{-- data-access="@hasFeatureAccess('Student Leave Management') --}}
+                    ">
+                    <i class="fa fa-plane menu-icon"></i>
+                    <span class="menu-title">{{ __('Student Leave') }}</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="student-leave-management">
+                    <ul class="nav flex-column sub-menu">
+
+                        {{-- @can('approve-leave') --}}
+                            <li class="nav-item">
+                                <a href="{{ route('student-leave.index') }}" class="nav-link"
+                                    {{-- data-name="{{ Auth::user()->getRoleNames()[0] }}" --}}
+                                    {{-- data-access="@hasFeatureAccess('Student Leave Management') --}}
+                                >{{ __('Student') }} {{ __('leave') }}</a>
+                            </li>
+                            {{-- <li class="nav-item">
+                                <a href="{{ url('leave/report') }}" class="nav-link"
+                                    data-name="{{ Auth::user()->getRoleNames()[0] }}"
+                                    data-access="@hasFeatureAccess('Staff Leave Management')">{{ __('leave_report') }}</a>
+                            </li> --}}
+                        {{-- @endcan --}}
+                    </ul>
+                </div>
+            </li>
+        @endrole
         {{-- Subscription Plans & Addons --}}
         @role('School Admin')
             <li class="nav-item">

@@ -1,26 +1,3 @@
-04/12/2025
-->migration
-->actionEvents.js (public\assets\js\custom\bootstrap-table\actionEvents.js)
-
-VEHICLE
-->controller
-->view
-->model
-
-Pickup point 
-->controller
-->view
-
-Routes
-->controller
-->view
-
-05/12/2025
-Website(Done)
-->home.blade.php 
-->public\assets\home_page\css\style.css
-->resources\views\layouts\home_page\footer.blade.php
-
 
 change eSchool to ShikshaEMS(DONE)
 ->.env.example
@@ -34,4 +11,23 @@ change eSchool to ShikshaEMS(DONE)
 08/12/2025
 ->database\migrations\2022_04_01_105826_all_tables.php
 ->database\migrations\schools\2022_04_01_105826_all_tables.php
+->
+
+Pickup point 
+->controller
+->view
+->model
+->migration - database\migrations\schoo\2025_09_09_130059_version1_8_0.php
+
+->public\assets\js\custom\bootstrap-table\actionEvents.js
+->
+
+
+Manage Routes
+->controller
+->view
+->model
+->migration - database\migrations\schoo\2025_09_09_130059_version1_8_0.php
+
+->public\assets\js\custom\bootstrap-table\actionEvents.js
 ->

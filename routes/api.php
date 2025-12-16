@@ -81,7 +81,9 @@ Route::group(['prefix' => 'student'], static function () {
         Route::get('current-session-year', [StudentApiController::class, 'getSessionYear']);
 
         Route::get('school-settings', [StudentApiController::class, 'getSchoolSettings']);
-
+        
+        //student leave-request
+        Route::post('leave-request', [StudentApiController::class, 'leaveRequest']);
 
         // student diaries
         // Route::get('/diaries', [StudentApiController::class, 'getStudentDiaries']);
