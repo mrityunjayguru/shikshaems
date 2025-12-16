@@ -9,6 +9,7 @@ use App\Models\AssignmentSubmission;
 use App\Models\OnlineExamCommon;
 use App\Models\School;
 use App\Models\Students;
+use App\Models\StudentLeave;
 use App\Models\User;
 use Carbon\Carbon;
 use App\Repositories\Announcement\AnnouncementInterface;
@@ -1779,6 +1780,46 @@ class StudentApiController extends Controller
             ResponseService::successResponse("Student Diary Fetched Successfully", $diaryStudents);
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function leaveRequest(Request $request)
+    {
+        // ResponseService::noFeatureThenSendJson('Student Leave Management');
+        // ResponseService::noPermissionThenSendJson('approve-leave');
+        try {
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'required',
+                'from_date' => 'required',
+                'to_date' => 'required',
+                'days' => 'required',
+                'reason' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                ResponseService::validationError($validator->errors()->first());
+            }
+
+            $leave = new StudentLeave();
+            $leave->user_id = $request->user_id;
+            $leave->from_date = $request->from_date;
+            $leave->to_date = $request->to_date;
+            $leave->days = $request->days;
+            $leave->reason = $request->reason;
+
+            if ($request->hasFile('attachment')) {
+                $file = $request->file('attachment');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('2/leave-attachment', $filename, 'public'); // storage/app/public/vehicle_icons
+                $leave->attachment = $path;
+            }
+
+            $leave->save();
+          
+            ResponseService::successResponse('Data added Successfully');
+        } catch (\Throwable $th) {
+            ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
         }
     }

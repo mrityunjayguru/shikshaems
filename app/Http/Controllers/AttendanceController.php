@@ -8,6 +8,7 @@ use App\Repositories\Student\StudentInterface;
 use App\Services\CachingService;
 use App\Services\ResponseService;
 use App\Services\SessionYearsTrackingsService;
+use App\Models\StudentLeave;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -288,37 +289,70 @@ class AttendanceController extends Controller
         ResponseService::noAnyPermissionThenRedirect(['class-teacher', 'attendance-list']);
 
         $sessionYear = $this->cache->getDefaultSessionYear();
-        $sql = $this->student->builder()->with('user')->whereHas('attendance', function ($q) use ($request, $sessionYear) {
-            $q->where('class_section_id', $request->class_section_id)
+
+        $sql = $this->student->builder()
+            ->with('user')
+            ->whereHas('attendance', function ($q) use ($request, $sessionYear) {
+                $q->where('class_section_id', $request->class_section_id)
                 ->whereMonth('date', $request->month)
                 ->where('session_year_id', $sessionYear->id);
-        })->orderBy('roll_number', 'ASC');
-
-        $total = $sql->count();
+            })
+            ->orderBy('roll_number', 'ASC');
 
         $res = $sql->get();
-        $bulkData = array();
-        $bulkData['total'] = $total;
-        $rows = array();
 
+        $bulkData = [];
+        $bulkData['total'] = $res->count();
+        $rows = [];
 
         $month = $request->month;
         $date = Carbon::create(null, $month, 1);
 
+        // ✅ Load approved leaves
+        $leaves = StudentLeave::whereIn('user_id', $res->pluck('user_id'))
+            ->where('status', 1)
+            ->get();
+            // dd($leaves);
         foreach ($res as $row) {
-            $studentAttendance = ['full_name' => $row->user->full_name, 'roll_number' => $row->roll_number];
+
+            $studentAttendance = [
+                'full_name'  => $row->user->full_name,
+                'roll_number'=> $row->roll_number
+            ];
 
             for ($day = 1; $day <= $date->daysInMonth; $day++) {
-                $currentDate = $date->copy()->day($day)->format('Y-m-d');
-                $attendance = $row->attendance()->where('student_id', $row->user_id)->where('date', $currentDate)->first();
-                $studentAttendance["day_$day"] = $attendance ? $attendance->type : null;
 
+                $currentDate = $date->copy()->day($day);
+
+                $attendance = $row->attendance()
+                    ->where('student_id', $row->user_id)
+                    ->whereDate('date', $currentDate)
+                    ->first();
+
+                if ($attendance) {
+
+                    $studentAttendance["day_$day"] = $attendance->type;
+
+                } else {
+
+                    // ✅ Proper Carbon date comparison
+                    $leave = $leaves->first(function ($leave) use ($currentDate, $row) {
+                        return $leave->user_id == $row->user_id &&
+                            $currentDate->between(
+                                Carbon::parse($leave->from_date),
+                                Carbon::parse($leave->to_date)
+                            );
+                    });
+
+                    $studentAttendance["day_$day"] = $leave ? 'L' : null;
+                }
             }
-            $tempRow[] = $studentAttendance;
-            $rows = $tempRow;
+
+            $rows[] = $studentAttendance;
         }
+
         $bulkData['rows'] = $rows;
         return response()->json($bulkData);
-
     }
+
 }

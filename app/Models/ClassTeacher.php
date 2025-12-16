@@ -46,6 +46,11 @@ class ClassTeacher extends Model
         return $this->belongsTo(User::class, 'teacher_id')->withTrashed();
     }
 
+    public function student()
+    {
+        return $this->belongsTo(Student::class, 'user_id', 'user_id');
+    }
+
 
     public function getClassIdAttribute(){
         if ($this->relationLoaded('class_section')) {
