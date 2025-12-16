@@ -160,29 +160,35 @@ class Students extends Model
         return $this->belongsTo(User::class, 'guardian_id')->withTrashed();
     }
 
+    public function classSection()
+    {
+        return $this->belongsTo(ClassSection::class);
+    }
+
+
     //    public function scopeOfTeacher($query) {
-//        $user = Auth::user();
-//        if ($user->hasRole('Teacher')) {
-//            // for teacher list
-//            $class_teacher = $user->teacher->class_section;
-//            $class_section_id = array();
-//            if ($class_teacher) {
-//                $class_section_id[] = array($class_teacher->class_section_id);
-//            }
-//            $subject_teachers = $user->teacher->subjects;
-//            if ($subject_teachers) {
-//                foreach ($subject_teachers as $subject_teacher) {
-//                    $class_section_id[] = array($subject_teacher->class_section_id);
-//                }
-//            }
-//            return $query->whereIn('class_section_id', $class_section_id);
-//        }
-//
-//        // for admin list
-//        return $query;
-//        //return if it doesn't affect above conditions
-////        return $query->where('class_section_id', 0);
-//    }
+    //        $user = Auth::user();
+    //        if ($user->hasRole('Teacher')) {
+    //            // for teacher list
+    //            $class_teacher = $user->teacher->class_section;
+    //            $class_section_id = array();
+    //            if ($class_teacher) {
+    //                $class_section_id[] = array($class_teacher->class_section_id);
+    //            }
+    //            $subject_teachers = $user->teacher->subjects;
+    //            if ($subject_teachers) {
+    //                foreach ($subject_teachers as $subject_teacher) {
+    //                    $class_section_id[] = array($subject_teacher->class_section_id);
+    //                }
+    //            }
+    //            return $query->whereIn('class_section_id', $class_section_id);
+    //        }
+    //
+    //        // for admin list
+    //        return $query;
+    //        //return if it doesn't affect above conditions
+    ////        return $query->where('class_section_id', 0);
+    //    }
 
     public function fees_paid()
     {
