@@ -166,7 +166,10 @@
                             <li class="nav-item"><a href="{{ route('students.upload-profile') }}"
                                     class="nav-link">{{ __('upload_profile_images') }}</a></li>
                         @endcan
-
+                        <li class="nav-item">
+                            <a href="{{ route('students.birthdays.index') }}" class="nav-link"> {{ __('birthdays') }}
+                            </a>
+                        </li>
                         {{-- parents --}}
                         @can('guardian-create')
                             <li class="nav-item">
@@ -289,6 +292,14 @@
                 @endcan
             </li>
         @endcanany
+        <li class="nav-item">
+            {{-- @can('holiday-list') --}}
+            <a href="{{ route('event.index') }}" class="nav-link">
+                <i class="fa fa-calendar-check-o menu-icon"></i>
+                <span class="menu-title">{{ __('event_list') }}</span>
+            </a>
+            {{-- @endcan --}}
+        </li>
         {{-- subject lesson --}}
         @canany(['lesson-list', 'lesson-create', 'lesson-edit', 'lesson-delete', 'topic-list', 'topic-create',
             'topic-edit', 'topic-delete'])
@@ -1142,283 +1153,278 @@
 
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#student-leave-management" aria-expanded="false"
-                    aria-controls="student-leave-management-menu" 
-                    {{-- data-access="@hasFeatureAccess('Student Leave Management') --}}
-                    ">
-                    <i class="fa fa-plane menu-icon"></i>
-                    <span class="menu-title">{{ __('Student Leave') }}</span>
-                    <i class="menu-arrow"></i>
-                </a>
-                <div class="collapse" id="student-leave-management">
-                    <ul class="nav flex-column sub-menu">
+                    aria-controls="student-leave-management-menu" {{-- data-access="@hasFeatureAccess('Student Leave Management') --}} ">
+                                <i class="fa fa-plane menu-icon"></i>
+                                <span class="menu-title">{{ __('Student Leave') }}</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse" id="student-leave-management">
+                                <ul class="nav flex-column sub-menu">
 
-                        {{-- @can('approve-leave') --}}
-                            <li class="nav-item">
-                                <a href="{{ route('student-leave.index') }}" class="nav-link"
-                                    {{-- data-name="{{ Auth::user()->getRoleNames()[0] }}" --}}
-                                    {{-- data-access="@hasFeatureAccess('Student Leave Management') --}}
-                                >{{ __('Student') }} {{ __('leave') }}</a>
-                            </li>
-                            {{-- <li class="nav-item">
+                                    {{-- @can('approve-leave') --}}
+                                        <li class="nav-item">
+                                            <a href="{{ route('student-leave.index') }}" class="nav-link"
+                                                {{-- data-name="{{ Auth::user()->getRoleNames()[0] }}" --}}
+                                                {{-- data-access="@hasFeatureAccess('Student Leave Management') --}}
+                                            >{{ __('Student') }} {{ __('leave') }}</a>
+                                        </li>
+                                        {{-- <li class="nav-item">
                                 <a href="{{ url('leave/report') }}" class="nav-link"
                                     data-name="{{ Auth::user()->getRoleNames()[0] }}"
                                     data-access="@hasFeatureAccess('Staff Leave Management')">{{ __('leave_report') }}</a>
                             </li> --}}
-                        {{-- @endcan --}}
-                    </ul>
-                </div>
-            </li>
+                                    {{-- @endcan --}}
+                                </ul>
+                            </div>
+                        </li>
         @endrole
         {{-- Subscription Plans & Addons --}}
         @role('School Admin')
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#subscription" aria-expanded="false"
-                    aria-controls="subscription-menu">
-                    <i class="fa fa-puzzle-piece menu-icon"></i>
-                    <span class="menu-title">{{ __('subscription') }}</span>
-                    <i class="menu-arrow"></i>
-                </a>
-                <div class="collapse" id="subscription">
-                    <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link"
-                                href="{{ route('subscriptions.history') }}">{{ __('subscription') }}</a>
+                            <a class="nav-link" data-toggle="collapse" href="#subscription" aria-expanded="false"
+                                aria-controls="subscription-menu">
+                                <i class="fa fa-puzzle-piece menu-icon"></i>
+                                <span class="menu-title">{{ __('subscription') }}</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse" id="subscription">
+                                <ul class="nav flex-column sub-menu">
+                                    <li class="nav-item">
+                                        <a class="nav-link"
+                                            href="{{ route('subscriptions.history') }}">{{ __('subscription') }}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{{ route('subscriptions.index') }}">{{ __('plans') }}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{{ route('addons.plan') }}">{{ __('addons') }}</a>
+                                    </li>
+                                </ul>
+                            </div>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('subscriptions.index') }}">{{ __('plans') }}</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('addons.plan') }}">{{ __('addons') }}</a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
 
-            {{-- Support --}}
-            <li class="nav-item">
-                <a href="{{ url('staff/support') }}" class="nav-link">
-                    <i class="fa fa-question menu-icon"></i>
-                    <span class="menu-title">{{ __('support') }}</span>
-                </a>
-            </li>
+                        {{-- Support --}}
+                        <li class="nav-item">
+                            <a href="{{ url('staff/support') }}" class="nav-link">
+                                <i class="fa fa-question menu-icon"></i>
+                                <span class="menu-title">{{ __('support') }}</span>
+                            </a>
+                        </li>
 
-            <li class="nav-item">
-                <a href="{{ url('features') }}" class="nav-link">
-                    <i class="fa fa-list-ul menu-icon"></i>
-                    <span class="menu-title">{{ __('features') }}</span>
-                </a>
-            </li>
+                        <li class="nav-item">
+                            <a href="{{ url('features') }}" class="nav-link">
+                                <i class="fa fa-list-ul menu-icon"></i>
+                                <span class="menu-title">{{ __('features') }}</span>
+                            </a>
+                        </li>
 
         @endrole
 
         {{-- Contact Inquiry --}}
         @canany(['contact-inquiry-list'])
-            <li class="nav-item">
-                <a href="{{ url('contact-inquiry') }}" class="nav-link">
-                    <i class="fa fa-envelope-o menu-icon"></i>
-                    <span class="menu-title">{{ __('Contact Inquiry') }}</span>
-                </a>
-            </li>
+                        <li class="nav-item">
+                            <a href="{{ url('contact-inquiry') }}" class="nav-link">
+                                <i class="fa fa-envelope-o menu-icon"></i>
+                                <span class="menu-title">{{ __('Contact Inquiry') }}</span>
+                            </a>
+                        </li>
         @endcanany
         {{-- Super admin web settings --}}
         @can('web-settings')
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#web_settings" aria-expanded="false"
-                    aria-controls="web_settings-menu">
-                    <i class="fa fa-cogs menu-icon"></i>
-                    <span class="menu-title">{{ __('web_settings') }}</span>
-                    <i class="menu-arrow"></i>
-                </a>
-                <div class="collapse" id="web_settings">
-                    <ul class="nav flex-column sub-menu">
-                        <li class="nav-item">
-                            <a class="nav-link"
-                                href="{{ route('web-settings.index') }}">{{ __('general_settings') }}</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link"
-                                href="{{ route('web-settings.feature.sections') }}">{{ __('feature_sections') }}</a>
-                        </li>
-
-                        @canany(['faqs-create', 'faqs-list', 'faqs-edit', 'faqs-delete'])
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="collapse" href="#web_settings" aria-expanded="false"
+                        aria-controls="web_settings-menu">
+                        <i class="fa fa-cogs menu-icon"></i>
+                        <span class="menu-title">{{ __('web_settings') }}</span>
+                        <i class="menu-arrow"></i>
+                    </a>
+                    <div class="collapse" id="web_settings">
+                        <ul class="nav flex-column sub-menu">
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('faqs.index') }}">{{ __('faqs') }}</a>
+                                <a class="nav-link"
+                                    href="{{ route('web-settings.index') }}">{{ __('general_settings') }}</a>
                             </li>
-                        @endcanany
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                    href="{{ route('web-settings.feature.sections') }}">{{ __('feature_sections') }}</a>
+                            </li>
 
-                    </ul>
-                </div>
-            </li>
+                            @canany(['faqs-create', 'faqs-list', 'faqs-edit', 'faqs-delete'])
+        <li class="nav-item">
+                                                <a class="nav-link" href="{{ route('faqs.index') }}">{{ __('faqs') }}</a>
+                                            </li>
+    @endcanany
+                        </ul>
+                    </div>
+                </li>
         @endcan
 
         {{-- School web page setttings --}}
         @can('school-web-settings')
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#web_settings" aria-expanded="false"
-                    aria-controls="web_settings-menu" data-access="@hasFeatureAccess('Website Management')">
-                    <i class="fa fa-cogs menu-icon"></i>
-                    <span class="menu-title">{{ __('web_settings') }}</span>
-                    <i class="menu-arrow"></i>
-                </a>
-                <div class="collapse" id="web_settings">
-                    <ul class="nav flex-column sub-menu">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('school.web-settings.index') }}"
-                                data-name="{{ Auth::user()->getRoleNames()[0] }}"
-                                data-access="@hasFeatureAccess('Website Management')">{{ __('content') }}</a>
-                        </li>
-
-                        @canany(['faqs-create', 'faqs-list', 'faqs-edit', 'faqs-delete'])
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="collapse" href="#web_settings" aria-expanded="false"
+                        aria-controls="web_settings-menu" data-access="@hasFeatureAccess('Website Management')">
+                        <i class="fa fa-cogs menu-icon"></i>
+                        <span class="menu-title">{{ __('web_settings') }}</span>
+                        <i class="menu-arrow"></i>
+                    </a>
+                    <div class="collapse" id="web_settings">
+                        <ul class="nav flex-column sub-menu">
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('faqs.index') }}"
+                                <a class="nav-link" href="{{ route('school.web-settings.index') }}"
                                     data-name="{{ Auth::user()->getRoleNames()[0] }}"
-                                    data-access="@hasFeatureAccess('Website Management')">{{ __('faqs') }}</a>
+                                    data-access="@hasFeatureAccess('Website Management')">{{ __('content') }}</a>
                             </li>
-                        @endcanany
-                    </ul>
-                </div>
-            </li>
+
+                            @canany(['faqs-create', 'faqs-list', 'faqs-edit', 'faqs-delete'])
+        <li class="nav-item">
+                                        <a class="nav-link" href="{{ route('faqs.index') }}"
+                                            data-name="{{ Auth::user()->getRoleNames()[0] }}"
+                                            data-access="@hasFeatureAccess('Website Management')">{{ __('faqs') }}</a>
+                                    </li>
+    @endcanany
+                        </ul>
+                    </div>
+                </li>
         @endcan
 
 
 
 
         {{-- settings --}}
-        @canany(['app-settings', 'language-list', 'school-setting-manage', 'system-setting-manage',
-            'fcm-setting-manage', 'email-setting-create', 'privacy-policy', 'contact-us', 'about-us', 'guidance-create',
-            'guidance-list', 'guidance-edit', 'guidance-delete', 'email-template'])
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#settings-menu" aria-expanded="false"
-                    aria-controls="settings-menu">
-                    <i class="fa fa-cog menu-icon"></i>
-                    <span class="menu-title">{{ __('system_settings') }}</span>
-                    <i class="menu-arrow"></i>
-                </a>
-                <div class="collapse" id="settings-menu">
-                    <ul class="nav flex-column sub-menu">
-                        @can('app-settings')
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('system-settings.app') }}">{{ __('app_settings') }}</a>
-                            </li>
-                        @endcan
-                        @can('school-setting-manage')
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('school-settings.index') }}">{{ __('general_settings') }}</a>
-                            </li>
+        @canany(['app-settings', 'language-list', 'school-setting-manage', 'system-setting-manage', 'fcm-setting-manage', 'email-setting-create', 'privacy-policy', 'contact-us', 'about-us', 'guidance-create', 'guidance-list', 'guidance-edit', 'guidance-delete', 'email-template'])
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="collapse" href="#settings-menu" aria-expanded="false"
+                                aria-controls="settings-menu">
+                                <i class="fa fa-cog menu-icon"></i>
+                                <span class="menu-title">{{ __('system_settings') }}</span>
+                                <i class="menu-arrow"></i>
+                            </a>
+                            <div class="collapse" id="settings-menu">
+                                <ul class="nav flex-column sub-menu">
+                                    @can('app-settings')
+        <li class="nav-item">
+                                                <a class="nav-link" href="{{ route('system-settings.app') }}">{{ __('app_settings') }}</a>
+                                            </li>
+    @endcan
+                                    @can('school-setting-manage')
+        <li class="nav-item">
+                                                <a class="nav-link"
+                                                    href="{{ route('school-settings.index') }}">{{ __('general_settings') }}</a>
+                                            </li>
 
-                            {{-- session-year.index --}}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('session-year.index') }}">{{ __('session_year') }}</a>
-                            </li>
+                                            {{-- session-year.index --}}
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="{{ route('session-year.index') }}">{{ __('session_year') }}</a>
+                                            </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('leave-master.index') }}"
-                                    data-name="{{ Auth::user()->getRoleNames()[0] }}"
-                                    data-access="@hasFeatureAccess('Staff Leave Management')">{{ __('leave') }} {{ __('settings') }}</a>
-                            </li>
-                        @endcan
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="{{ route('leave-master.index') }}"
+                                                    data-name="{{ Auth::user()->getRoleNames()[0] }}"
+                                                    data-access="@hasFeatureAccess('Staff Leave Management')">{{ __('leave') }} {{ __('settings') }}</a>
+                                            </li>
+    @endcan
 
-                        @can('system-setting-manage')
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('system-settings.index') }}">{{ __('general_settings') }}</a>
-                            </li>
-                        @endcan
+                                    @can('system-setting-manage')
+        <li class="nav-item">
+                                                <a class="nav-link"
+                                                    href="{{ route('system-settings.index') }}">{{ __('general_settings') }}</a>
+                                            </li>
+    @endcan
 
-                        @can('subscription-settings')
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('system-settings.subscription-settings') }}">{{ __('subscription_settings') }}</a>
-                            </li>
-                        @endcan
+                                    @can('subscription-settings')
+        <li class="nav-item">
+                                                <a class="nav-link"
+                                                    href="{{ route('system-settings.subscription-settings') }}">{{ __('subscription_settings') }}</a>
+                                            </li>
+    @endcan
 
-                        {{-- @can('front-site-setting')
+                                    {{-- @can('front-site-setting')
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('system-settings.front-site-settings') }}">{{ __('front_site_settings') }}</a>
                             </li>
                         @endcan --}}
-                        @canany(['guidance-create', 'guidance-list', 'guidance-edit', 'guidance-delete'])
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('guidances.index') }}">{{ __('guidance') }}</a>
-                            </li>
-                        @endcanany
+                                    @canany(['guidance-create', 'guidance-list', 'guidance-edit', 'guidance-delete'])
+        <li class="nav-item">
+                                                <a class="nav-link" href="{{ route('guidances.index') }}">{{ __('guidance') }}</a>
+                                            </li>
+    @endcanany
 
-                        @can('language-list')
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url('language') }}">
-                                    {{ __('language_settings') }}</a>
-                            </li>
-                        @endcan
-                        @can('fcm-setting-manage')
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('system-settings.fcm') }}">
-                                    {{ __('notification_settings') }}</a>
-                            </li>
-                        @endcan
+                                    @can('language-list')
+        <li class="nav-item">
+                                                <a class="nav-link" href="{{ url('language') }}">
+                                                    {{ __('language_settings') }}</a>
+                                            </li>
+    @endcan
+                                    @can('fcm-setting-manage')
+        <li class="nav-item">
+                                                <a class="nav-link" href="{{ route('system-settings.fcm') }}">
+                                                    {{ __('notification_settings') }}</a>
+                                            </li>
+    @endcan
 
-                        {{-- @can('fees-config')
-                            <li class="nav-item">
-                                <a href="{{ route('fees.config.index') }}" class="nav-link" data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Fees Management')">
-                                    {{ __('Fees Settings') }}</a>
-                            </li>
-                        @endcan --}}
+                                    {{-- @can('fees-config')
+                                        <li class="nav-item">
+                                            <a href="{{ route('fees.config.index') }}" class="nav-link" data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Fees Management')">
+                                                {{ __('Fees Settings') }}</a>
+                                        </li>
+                                    @endcan --}}
 
-                        @can('school-setting-manage')
-                            <li class="nav-item">
-                                <a href="{{ route('school-settings.online-exam.index') }}" class="nav-link text-wrap"
-                                    data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Exam Management')">
-                                    {{ __('online_exam_terms_condition') }}
-                                </a>
-                            </li>
-                        @endcan
+                                    @can('school-setting-manage')
+        <li class="nav-item">
+                                                <a href="{{ route('school-settings.online-exam.index') }}" class="nav-link text-wrap"
+                                                    data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Exam Management')">
+                                                    {{ __('online_exam_terms_condition') }}
+                                                </a>
+                                            </li>
+    @endcan
 
-                        @can('email-setting-create')
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('system-settings.email.index') }}">{{ __('email_configuration') }}</a>
-                            </li>
-                        @endcan
+                                    @can('email-setting-create')
+        <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('system-settings.email.index') }}">{{ __('email_configuration') }}</a>
+                                                    </li>
+    @endcan
 
-                        {{-- Super admin panel --}}
-                        @can('email-setting-create')
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('system-settings.email.template') }}">{{ __('email_template') }}</a>
-                            </li>
-                        @endcan
+                                    {{-- Super admin panel --}}
+                                    @can('email-setting-create')
+        <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('system-settings.email.template') }}">{{ __('email_template') }}</a>
+                                                    </li>
+    @endcan
 
-                        {{-- School admin panel --}}
-                        @can('email-template')
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('school-settings.email.template') }}">{{ __('email_template') }}</a>
-                            </li>
-                        @endcan
+                                    {{-- School admin panel --}}
+                                    @can('email-template')
+        <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('school-settings.email.template') }}">{{ __('email_template') }}</a>
+                                                    </li>
+    @endcan
 
-                        {{-- Payment Configuration Menu For Superadmin --}}
-                        @hasanyrole(['Super Admin', 'School Admin'])
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('system-settings.payment.index') }}">{{ __('Payment Settings') }}</a>
-                            </li>
-                        @endrole
+                                    {{-- Payment Configuration Menu For Superadmin --}}
+                                    @hasanyrole(['Super Admin', 'School Admin'])
+                                                    <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('system-settings.payment.index') }}">{{ __('Payment Settings') }}</a>
+                                                    </li>
+                                    @endrole
 
-                        @can('school-setting-manage')
-                            <li class="nav-item">
-                                <a class="nav-link" data-access="@hasFeatureAccess('Website Management')"
-                                    href="{{ route('school-settings.third-party') }}">{{ __('Third-Party APIs') }}</a>
-                            </li>
-                        @endcan
+                                    @can('school-setting-manage')
+        <li class="nav-item">
+                                                        <a class="nav-link" data-access="@hasFeatureAccess('Website Management')"
+                                                            href="{{ route('school-settings.third-party') }}">{{ __('Third-Party APIs') }}</a>
+                                                    </li>
+    @endcan
 
-                        @can('system-setting-manage')
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('system-settings.third-party') }}">{{ __('Third-Party APIs') }}</a>
-                            </li>
-                        @endcan
+                                    @can('system-setting-manage')
+        <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('system-settings.third-party') }}">{{ __('Third-Party APIs') }}</a>
+                                                    </li>
+    @endcan
 
-                        {{-- @can('database-backup')
+                                    {{-- @can('database-backup')
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ url('database-backup') }}">{{ __('database_backup') }}</a>
                             </li>
@@ -1426,68 +1432,68 @@
 
 
 
-                        @can('contact-us')
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('system-settings.contact-us') }}">
-                                    {{ __('contact_us') }}</a>
-                            </li>
-                        @endcan
-                        @can('about-us')
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('system-settings.about-us') }}"> {{ __('about_us') }}
-                                </a>
-                            </li>
-                        @endcan
+                                    @can('contact-us')
+        <li class="nav-item">
+                                                        <a class="nav-link" href="{{ route('system-settings.contact-us') }}">
+                                                            {{ __('contact_us') }}</a>
+                                                    </li>
+    @endcan
+                                    @can('about-us')
+        <li class="nav-item">
+                                                        <a class="nav-link" href="{{ route('system-settings.about-us') }}"> {{ __('about_us') }}
+                                                        </a>
+                                                    </li>
+    @endcan
 
-                        @hasrole('School Admin')
+                                    @hasrole('School Admin')
 
-                            {{-- Privacy Policy --}}
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('school-settings.privacy-policy') }}">{{ __('privacy_policy') }}</a>
-                            </li>
+                                                    {{-- Privacy Policy --}}
+                                                    <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('school-settings.privacy-policy') }}">{{ __('privacy_policy') }}</a>
+                                                    </li>
 
-                            {{-- Terms & Conditions --}}
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('school-settings.terms-condition') }}">{{ __('terms_condition') }}</a>
-                            </li>
+                                                    {{-- Terms & Conditions --}}
+                                                    <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('school-settings.terms-condition') }}">{{ __('terms_condition') }}</a>
+                                                    </li>
 
-                            {{-- Refund Cancellation --}}
+                                                    {{-- Refund Cancellation --}}
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('school-settings.refund-cancellation') }}">{{ __('refund_cancellation') }}</a>
-                            </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('school-settings.refund-cancellation') }}">{{ __('refund_cancellation') }}</a>
+                                                    </li>
 
-                        @endrole
+                                    @endrole
 
-                        @can('privacy-policy')
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('system-settings.privacy-policy') }}">{{ __('privacy_policy') }}</a>
-                            </li>
-                        @endcan
+                                    @can('privacy-policy')
+        <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('system-settings.privacy-policy') }}">{{ __('privacy_policy') }}</a>
+                                                    </li>
+    @endcan
 
-                        @can('terms-condition')
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                    href="{{ route('system-settings.terms-condition') }}">{{ __('terms_condition') }}</a>
-                            </li>
-                        @endcan
+                                    @can('terms-condition')
+        <li class="nav-item">
+                                                        <a class="nav-link"
+                                                            href="{{ route('system-settings.terms-condition') }}">{{ __('terms_condition') }}</a>
+                                                    </li>
+    @endcan
 
-                    </ul>
-                </div>
-            </li>
+                                </ul>
+                            </div>
+                        </li>
         @endcanany
 
-        @if (Auth::user()->hasRole(['Super Admin']))
-            <li class="nav-item">
-                <a class="nav-link" href="https://wrteam-in.github.io/eSchool-SaaS-Doc/" target="_blank">
-                    <i class="fa fa-book menu-icon"></i>
-                    <span class="menu-title">{{ __('Documentation') }}</span>
-                </a>
-            </li>
+           @if (Auth::user()->hasRole(['Super Admin']))
+        <li class="nav-item">
+            <a class="nav-link" href="https://wrteam-in.github.io/eSchool-SaaS-Doc/" target="_blank">
+                <i class="fa fa-book menu-icon"></i>
+                <span class="menu-title">{{ __('Documentation') }}</span>
+            </a>
+        </li>
         @endif
         @if (Auth::user()->hasRole(['Super Admin', 'School Admin']) || Auth::user()->hasPermissionTo('database-backup'))
             <li class="nav-item">
@@ -1505,6 +1511,13 @@
                 </a>
             </li>
         @endif
-
+        @if (Auth::user()->hasRole(['School Admin']))
+            <li class="nav-item">
+                <a class="nav-link" href="{{route('chat-history')}}">
+                    <i class="fa fa-comments-o menu-icon"></i>
+                    <span class="menu-title">{{ __('Chat History') }}</span>
+                </a>
+            </li>
+        @endif
     </ul>
 </nav>

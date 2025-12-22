@@ -31,3 +31,11 @@ Manage Routes
 
 ->public\assets\js\custom\bootstrap-table\actionEvents.js
 ->
+
+
+12-17-2025
+birthdays
+->controller
+->view
+->sidebar.blade
+->public\assets\js\custom\bootstrap-table\queryParams.js 

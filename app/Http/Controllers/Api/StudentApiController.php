@@ -1807,7 +1807,7 @@ class StudentApiController extends Controller
             $leave->to_date = $request->to_date;
             $leave->days = $request->days;
             $leave->reason = $request->reason;
-
+            // dd($request->all());
             if ($request->hasFile('attachment')) {
                 $file = $request->file('attachment');
                 $filename = time() . '_' . $file->getClientOriginalName();

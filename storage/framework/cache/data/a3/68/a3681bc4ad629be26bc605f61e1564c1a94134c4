@@ -1,4 +1,4 @@
-1765887754s:83330:"{
+1766150569s:83487:"{
     "The :attribute must contain at least one letter.": "The :attribute must contain at least one letter.",
     "The :attribute must contain at least one number.": "The :attribute must contain at least one number.",
     "The :attribute must contain at least one symbol.": "The :attribute must contain at least one symbol.",
@@ -39,6 +39,7 @@
     "email": "Email",
     "mobile": "Mobile",
     "dob": "Date of Birth",
+    "birthdays" : "BirthDays",
     "image": "Image",
     "qualification": "Qualification",
     "action": "Action",
@@ -152,6 +153,8 @@
     "other_link": "Other Link",
     "Student Id": "Student Id",
     "holiday_list": "Holiday List",
+    "event_list" : "Event List",
+    "event" : "Event",
     "assignment": "Assignment",
     "assignment_name": "Assignment Name",
     "assignment_instructions": "Assignment Instructions",
@@ -1639,6 +1642,7 @@
     "Diary Added Successfully": "Diary Added Successfully",
     "included_in_package": "Included in package",
     "edit_holiday": "Edit Holiday",
+    "edit_event" : "Edit Event",
     "edit_announcement": "Edit Announcement",
     "edit_exam": "Edit Exam",
     "no_packages_available": "No packages available.",
@@ -1662,6 +1666,7 @@
     "my_attendance" : "My Attendance",
     "staff_id": "Staff ID",
     "Please Wait...": "Please Wait...",
-    "Write Something...": "Write Something..."
+    "Write Something...": "Write Something...",
+    "Chat History" : "Chat History"
 }
 ";

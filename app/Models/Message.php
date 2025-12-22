@@ -9,7 +9,7 @@ use App\Traits\DateFormatTrait;
 class Message extends Model
 {
     use HasFactory, DateFormatTrait;
-    protected $fillable = ['chat_id','sender_id','message','read_at'];
+    protected $fillable = ['chat_id', 'sender_id', 'message', 'read_at'];
 
 
 
@@ -33,16 +33,22 @@ class Message extends Model
         return $this->belongsTo(Chat::class);
     }
 
+    public function sender()
+    {
+        return $this->belongsTo(User::class, 'sender_id');
+    }
+
+
     public function getCreatedAtAttribute()
     {
         return $this->formatDateValue($this->getRawOriginal('created_at'));
     }
-    
+
     public function getUpdatedAtAttribute()
     {
         return $this->formatDateValue($this->getRawOriginal('updated_at'));
     }
-    
+
     public function getReadAtAttribute($value)
     {
         if ($value) {
