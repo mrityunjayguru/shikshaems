@@ -11,10 +11,11 @@ use App\Services\CachingService;
 use App\Services\ResponseService;
 use App\Services\UploadService;
 use App\Services\SessionYearsTrackingsService;
-use Hash;
+// use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Throwable;
 
 class GuardianController extends Controller {

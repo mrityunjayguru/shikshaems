@@ -49,7 +49,7 @@
                                 <b><a href="#" class="table-list-type active mr-2" data-id="0">{{__('active')}}</a></b> | <a href="#" class="ml-2 table-list-type" data-id="1">{{__("Inactive")}}</a>
                             </div>
                         @endcan
-                        <div class="row">z
+                        <div class="row">
                             <div class="col-12">
                                 <table aria-describedby="mydesc" class='table' id='table_list'
                                        data-toggle="table" data-url="{{ route('students.show',[1]) }}" data-click-to-select="true"

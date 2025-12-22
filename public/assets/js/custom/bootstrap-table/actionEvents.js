@@ -1209,7 +1209,22 @@ window.holidayEvents = {
         $('#id').val(row.id);
         $('#edit-date').val(moment(row.date, momentFormat).format(momentFormat));
         $('#edit-title').val(row.title);
-        $('#edit-description').val(row.description);
+        $('#edit-description').val(row.description ?? row.desc);
+    }
+};
+
+window.eventEvents = {
+    'click .edit-data': function (e, value, row) {
+        let momentFormat = schoolDateFormat
+            .replace(/d/g, 'DD')
+            .replace(/m/g, 'MM')
+            .replace(/Y/g, 'YYYY')
+            .replace(/y/g, 'YY');
+        $('.modal-title').html(window.trans["edit_event"]);
+        $('#id').val(row.id);
+        $('#edit-date').val(moment(row.date, momentFormat).format(momentFormat));
+        $('#edit-title').val(row.title);
+        $('#edit-description').val(row.desc);
     }
 };
 
