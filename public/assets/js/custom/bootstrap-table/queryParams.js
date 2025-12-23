@@ -795,6 +795,19 @@ function guardianQueryParams(p) {
     };
 }
 
+function birthdaysQueryParams(p) {
+    return {
+        limit: p.limit,
+        sort: p.sort,
+        order: p.order,
+        offset: p.offset,
+        search: p.search,
+        class_id: $('#filter_class_id').val(),
+        month: $('#filter_month').val(),
+        class_section_id: $('#filter_class_section_id').val()
+    };
+}
+
 function FormFieldQueryParams(p) {
     let tableListType = $('.table-list-type.active').data('id');
     return {

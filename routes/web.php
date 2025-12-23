@@ -7,11 +7,13 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BirthDaysController;
 use App\Http\Controllers\CertificateTemplateController;
 use App\Http\Controllers\ClassGroupController;
 use App\Http\Controllers\ClassSchoolController;
 use App\Http\Controllers\ClassSectionController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\ChatHistoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\Exam\ExamController;
@@ -57,6 +59,8 @@ use App\Http\Controllers\StaffAttendanceController;
 use App\Http\Controllers\StreamController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\StudentCategoryController;
+use App\Http\Controllers\StudentHouseController;
 use App\Http\Controllers\SubscriptionBillPaymentController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SubscriptionWebhookController;
@@ -75,6 +79,7 @@ use App\Http\Controllers\ContactInquiryController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\AssignElectiveSubjectController;
 use App\Http\Controllers\DiaryCategoryController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\DiaryController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleTypeController;
@@ -82,6 +87,7 @@ use App\Http\Controllers\DriverHelperController;
 use App\Http\Controllers\RouteVehicleController;
 use App\Http\Controllers\TransportationRequestController;
 use App\Http\Controllers\TransportationExpenseController;
+use App\Http\Controllers\CodeController;
 use App\Models\PaymentTransaction;
 use App\Models\Subscription;
 use App\Models\SubscriptionBill;
@@ -105,13 +111,14 @@ use Illuminate\Support\Facades\Session;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
 Auth::routes();
 Auth::routes(['verify' => true]);
 
 // global login
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
-Route::get('/', [Controller::class, 'index'])->name('index')->middleware(['CheckForMaintenanceMode','2fa']);
+Route::get('/', [Controller::class, 'index'])->name('index')->middleware(['CheckForMaintenanceMode', '2fa']);
 
 // 2fa code verification
 Route::get('/2fa', [AuthController::class, 'twoFactorAuthentication'])->name('auth.2fa');
@@ -138,8 +145,8 @@ Route::group(['prefix' => 'school'], static function () {
     Route::get('terms-conditions', [Controller::class, 'terms_conditions']);
     Route::get('privacy-policy', [Controller::class, 'privacy_policy']);
     Route::get('refund-cancellation-policy', [Controller::class, 'refund_cancellation']);
-    Route::get('online-admission',[Controller::class, 'admission'])->name('online-admission.index');
-    Route::post('online-admission',[Controller::class, 'registerStudent'])->name('online-admission.store');
+    Route::get('online-admission', [Controller::class, 'admission'])->name('online-admission.index');
+    Route::post('online-admission', [Controller::class, 'registerStudent'])->name('online-admission.store');
 });
 
 Route::group(['prefix' => 'page/type'], static function () {
@@ -153,7 +160,7 @@ Route::group(['prefix' => 'install'], static function () {
 });
 
 // auth
-Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchDatabase','verifiedEmail','CheckForMaintenanceMode','2fa','wizardSettings']], static function () {
+Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDatabase', 'verifiedEmail', 'CheckForMaintenanceMode', '2fa', 'wizardSettings']], static function () {
 
     Route::group(['middleware' => 'language'], static function () {
 
@@ -167,18 +174,17 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         /*** School ***/
 
         Route::group(['prefix' => 'school-custom-fields'], static function () {
-            Route::get('/',[FormFieldsController::class, 'schoolIndex'])->name('school-custom-fields.index');
-            Route::post('/store',[FormFieldsController::class, 'schoolStore'])->name('school-custom.store');
-            Route::put('/{id}',[FormFieldsController::class, 'schoolUpdate'])->name('school-custom-field.update');
+            Route::get('/', [FormFieldsController::class, 'schoolIndex'])->name('school-custom-fields.index');
+            Route::post('/store', [FormFieldsController::class, 'schoolStore'])->name('school-custom.store');
+            Route::put('/{id}', [FormFieldsController::class, 'schoolUpdate'])->name('school-custom-field.update');
             Route::get('/list', [FormFieldsController::class, 'schoolShow'])->name('school-custom-field.list');
             Route::delete('/delete/{id}', [FormFieldsController::class, 'schoolDestroy'])->name('school-custom-field.destroy');
 
             Route::post('/update-rank', [FormFieldsController::class, 'schoolUpdateRankOfFields']);
             Route::put("/{id}/restore", [FormFieldsController::class, 'schoolRestore'])->name('school-custom-field.restore');
             Route::delete("/{id}/deleted", [FormFieldsController::class, 'schoolTrash'])->name('school-custom-field.trash');
-
         });
-        
+
         Route::group(['prefix' => 'schools'], static function () {
             Route::put("/{id}/restore", [SchoolController::class, 'restore'])->name('schools.restore');
             Route::delete("/{id}/deleted", [SchoolController::class, 'trash'])->name('schools.trash');
@@ -190,25 +196,36 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('/send-mail', [SchoolController::class, 'sendMailIndex'])->name('schools.send.mail');
             Route::post('/send-mail', [SchoolController::class, 'sendMail']);
             Route::post('/create-demo-school', [SchoolController::class, 'createDemoSchool'])->name('create.demo.school');
-            Route::get('/school-inquiry-index',[SchoolController::class, 'schoolInquiryIndex'])->name('school-inquiry.index');
+            Route::get('/school-inquiry-index', [SchoolController::class, 'schoolInquiryIndex'])->name('school-inquiry.index');
             Route::get('/school-inquiry-list', [SchoolController::class, 'schoolInquiryList'])->name('school-inquiry.list');
             Route::post('/school-inquiry-update', [SchoolController::class, 'schoolInquiryUpdate'])->name('school-inquiry.update');
             Route::delete("/{id}/school-inquiry-delete", [SchoolController::class, 'schoolInquiryDelete'])->name('school-inquiry.delete');
-            
         });
         Route::resource('schools', SchoolController::class);
 
         //vehicle type
         Route::group(['prefix' => 'vehicle-type'], static function () {
-            Route::get('/', [VehicleTypeController::class, 'index'])->name('vehicle-type.index'); 
+            Route::get('/', [VehicleTypeController::class, 'index'])->name('vehicle-type.index');
             Route::put('restore/{id}', [VehicleTypeController::class, 'restore'])->name('vehicle-type.restore');
             Route::delete('trash/{id}', [VehicleTypeController::class, 'trash'])->name('vehicle-type.trash');
             Route::delete('destroy/{id}', [VehicleTypeController::class, 'destroy'])->name('vehicle-type.destroy');
-            Route::post('store', [VehicleTypeController::class, 'store'])->name('vehicle-type.store'); 
-            Route::get('show', [VehicleTypeController::class, 'show'])->name('vehicle-type.show'); 
-            Route::put('update/{id}', [VehicleTypeController::class, 'update'])->name('vehicle-type.update'); 
+            Route::post('store', [VehicleTypeController::class, 'store'])->name('vehicle-type.store');
+            Route::get('show', [VehicleTypeController::class, 'show'])->name('vehicle-type.show');
+            Route::put('update/{id}', [VehicleTypeController::class, 'update'])->name('vehicle-type.update');
         });
-        
+
+        //chat history
+        Route::get('/chat-history', [ChatHistoryController::class, 'index'])->name('chat-history');
+        Route::get('/chat-history/messages', [ChatHistoryController::class, 'chatMessages'])->name('chat-history.messages');
+        Route::get('chat-history/users', [ChatHistoryController::class, 'chatUsers'])->name('chat-history.users');
+        Route::get('/get-users-by-role', [ChatHistoryController::class, 'getUsersByRole']);
+
+        //school bus tracking code
+        Route::get('code', [CodeController::class, 'index'])->name('code.index');
+        Route::get('code/show', [CodeController::class, 'show'])->name('code.show');
+        Route::post('code/store', [CodeController::class, 'store'])->name('code.store');
+        Route::put('code/update/{id}', [CodeController::class, 'update'])->name('code.update');
+        Route::delete('code/destroy/{id}', [CodeController::class, 'destroy'])->name('code.destroy');
 
         /*** Package ***/
         Route::group(['prefix' => 'package'], static function () {
@@ -216,7 +233,6 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::put('restore/{id}', [PackageController::class, 'restore'])->name('package.restore');
             Route::delete('trash/{id}', [PackageController::class, 'trash'])->name('package.trash');
             Route::PATCH('change/rank', [PackageController::class, 'change_rank']);
-
         });
         Route::resource('package', PackageController::class);
 
@@ -239,7 +255,6 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             // Razorpay, Paystack, Flutterwave
             Route::get('payment/success', [AddonController::class, 'payment_success_callback'])->name('addons.payment.success');
             Route::get('payment/cancel_callback', [AddonController::class, 'payment_cancel_callback'])->name('addons.payment.cancel');
-
         });
         Route::resource('addons', AddonController::class);
 
@@ -247,7 +262,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::group(['prefix' => 'subscriptions'], static function () {
             Route::get('plan/{id}/type/{type}/current-plan/{isCurrentPlan?}', [SubscriptionController::class, 'plan']);
             Route::get('prepaid/package/{package_id}/{type?}/{isCurrentPlan?}', [SubscriptionController::class, 'prepaid_plan']);
-            
+
             Route::get('history', [SubscriptionController::class, 'history'])->name('subscriptions.history');
             Route::get('cancel-upcoming/{id?}', [SubscriptionController::class, 'cancel_upcoming'])->name('subscriptions.cancel.upcoming');
             Route::get('confirm-upcoming-plan/{id}', [SubscriptionController::class, 'confirm_upcoming_plan']);
@@ -281,7 +296,6 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             // Razorpay
             Route::post('create/razorpay/order-id', [SubscriptionController::class, 'razorpay_order_id']);
             Route::post('razorpay', [SubscriptionController::class, 'razorpay']);
-
         });
         Route::resource('subscriptions', SubscriptionController::class);
 
@@ -295,7 +309,6 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::delete('section/delete/{id}', [WebSettingsController::class, 'feature_section_delete'])->name('web-settings-section.destroy');
 
             Route::PATCH('feature-section/change/rank', [WebSettingsController::class, 'feature_section_rank'])->name('feature_section_rank');
-            
         });
 
         /*** System Settings ***/
@@ -346,7 +359,6 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::put('email-template', [SystemSettingsController::class, 'emailTemplateUpdate'])->name('system-settings.email-template.update');
 
             Route::post('server-configuration', [SystemSettingsController::class, 'serverConfigurationUpdate'])->name('server-configuration.update');
-
         });
 
         Route::resource('system-settings', SystemSettingsController::class);
@@ -390,27 +402,23 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('id-card-list', [StaffController::class, 'staff_id_card_list'])->name('staff.show.all');
             Route::post('generate-id-card', [StaffController::class, 'generate_staff_id_card']);
             Route::get('download-dummy-file', [StaffController::class, 'downloadSampleFile'])->name('staff.bulk-data-sample');
-            Route::get("create-bulk-upload",[StaffController::class,'bulkUploadIndex'])->name('staff.create-bulk-upload');
-            Route::post("store-bulk-upload",[StaffController::class,'storeBulkUpload'])->name('staff.store-bulk-upload');
-            Route::get('payroll-structure/{id}',[StaffController::class,'viewSalaryStructure'])->name('staff.payroll-structure');
+            Route::get("create-bulk-upload", [StaffController::class, 'bulkUploadIndex'])->name('staff.create-bulk-upload');
+            Route::post("store-bulk-upload", [StaffController::class, 'storeBulkUpload'])->name('staff.store-bulk-upload');
+            Route::get('payroll-structure/{id}', [StaffController::class, 'viewSalaryStructure'])->name('staff.payroll-structure');
 
-            Route::delete('payroll-setting/{id}',[StaffController::class,'deletePayrollSetting']);
-            Route::put('payroll-setting/{id}',[StaffController::class,'updatePayrollSetting']);
-            
-
+            Route::delete('payroll-setting/{id}', [StaffController::class, 'deletePayrollSetting']);
+            Route::put('payroll-setting/{id}', [StaffController::class, 'updatePayrollSetting']);
         });
-        
+
         Route::resource('staff', StaffController::class);
         Route::put("staff/{id}/change-status", [StaffController::class, 'restore'])->name('staff.restore');
         Route::delete("staff/{id}/deleted", [StaffController::class, 'trash'])->name('staff.trash');
         Route::post("staff/change-status-bulk", [StaffController::class, 'changeStatusBulk']);
-        
+
         Route::group(['prefix' => 'driver-helper'], static function () {
             Route::get('download-dummy-file', [DriverHelperController::class, 'downloadSampleFile'])->name('driver-helper.bulk-data-sample');
-            Route::get("create-bulk-upload",[DriverHelperController::class,'bulkUploadIndex'])->name('driver-helper.create-bulk-upload');
-            Route::post("store-bulk-upload",[DriverHelperController::class,'storeBulkUpload'])->name('driver-helper.store-bulk-upload');
-            
-            
+            Route::get("create-bulk-upload", [DriverHelperController::class, 'bulkUploadIndex'])->name('driver-helper.create-bulk-upload');
+            Route::post("store-bulk-upload", [DriverHelperController::class, 'storeBulkUpload'])->name('driver-helper.store-bulk-upload');
         });
         // driver helper
         Route::resource('driver-helper', DriverHelperController::class);
@@ -418,7 +426,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::delete("driver-helper/{id}/deleted", [DriverHelperController::class, 'trash'])->name('driver-helper.trash');
         Route::post("driver-helper/change-status-bulk", [DriverHelperController::class, 'changeStatusBulk']);
 
-        
+
 
         /*** Medium ***/
         Route::group(['prefix' => 'mediums'], static function () {
@@ -455,7 +463,6 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::delete('/subject-group/{group_id}', [ClassSchoolController::class, 'deleteClassSubjectGroup'])->name('class.subject-group.destroy');
 
             Route::get('/attendance/{id?}', [ClassSchoolController::class, 'classAttendance']);
-
         });
         Route::resource('class', ClassSchoolController::class);
 
@@ -487,8 +494,8 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::put("change/status/{id}", [TeacherController::class, 'changeStatus'])->name('teachers.change-status');
             Route::post("/change-status-bulk", [TeacherController::class, 'changeStatusBulk'])->name('staff.change-status-bulk');
             Route::get('download-dummy-file', [TeacherController::class, 'downloadSampleFile'])->name('teachers.bulk-data-sample');
-            Route::get("create-bulk-upload",[TeacherController::class,'bulkUploadIndex'])->name('teachers.create-bulk-upload');
-            Route::post("store-bulk-upload",[TeacherController::class,'storeBulkUpload'])->name('teachers.store-bulk-upload');
+            Route::get("create-bulk-upload", [TeacherController::class, 'bulkUploadIndex'])->name('teachers.create-bulk-upload');
+            Route::post("store-bulk-upload", [TeacherController::class, 'storeBulkUpload'])->name('teachers.store-bulk-upload');
         });
         Route::resource('teachers', TeacherController::class);
 
@@ -501,12 +508,12 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::group(['prefix' => 'students'], static function () {
             Route::get('create-bulk', [StudentController::class, 'createBulkData'])->name('students.create-bulk-data');
             Route::post('store-bulk', [StudentController::class, 'storeBulkData'])->name('students.store-bulk-data');
-            
+
             // Update bulk profile student & guardian
             Route::get('update-profile', [StudentController::class, 'update_profile'])->name('students.upload-profile');
             Route::get('list/{id?}', [StudentController::class, 'list'])->name('students.list');
             Route::post('update-profile', [StudentController::class, 'store_update_profile'])->name('students.update-profile');
-            
+
 
             Route::get('download-file', [StudentController::class, 'downloadSampleFile'])->name('student.bulk-data-sample');
             Route::delete('change-status/{id}', [StudentController::class, 'changeStatus'])->name('student.change-status');
@@ -525,11 +532,29 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
 
             Route::get('generate-id-card', [StudentController::class, 'generate_id_card_index'])->name('students.generate-id-card-index');
             Route::post('generate-id-card', [StudentController::class, 'generate_id_card'])->name('students.generate-id-card');
-            Route::get('online-registration-index',[StudentController::class, 'onlineRegistrationIndex'])->name('online-registration.index');
-            Route::get('online-registration-list',[StudentController::class, 'onlineRegistrationList'])->name('students.online-registration');
-            Route::post('update-bulk-application-status',[StudentController::class, 'updateBulkApplicationStatus'])->name('update-bulk-application-status');
-            Route::post('update-application-status',[StudentController::class, 'updateApplicationStatus'])->name('update-application-status');
-            Route::get('get-class-section-by-class/{class_id}',[StudentController::class, 'getclassSectionByClass']);
+            Route::get('online-registration-index', [StudentController::class, 'onlineRegistrationIndex'])->name('online-registration.index');
+            Route::get('online-registration-list', [StudentController::class, 'onlineRegistrationList'])->name('students.online-registration');
+            Route::post('update-bulk-application-status', [StudentController::class, 'updateBulkApplicationStatus'])->name('update-bulk-application-status');
+            Route::post('update-application-status', [StudentController::class, 'updateApplicationStatus'])->name('update-application-status');
+            Route::get('get-class-section-by-class/{class_id}', [StudentController::class, 'getclassSectionByClass']);
+
+            //Birtrhdays
+            Route::get('birthdays', [BirthDaysController::class, 'index'])->name('students.birthdays.index');
+            Route::get('birthdays/show', [BirthDaysController::class, 'show'])->name('students.birthdays.show');
+
+            //Student Category
+            Route::get('category', [StudentCategoryController::class, 'index'])->name('students.category.index');
+            Route::post('category/store', [StudentCategoryController::class, 'store'])->name('students.category.store');
+            Route::get('category/show', [StudentCategoryController::class, 'show'])->name('students.category.show');
+            Route::put('category/update/{id}', [StudentCategoryController::class, 'update'])->name('students.category.update');
+            Route::delete('category/destroy/{id}', [StudentCategoryController::class, 'destroy'])->name('students.category.destroy');
+
+            //Student House
+            Route::get('house', [StudentHouseController::class, 'index'])->name('students.house.index');
+            Route::post('house/store', [StudentHouseController::class, 'store'])->name('students.house.store');
+            Route::get('house/show', [StudentHouseController::class, 'show'])->name('students.house.show');
+            Route::put('house/update/{id}', [StudentHouseController::class, 'update'])->name('students.house.update');
+            Route::delete('house/destroy/{id}', [StudentHouseController::class, 'destroy'])->name('students.house.destroy');
         });
         Route::resource('students', StudentController::class);
 
@@ -580,7 +605,6 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('/search', [LessonController::class, 'search'])->name('lesson.search');
             Route::put("/{id}/restore", [LessonController::class, 'restore'])->name('lesson.restore');
             Route::delete("/{id}/deleted", [LessonController::class, 'trash'])->name('lesson.trash');
-
         });
         Route::resource('lesson', LessonController::class);
         Route::delete('file/delete/{id}', [LessonController::class, 'deleteFile'])->name('file.delete');
@@ -598,13 +622,18 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::put("/{id}/restore", [AnnouncementController::class, 'restore'])->name('announcement.restore');
             Route::delete("/{id}/deleted", [AnnouncementController::class, 'trash'])->name('announcement.trash');
             Route::delete("file/delete/{id}", [AnnouncementController::class, 'fileDelete'])->name('announcement.fileDelete');
-
         });
         Route::resource('announcement', AnnouncementController::class);
 
         /*** Holiday ***/
         Route::resource('holiday', HolidayController::class);
 
+        //Events
+        Route::get('events', [EventController::class, 'index'])->name('event.index');
+        Route::post('events/store', [EventController::class, 'store'])->name('event.store');
+        Route::get('events/show', [EventController::class, 'show'])->name('event.show');
+        Route::delete('events/destroy/{id}', [EventController::class, 'destroy'])->name('event.destroy');
+        Route::put('events/update/{id}', [EventController::class, 'update'])->name('event.update');
         /*** Assignment ***/
         // TODO : Improve this
         Route::get('assignment-submission', [AssignmentController::class, 'viewAssignmentSubmission'])->name('assignment.submission');
@@ -666,7 +695,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::get('exams/view-marks', [ExamController::class, 'viewMarksindex'])->name('exam.view-marks');
         Route::get('exams/view-marks-list', [ExamController::class, 'viewMarksShow'])->name('exam.view-marks-list');
         Route::get('exams/get-exams/{class_section_id}', [ExamController::class, 'getExamByClassId'])->name('exams.classes');
-    
+
         Route::resource('exams', ExamController::class);
 
         // TODO make two groups promote student and transfer student and classify the routes related to their group
@@ -680,7 +709,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::get('language-sample', [LanguageController::class, 'language_sample']);
         Route::get('language-json-file/{code?}', [LanguageController::class, 'language_file'])->name('language.json.file');
 
-        
+
         Route::get('language-list', [LanguageController::class, 'show']);
         Route::resource('language', LanguageController::class);
 
@@ -734,8 +763,6 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             // Fees Over Due Dashboard
             Route::get('/fees-over-due/{class_section_id}', [FeesController::class, 'feesOverDue']);
             Route::post('/student-account-deactivate', [FeesController::class, 'studentAccountDeactivate'])->name('deactivate-student-account');
-
-           
         });
         Route::resource('fees', FeesController::class);
 
@@ -752,7 +779,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::post('store-random-questions-choices', [OnlineExamController::class, 'storeRandomQuestionsChoices'])->name('online-exam.store-random-choice-question');
             Route::get('result/{id}', [OnlineExamController::class, 'onlineExamResultIndex'])->name('online-exam.result.index');
             Route::get('result-show/{id}', [OnlineExamController::class, 'showOnlineExamResult'])->name('online-exam.result.show');
-            
+
             // Dynamic dropdown API endpoints
             Route::get('get-sections-by-class', [OnlineExamController::class, 'getSectionsByClass'])->name('online-exam.get-sections-by-class');
             Route::get('get-subjects-by-class-section', [OnlineExamController::class, 'getSubjectsByClassSection'])->name('online-exam.get-subjects-by-class-section');
@@ -768,7 +795,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::resource('online-exam-question', OnlineExamQuestionController::class);
         // End Online Exam Routes
 
-        
+
 
         /*** School Settings ***/
         Route::group(['prefix' => 'school-settings'], static function () {
@@ -780,7 +807,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
 
             Route::get('email-template', [SchoolSettingsController::class, 'emailTemplate'])->name('school-settings.email.template');
             Route::put('email-template', [SchoolSettingsController::class, 'emailTemplateUpdate'])->name('school-settings.email-template.update');
-            
+
 
             Route::get('refund-cancellation', [SchoolSettingsController::class, 'refund_cancellation'])->name('school-settings.refund-cancellation');
 
@@ -791,16 +818,16 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
 
         // Database backup
         Route::group(['prefix' => 'database-backup'], static function () {
-            Route::get('/',[DatabaseBackupController::class, 'index'])->name('database-backup.index');
-            Route::get('show',[DatabaseBackupController::class, 'show']);
-            Route::get('store',[DatabaseBackupController::class, 'store']);
-            Route::delete('/{id}',[DatabaseBackupController::class, 'destroy']);
-            Route::post('restore/{id}',[DatabaseBackupController::class, 'restore'])->name('database-backup.restore');
+            Route::get('/', [DatabaseBackupController::class, 'index'])->name('database-backup.index');
+            Route::get('show', [DatabaseBackupController::class, 'show']);
+            Route::get('store', [DatabaseBackupController::class, 'store']);
+            Route::delete('/{id}', [DatabaseBackupController::class, 'destroy']);
+            Route::post('restore/{id}', [DatabaseBackupController::class, 'restore'])->name('database-backup.restore');
             Route::get('download/{filename}', [DatabaseBackupController::class, 'download'])->name('database-backup.download');
         });
 
 
-        
+
 
         /*** Form Fields ***/
         Route::group(['prefix' => 'form-fields'], static function () {
@@ -814,18 +841,17 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::group(['prefix' => 'expense-category'], static function () {
             Route::put('restore/{id}', [ExpenseCategoryController::class, 'restore'])->name('expense-category.restore');
             Route::delete('trash/{id}', [ExpenseCategoryController::class, 'trash'])->name('expense-category.trash');
-
         });
         Route::resource('expense-category', ExpenseCategoryController::class);
 
         // Expense
-        Route::get('expense/filter/{session_year_id?}',[ExpenseController::class,'filter_graph']);
+        Route::get('expense/filter/{session_year_id?}', [ExpenseController::class, 'filter_graph']);
         Route::resource('expense', ExpenseController::class);
         // Payroll
-        Route::get('payroll/slip/{id?}',[PayrollController::class,'slip'])->name('payroll.slip');
-        Route::get('payroll/slips',[PayrollController::class,'slip_index'])->name('payroll.slip.index');
-        Route::get('payroll/slips/list',[PayrollController::class,'slip_list'])->name('payroll.slip.list');
-        
+        Route::get('payroll/slip/{id?}', [PayrollController::class, 'slip'])->name('payroll.slip');
+        Route::get('payroll/slips', [PayrollController::class, 'slip_index'])->name('payroll.slip.index');
+        Route::get('payroll/slips/list', [PayrollController::class, 'slip_list'])->name('payroll.slip.list');
+
         Route::resource('payroll', PayrollController::class)->only(['index', 'store', 'show', 'destroy']);
 
         // Leave
@@ -836,7 +862,6 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('filter', [LeaveController::class, 'filter_leave']);
             Route::get('report', [LeaveController::class, 'report'])->name('leave.report');
             Route::get('detail', [LeaveController::class, 'detail'])->name('leave.detail');
-
         });
 
         Route::resource('leave', LeaveController::class);
@@ -849,7 +874,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::put('status/update', [LeaveStudentController::class, 'updateStatus'])->name('student-leave.status.update');
             // Route::put('status/update', [LeaveStudentController::class, 'updateStatus'])->name('student-leave.status.update');
         });
-        
+
         // Semester
         Route::group(['prefix' => 'semester'], static function () {
             Route::put('restore/{id}', [SemesterController::class, 'restore'])->name('semester.restore');
@@ -882,7 +907,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::delete('delete/{table}/{id}', [Controller::class, 'relatedDataDestroy'])->name('related-data.trash');
         });
 
-        
+
         Route::group(['prefix' => 'gallery'], static function () {
             Route::delete('file/delete/{id}', [GalleryController::class, 'deleteFile'])->name('gallery.delete');
         });
@@ -898,9 +923,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::group(['prefix' => 'web-settings'], static function () {
                 Route::get('/', [WebSettingsController::class, 'school_index'])->name('school.web-settings.index');
                 Route::post('/', [WebSettingsController::class, 'school_store'])->name('school.web-settings.store');
-
             });
-            
         });
         Route::resource('web-settings', WebSettingsController::class);
 
@@ -975,37 +998,41 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('rank-wise-result/bulk-rank-result', [ReportsController::class, 'bulkRankWiseResult'])->name('reports.exam.bulk-rank-result');
         });
     });
-    
+
     // Vehicle Routes
     Route::get('vehicles/show', [VehicleController::class, 'show'])->name('vehicles.show');
+    Route::get('track-now', [VehicleController::class, 'trackNow'])->name('vehicles.track-now');
+    Route::get('track/{code}', [VehicleController::class, 'trackByCode']);
     Route::delete("vehicles/{id}/deleted", [VehicleController::class, 'destroy'])->name('vehicles.destroy');
     Route::put("vehicles/{id}/restore", [VehicleController::class, 'restore'])->name('vehicles.restore');
     Route::delete("vehicles/{id}/trash", [VehicleController::class, 'trash'])->name('vehicles.trash');
     Route::resource('vehicles', VehicleController::class);
+    
+    Route::post('code-validate', [CodeController::class, 'codeValidate'])->name('ajax.code.validate');
 
     //proximity
     Route::get("set-proximity", [ProximityController::class, 'index'])->name('proximity.index');
     Route::post("store-proximity", [ProximityController::class, 'store'])->name('proximity.store');
     // Student Diary Routes:::
-    
+
     Route::delete('/diary-categories/{id}/deleted', [DiaryCategoryController::class, 'trash'])->name('diary-categories.trash');
     Route::put('/diary-categories/{id}/restore', [DiaryCategoryController::class, 'restore'])->name('diary-categories.restore');
-    
+
     Route::resource('diary-categories', DiaryCategoryController::class);
-    
+
     Route::get('diary/students', [DiaryController::class, 'showStudents'])->name('diary.showStudents');
     Route::get('diary/change-subjects-by-class-section', [DiaryController::class, 'changeSubjectsByClassSection'])->name('diary.changeSubjectsByClassSection');
     Route::resource('diary', DiaryController::class);
     Route::delete('diary/{diaryId}/remove-student/{id}', [DiaryController::class, 'removeStudent']);
-    
-    
+
+
     // Transportation Module Routes
     Route::resource('pickup-points', PickupPointController::class);
     Route::get('change-order/{id}', [RouteController::class, 'changeOrderIndex'])->name('routes.change-order');
     Route::put('routes/{id}/update-pickup-order', [RouteController::class, 'updatePickupOrder'])->name('routes.update-pickup-order');
     Route::delete('delete-pickup-points/{id}', [RouteController::class, 'deletePickupPoint'])->name('pickup-points.delete');
     Route::resource('routes', RouteController::class);
-   
+
 
     Route::get('transporatation-fees/{id}', [TransportationFeeController::class, 'edit'])->name('transportation-fees.edit');
     Route::post('transportation-fees/update', [TransportationFeeController::class, 'update'])->name('transportation-fees.update');
@@ -1030,14 +1057,13 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
 
 
     Route::resource('transportation-expense', TransportationExpenseController::class);
-
 });
 
 // webhooks
 Route::post('webhook/razorpay', [WebhookController::class, 'razorpay']);
 Route::post('webhook/stripe', [WebhookController::class, 'stripe']);
-Route::post('webhook/paystack',[WebhookController::class,'paystack']);
-Route::post('webhook/flutterwave',[WebhookController::class, 'flutterwave']);
+Route::post('webhook/paystack', [WebhookController::class, 'paystack']);
+Route::post('webhook/flutterwave', [WebhookController::class, 'flutterwave']);
 // Route::get('response/paystack/success', [WebhookController::class,'paystackSuccessCallback'])->name('paystack.success');
 // Route::get('response/flutterwave/success', [WebhookController::class,'flutterwaveSuccessCallback'])->name('flutterwave.success');
 
@@ -1128,14 +1154,14 @@ Route::get('storage-link', static function () {
 
 Route::get('migrate', static function () {
     Artisan::call('migrate');
-//    return redirect()->back();
+    //    return redirect()->back();
     echo "Done";
     return false;
 });
 
 Route::get('migrate-school', static function () {
     Artisan::call('migrate:school');
-//    return redirect()->back();
+    //    return redirect()->back();
     echo "Done";
     return false;
 });
@@ -1148,7 +1174,7 @@ Route::get('seeder-school', static function () {
 
 Route::get('start-websocket', static function () {
     Artisan::call('websocket:init');
-   return redirect()->back();
+    return redirect()->back();
     return false;
 });
 
@@ -1164,7 +1190,7 @@ Route::get('installation-seeder', static function () {
 });
 
 Route::get('dummy-seeder', static function () {
-   Artisan::call('db:seed --class=DummyDataSeeder');
+    Artisan::call('db:seed --class=DummyDataSeeder');
     // Artisan::call('db:seed');
     return redirect()->back();
     return false;
@@ -1190,13 +1216,11 @@ Route::get('/js/lang', static function () {
         $files = resource_path('lang/' . $lang . '.json');
         return File::get($files);
     });
-    echo('window.trans = ' . $labels);
+    echo ('window.trans = ' . $labels);
     exit();
 })->name('assets.lang');
 
-Route::get('test-code', static function () {
-
-});
+Route::get('test-code', static function () {});
 
 // Route::get('cache-flush', [Controller::class, 'cacheFlush']);
 
@@ -1228,4 +1252,3 @@ Route::get('demo-tokens', static function () {
         });
     }
 });
-

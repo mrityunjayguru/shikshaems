@@ -1,4 +1,4 @@
-1765887754s:83330:"{
+1766499087s:83800:"{
     "The :attribute must contain at least one letter.": "The :attribute must contain at least one letter.",
     "The :attribute must contain at least one number.": "The :attribute must contain at least one number.",
     "The :attribute must contain at least one symbol.": "The :attribute must contain at least one symbol.",
@@ -39,6 +39,7 @@
     "email": "Email",
     "mobile": "Mobile",
     "dob": "Date of Birth",
+    "birthdays" : "BirthDays",
     "image": "Image",
     "qualification": "Qualification",
     "action": "Action",
@@ -96,6 +97,7 @@
     "select_student": "Select Student",
     "student_admission": "Students Admission",
     "student_category": "Students Category",
+    "student_house": "Students House",
     "add_bulk_data": "Add Bulk Data",
     "add_bulk_questions": "Add Bulk Questions",
     "assign": "Assign",
@@ -152,6 +154,8 @@
     "other_link": "Other Link",
     "Student Id": "Student Id",
     "holiday_list": "Holiday List",
+    "event_list" : "Event List",
+    "event" : "Event",
     "assignment": "Assignment",
     "assignment_name": "Assignment Name",
     "assignment_instructions": "Assignment Instructions",
@@ -1450,6 +1454,10 @@
     "diary_type": "Diary Type",
     "added_by": "Added By",
     "create_diary_category": "Create Diary Category",
+    "create_student_category": "Create Student Category",
+    "create_student_house": "Create Student House",
+    "edit_student_category": "Edit Student Category",
+    "edit_student_house": "Edit Student House",
     "list_diary_categories": "List Diary Categories",
     "manage_diary_categories": "Manage Diary Categories",
     "manage_diaries": "Manage Diaries",
@@ -1639,6 +1647,7 @@
     "Diary Added Successfully": "Diary Added Successfully",
     "included_in_package": "Included in package",
     "edit_holiday": "Edit Holiday",
+    "edit_event" : "Edit Event",
     "edit_announcement": "Edit Announcement",
     "edit_exam": "Edit Exam",
     "no_packages_available": "No packages available.",
@@ -1662,6 +1671,9 @@
     "my_attendance" : "My Attendance",
     "staff_id": "Staff ID",
     "Please Wait...": "Please Wait...",
-    "Write Something...": "Write Something..."
+    "Write Something...": "Write Something...",
+    "Chat History" : "Chat History",
+    "edit_code" : "Edit Code",
+    "track_now" : "Track Now"
 }
 ";
