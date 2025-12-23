@@ -1,4 +1,4 @@
-1766150569s:83487:"{
+1766468004s:83549:"{
     "The :attribute must contain at least one letter.": "The :attribute must contain at least one letter.",
     "The :attribute must contain at least one number.": "The :attribute must contain at least one number.",
     "The :attribute must contain at least one symbol.": "The :attribute must contain at least one symbol.",
@@ -1667,6 +1667,8 @@
     "staff_id": "Staff ID",
     "Please Wait...": "Please Wait...",
     "Write Something...": "Write Something...",
-    "Chat History" : "Chat History"
+    "Chat History" : "Chat History",
+    "edit_code" : "Edit Code",
+    "track_now" : "Track Now"
 }
 ";
