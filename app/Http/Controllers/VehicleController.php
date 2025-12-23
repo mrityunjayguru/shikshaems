@@ -261,4 +261,12 @@ class VehicleController extends Controller
         $bulkData['rows'] = $rows;
         return response()->json($bulkData);
     }
+
+    public function trackNow(){
+        return view('vehicles.code-validate');
+    }
+
+    public function trackByCode(){
+        return view('vehicles.track');
+    }
 }

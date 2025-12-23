@@ -1228,7 +1228,6 @@ window.eventEvents = {
     }
 };
 
-
 window.galleryEvents = {
     'click .edit-data': function (e, value, row) {
         $('#id').val(row.id);
@@ -1236,6 +1235,17 @@ window.galleryEvents = {
         $('#edit-description').val(row.description);
         $('#edit_session_year_id').val(row.session_year_id);
         $('#edit-thumbnail').attr('src', row.thumbnail);
+    }
+};
+
+window.codeEvents = {
+    'click .edit-data': function (e, value, row) {
+        $('#id').val(row.id);
+        $('#edit-code').val(row.code);
+         if (row.end_date) {
+            let date = row.end_date.split(' ')[0]; // remove time
+            $('#edit_end_date').val(date);
+        }
     }
 };
 

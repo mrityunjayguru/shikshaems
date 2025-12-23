@@ -85,6 +85,7 @@ use App\Http\Controllers\DriverHelperController;
 use App\Http\Controllers\RouteVehicleController;
 use App\Http\Controllers\TransportationRequestController;
 use App\Http\Controllers\TransportationExpenseController;
+use App\Http\Controllers\CodeController;
 use App\Models\PaymentTransaction;
 use App\Models\Subscription;
 use App\Models\SubscriptionBill;
@@ -217,6 +218,12 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
         Route::get('chat-history/users', [ChatHistoryController::class, 'chatUsers'])->name('chat-history.users');
         Route::get('/get-users-by-role', [ChatHistoryController::class, 'getUsersByRole']);
 
+        //school bus tracking code
+        Route::get('code', [CodeController::class, 'index'])->name('code.index');
+        Route::get('code/show', [CodeController::class, 'show'])->name('code.show');
+        Route::post('code/store', [CodeController::class, 'store'])->name('code.store');
+        Route::put('code/update/{id}', [CodeController::class, 'update'])->name('code.update');
+        Route::delete('code/destroy/{id}', [CodeController::class, 'destroy'])->name('code.destroy');
 
         /*** Package ***/
         Route::group(['prefix' => 'package'], static function () {
@@ -978,10 +985,14 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
 
     // Vehicle Routes
     Route::get('vehicles/show', [VehicleController::class, 'show'])->name('vehicles.show');
+    Route::get('track-now', [VehicleController::class, 'trackNow'])->name('vehicles.track-now');
+    Route::get('track/{code}', [VehicleController::class, 'trackByCode']);
     Route::delete("vehicles/{id}/deleted", [VehicleController::class, 'destroy'])->name('vehicles.destroy');
     Route::put("vehicles/{id}/restore", [VehicleController::class, 'restore'])->name('vehicles.restore');
     Route::delete("vehicles/{id}/trash", [VehicleController::class, 'trash'])->name('vehicles.trash');
     Route::resource('vehicles', VehicleController::class);
+    
+    Route::post('code-validate', [CodeController::class, 'codeValidate'])->name('ajax.code.validate');
 
     //proximity
     Route::get("set-proximity", [ProximityController::class, 'index'])->name('proximity.index');
