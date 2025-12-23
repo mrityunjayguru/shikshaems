@@ -1,4 +1,4 @@
-1766468004s:83549:"{
+1766499087s:83800:"{
     "The :attribute must contain at least one letter.": "The :attribute must contain at least one letter.",
     "The :attribute must contain at least one number.": "The :attribute must contain at least one number.",
     "The :attribute must contain at least one symbol.": "The :attribute must contain at least one symbol.",
@@ -97,6 +97,7 @@
     "select_student": "Select Student",
     "student_admission": "Students Admission",
     "student_category": "Students Category",
+    "student_house": "Students House",
     "add_bulk_data": "Add Bulk Data",
     "add_bulk_questions": "Add Bulk Questions",
     "assign": "Assign",
@@ -1453,6 +1454,10 @@
     "diary_type": "Diary Type",
     "added_by": "Added By",
     "create_diary_category": "Create Diary Category",
+    "create_student_category": "Create Student Category",
+    "create_student_house": "Create Student House",
+    "edit_student_category": "Edit Student Category",
+    "edit_student_house": "Edit Student House",
     "list_diary_categories": "List Diary Categories",
     "manage_diary_categories": "Manage Diary Categories",
     "manage_diaries": "Manage Diaries",

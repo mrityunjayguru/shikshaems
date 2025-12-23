@@ -59,6 +59,8 @@ use App\Http\Controllers\StaffAttendanceController;
 use App\Http\Controllers\StreamController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\StudentCategoryController;
+use App\Http\Controllers\StudentHouseController;
 use App\Http\Controllers\SubscriptionBillPaymentController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SubscriptionWebhookController;
@@ -539,6 +541,20 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             //Birtrhdays
             Route::get('birthdays', [BirthDaysController::class, 'index'])->name('students.birthdays.index');
             Route::get('birthdays/show', [BirthDaysController::class, 'show'])->name('students.birthdays.show');
+
+            //Student Category
+            Route::get('category', [StudentCategoryController::class, 'index'])->name('students.category.index');
+            Route::post('category/store', [StudentCategoryController::class, 'store'])->name('students.category.store');
+            Route::get('category/show', [StudentCategoryController::class, 'show'])->name('students.category.show');
+            Route::put('category/update/{id}', [StudentCategoryController::class, 'update'])->name('students.category.update');
+            Route::delete('category/destroy/{id}', [StudentCategoryController::class, 'destroy'])->name('students.category.destroy');
+
+            //Student House
+            Route::get('house', [StudentHouseController::class, 'index'])->name('students.house.index');
+            Route::post('house/store', [StudentHouseController::class, 'store'])->name('students.house.store');
+            Route::get('house/show', [StudentHouseController::class, 'show'])->name('students.house.show');
+            Route::put('house/update/{id}', [StudentHouseController::class, 'update'])->name('students.house.update');
+            Route::delete('house/destroy/{id}', [StudentHouseController::class, 'destroy'])->name('students.house.destroy');
         });
         Route::resource('students', StudentController::class);
 

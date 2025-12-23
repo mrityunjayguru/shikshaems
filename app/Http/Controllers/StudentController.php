@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Exports\StudentDataExport;
 use App\Imports\StudentsImport;
 use App\Models\School;
+use App\Models\StudentCategory;
+use App\Models\StudentHouse;
 use App\Repositories\ClassSchool\ClassSchoolInterface;
 use App\Repositories\ClassSection\ClassSectionInterface;
 use App\Repositories\FormField\FormFieldsInterface;
@@ -74,7 +76,9 @@ class StudentController extends Controller
 
         $sessionYears = $this->sessionYear->all();
         $features = FeaturesService::getFeatures();
-        return view('students.details', compact('class_sections', 'extraFields', 'sessionYears', 'features', 'schoolSettings'));
+        $student_category = StudentCategory::get();
+        $student_house = StudentHouse::get();
+        return view('students.details', compact('class_sections', 'extraFields', 'sessionYears', 'features', 'schoolSettings','student_category','student_house'));
     }
 
     public function create()
@@ -93,11 +97,15 @@ class StudentController extends Controller
 
         $sessionYears = $this->sessionYear->all();
         $features = FeaturesService::getFeatures();
-        return view('students.create', compact('class_sections', 'admission_no', 'extraFields', 'sessionYears', 'features'));
+
+        $student_category = StudentCategory::get();
+        $student_house = StudentHouse::get();
+        return view('students.create', compact('class_sections', 'admission_no', 'extraFields', 'sessionYears', 'features', 'student_category', 'student_house'));
     }
 
     public function store(Request $request)
     {
+        // dd($request->all());
         ResponseService::noPermissionThenRedirect(['student-create']);
         $request->validate([
             'first_name' => 'required',
@@ -106,6 +114,8 @@ class StudentController extends Controller
             'image' => 'nullable|mimes:jpeg,png,jpg,svg|image|max:2048',
             'dob' => 'required',
             'class_section_id' => 'required|numeric',
+            'student_category_id' => 'required|numeric',
+            'student_house_id' => 'required|numeric',
             /*NOTE : Unique constraint is used because it's not school specific*/
             'admission_no' => 'required|unique:users,email',
             'admission_date' => 'required',
@@ -162,7 +172,7 @@ class StudentController extends Controller
             $sessionYear = $this->sessionYear->findById($request->session_year_id);
             $guardian = $userService->createOrUpdateParent($request->guardian_first_name, $request->guardian_last_name, $request->guardian_email, $request->guardian_mobile, $request->guardian_gender, $request->guardian_image);
             $is_send_notification = true;
-            $userService->createStudentUser($request->first_name, $request->last_name, $request->admission_no, $request->mobile, $request->dob, $request->gender, $request->image, $request->class_section_id, $request->admission_date, $request->current_address, $request->permanent_address, $sessionYear->id, $guardian->id, $request->extra_fields ?? [], $request->status ?? 0, $is_send_notification);
+            $userService->createStudentUser($request->first_name, $request->last_name, $request->admission_no, $request->mobile, $request->dob, $request->gender, $request->image, $request->class_section_id, $request->student_house_id, $request->student_category_id, $request->admission_date, $request->current_address, $request->permanent_address, $sessionYear->id, $guardian->id, $request->extra_fields ?? [], $request->status ?? 0, $is_send_notification);
 
             DB::commit();
             ResponseService::successResponse('Data Stored Successfully');
@@ -183,7 +193,6 @@ class StudentController extends Controller
                 ResponseService::logErrorResponse($e, "Student Controller -> Store method");
                 ResponseService::errorResponse();
             }
-
         }
     }
 
@@ -210,7 +219,7 @@ class StudentController extends Controller
             $sessionYear = $this->sessionYear->findById($request->session_year_id);
             $guardian = $userService->createOrUpdateParent($request->guardian_first_name, $request->guardian_last_name, $request->guardian_email, $request->guardian_mobile, $request->guardian_gender, $request->guardian_image, $request->parent_reset_password);
 
-            $userService->updateStudentUser($id, $request->first_name, $request->last_name, $request->mobile, $request->dob, $request->gender, $request->image, $sessionYear->id, $request->extra_fields ?? [], $guardian->id, $request->current_address, $request->permanent_address, $request->reset_password, $request->class_section_id);
+            $userService->updateStudentUser($id, $request->first_name, $request->last_name, $request->mobile, $request->dob, $request->gender, $request->image, $sessionYear->id, $request->extra_fields ?? [], $guardian->id, $request->current_address, $request->permanent_address, $request->reset_password, $request->class_section_id, $request->student_house_id, $request->student_category_id);
             DB::commit();
             ResponseService::successResponse('Data Updated Successfully');
         } catch (Throwable $e) {
@@ -718,7 +727,6 @@ class StudentController extends Controller
 
         $class_sections = $this->classSection->all(['*'], ['class', 'class.stream', 'section', 'medium']);
         return view('students.add_bulk_profile', compact('class_sections'));
-
     }
 
     public function list($id = null, Request $request)
@@ -771,7 +779,6 @@ class StudentController extends Controller
 
         $bulkData['rows'] = $rows;
         return response()->json($bulkData);
-
     }
 
     public function store_update_profile(Request $request)
@@ -799,7 +806,6 @@ class StudentController extends Controller
             $this->user->upsertProfile($data, ['id'], ['image']);
             // $this->user->upsert($data,['id'],['image']);
             ResponseService::successResponse('Profile Updated Successfully');
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
@@ -853,12 +859,12 @@ class StudentController extends Controller
             $students = $this->user->builder()->select('id', 'first_name', 'last_name', 'image', 'school_id', 'gender', 'dob')->with('student:id,user_id,class_section_id,school_id,guardian_id,roll_number', 'student.class_section.class', 'student.class_section.section', 'student.class_section.medium', 'student.class_section.class.stream', 'student.guardian:id,mobile,first_name,last_name')->whereHas('student', function ($q) use ($user_ids) {
                 $q->whereIn('id', $user_ids);
             })->with([
-                        'extra_student_details' => function ($q) {
-                            $q->whereHas('form_field', function ($query) {
-                                $query->where('display_on_id', 1)->whereNull('deleted_at');
-                            })->with('form_field');
-                        }
-                    ])->get();
+                'extra_student_details' => function ($q) {
+                    $q->whereHas('form_field', function ($query) {
+                        $query->where('display_on_id', 1)->whereNull('deleted_at');
+                    })->with('form_field');
+                }
+            ])->get();
 
 
             $settings['page_height'] = ($settings['page_height'] * 3.7795275591) . 'px';
@@ -903,9 +909,7 @@ class StudentController extends Controller
             $pdf = PDF::loadView('students.admission_form', compact('schoolSettings'));
             return $pdf->stream();
         } catch (\Throwable $th) {
-
         }
-
     }
 
     public function onlineRegistrationIndex()
@@ -1073,7 +1077,6 @@ class StudentController extends Controller
                     $class_name = $class->full_name;
 
                     $userService->sendApplicationRejectEmail($user, $class_name, $guardian);
-
                 }
             }
             DB::commit();
@@ -1121,7 +1124,6 @@ class StudentController extends Controller
                 $this->student->builder()->where('user_id', $request->edit_user_id)->withTrashed()->update(['application_status' => 0]);
                 $guardian = $this->user->guardian()->where('id', $student->guardian_id)->firstOrFail();
                 $userService->sendApplicationRejectEmail($user, $student, $guardian);
-
             }
 
 

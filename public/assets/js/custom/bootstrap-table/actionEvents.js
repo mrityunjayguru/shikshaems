@@ -347,6 +347,8 @@ window.studentEvents = {
         $('#edit-current-address').val(row.user.current_address);
         $('#edit-permanent-address').val(row.user.permanent_address);
         $('#edit_student_class_section_id').val(row.class_section_id);
+        $('#edit_student_category_id').val(row.student_category_id);
+        $('#edit_student_house_id').val(row.student_house_id);
         $('#edit_student_class_id').val(row.class_id).trigger('change');
 
         // Set gender radio button
@@ -1246,6 +1248,14 @@ window.codeEvents = {
             let date = row.end_date.split(' ')[0]; // remove time
             $('#edit_end_date').val(date);
         }
+    }
+};
+
+window.studentCategoryEvents = {
+    'click .edit-data': function (e, value, row) {
+        $('#id').val(row.id);
+        $('#edit-name').val(row.name);
+        $('#edit-description').val(row.description ?? '');
     }
 };
 
