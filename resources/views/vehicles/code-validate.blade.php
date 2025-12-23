@@ -192,7 +192,7 @@
                     if (response.code == '200') {
                         window.location.href = "{{ url('track') }}/" + $('#code').val();
                     } else if (response.code == '103') {
-                        $('#val-code').text('Invalid tracking code');
+                        $('#val-code').text(response.message);
                     } else {
                         $('#val-code').text('Something went wrong. Please try again.');
                     }
