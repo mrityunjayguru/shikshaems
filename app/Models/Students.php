@@ -20,6 +20,8 @@ class Students extends Model
         'user_id',
         'class_id',
         'class_section_id',
+        'student_category_id',
+        'student_house_id',
         'admission_no',
         'roll_number',
         'admission_date',

@@ -347,6 +347,8 @@ window.studentEvents = {
         $('#edit-current-address').val(row.user.current_address);
         $('#edit-permanent-address').val(row.user.permanent_address);
         $('#edit_student_class_section_id').val(row.class_section_id);
+        $('#edit_student_category_id').val(row.student_category_id);
+        $('#edit_student_house_id').val(row.student_house_id);
         $('#edit_student_class_id').val(row.class_id).trigger('change');
 
         // Set gender radio button
@@ -1209,10 +1211,24 @@ window.holidayEvents = {
         $('#id').val(row.id);
         $('#edit-date').val(moment(row.date, momentFormat).format(momentFormat));
         $('#edit-title').val(row.title);
-        $('#edit-description').val(row.description);
+        $('#edit-description').val(row.description ?? row.desc);
     }
 };
 
+window.eventEvents = {
+    'click .edit-data': function (e, value, row) {
+        let momentFormat = schoolDateFormat
+            .replace(/d/g, 'DD')
+            .replace(/m/g, 'MM')
+            .replace(/Y/g, 'YYYY')
+            .replace(/y/g, 'YY');
+        $('.modal-title').html(window.trans["edit_event"]);
+        $('#id').val(row.id);
+        $('#edit-date').val(moment(row.date, momentFormat).format(momentFormat));
+        $('#edit-title').val(row.title);
+        $('#edit-description').val(row.desc);
+    }
+};
 
 window.galleryEvents = {
     'click .edit-data': function (e, value, row) {
@@ -1221,6 +1237,25 @@ window.galleryEvents = {
         $('#edit-description').val(row.description);
         $('#edit_session_year_id').val(row.session_year_id);
         $('#edit-thumbnail').attr('src', row.thumbnail);
+    }
+};
+
+window.codeEvents = {
+    'click .edit-data': function (e, value, row) {
+        $('#id').val(row.id);
+        $('#edit-code').val(row.code);
+         if (row.end_date) {
+            let date = row.end_date.split(' ')[0]; // remove time
+            $('#edit_end_date').val(date);
+        }
+    }
+};
+
+window.studentCategoryEvents = {
+    'click .edit-data': function (e, value, row) {
+        $('#id').val(row.id);
+        $('#edit-name').val(row.name);
+        $('#edit-description').val(row.description ?? '');
     }
 };
 

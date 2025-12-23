@@ -113,7 +113,7 @@ class UserService {
      * @throws Throwable
      */
 
-    public function createStudentUser(string $first_name, string $last_name, string $admission_no, string|null $mobile, string $dob, string $gender, \Symfony\Component\HttpFoundation\File\UploadedFile|null $image, int $classSectionID, string $admissionDate, $current_address = null, $permanent_address = null, int $sessionYearID, int $guardianID, array $extraFields = [], int $status, $is_send_notification = null) {
+    public function createStudentUser(string $first_name, string $last_name, string $admission_no, string|null $mobile, string $dob, string $gender, \Symfony\Component\HttpFoundation\File\UploadedFile|null $image, int $classSectionID, int $houseID, int $categoryID, string $admissionDate, $current_address = null, $permanent_address = null, int $sessionYearID, int $guardianID, array $extraFields = [], int $status, $is_send_notification = null) {
         $password = $this->makeStudentPassword($dob);
         //Create Student User First
         $user = $this->user->create([
@@ -140,6 +140,8 @@ class UserService {
         $student = $this->student->updateOrCreate( ['user_id' => $user->id] ,[
             'user_id'          => $user->id,
             'class_section_id' => $classSectionID,
+            'student_house_id' => $houseID,
+            'student_category_id' => $categoryID,
             'admission_no'     => $admission_no,
             'roll_number'      => $roll_number,
             'admission_date'   => date('Y-m-d', strtotime($admissionDate)),
@@ -197,7 +199,7 @@ class UserService {
      * @return Model|null
      * @throws JsonException
      */
-    public function updateStudentUser($userID, $first_name, $last_name, $mobile, $dob, $gender, $image, $sessionYearID, array $extraFields = [], $guardianID = null, $current_address = null, $permanent_address = null, $reset_password = null, $classSectionID) {
+    public function updateStudentUser($userID, $first_name, $last_name, $mobile, $dob, $gender, $image, $sessionYearID, array $extraFields = [], $guardianID = null, $current_address = null, $permanent_address = null, $reset_password = null, $classSectionID, $houseID, $categoryID) {
         $studentUserData = array(
             'first_name'        => $first_name,
             'last_name'         => $last_name,
@@ -230,7 +232,9 @@ class UserService {
         $studentData = array(
             'guardian_id'     => $guardianID,
             'session_year_id' => $sessionYearID,
-            'class_section_id' => $classSectionID
+            'class_section_id' => $classSectionID,
+            'student_house_id' => $houseID,
+            'student_category_id' => $categoryID
         );
 
         $student = $this->student->update($user->student->id, $studentData);

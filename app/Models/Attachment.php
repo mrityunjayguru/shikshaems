@@ -10,9 +10,10 @@ use App\Traits\DateFormatTrait;
 class Attachment extends Model
 {
     use HasFactory, DateFormatTrait;
-    protected $fillable = ['message_id','file','file_type'];
+    protected $fillable = ['message_id', 'file', 'file_type'];
 
-    public function getFileAttribute($value) {
+    public function getFileAttribute($value)
+    {
         if ($value) {
             return url(Storage::url($value));
         }
@@ -23,10 +24,14 @@ class Attachment extends Model
     {
         return $this->formatDateValue($this->getRawOriginal('created_at'));
     }
-    
+
     public function getUpdatedAtAttribute()
     {
         return $this->formatDateValue($this->getRawOriginal('updated_at'));
     }
 
+    public function message()
+    {
+        return $this->belongsTo(Message::class, 'message_id');
+    }
 }
