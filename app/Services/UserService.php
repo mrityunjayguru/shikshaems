@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repositories\ExtraFormField\ExtraFormFieldsInterface;
 use App\Repositories\Student\StudentInterface;
 use App\Repositories\User\UserInterface;
+use App\Models\StudentCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -16,13 +17,15 @@ use Illuminate\Support\Str;
 use JsonException;
 use Throwable;
 
-class UserService {
+class UserService
+{
     private UserInterface $user;
     private StudentInterface $student;
     private ExtraFormFieldsInterface $extraFormFields;
     private SessionYearsTrackingsService $sessionYearsTrackingsService;
-    
-    public function __construct(UserInterface $user, StudentInterface $student, ExtraFormFieldsInterface $extraFormFields, SessionYearsTrackingsService $sessionYearsTrackingsService) {
+
+    public function __construct(UserInterface $user, StudentInterface $student, ExtraFormFieldsInterface $extraFormFields, SessionYearsTrackingsService $sessionYearsTrackingsService)
+    {
         $this->user = $user;
         $this->student = $student;
         $this->extraFormFields = $extraFormFields;
@@ -33,7 +36,8 @@ class UserService {
      * @param $mobile
      * @return string
      */
-    public function makeParentPassword($mobile) {
+    public function makeParentPassword($mobile)
+    {
         return $mobile;
     }
 
@@ -41,7 +45,8 @@ class UserService {
      * @param $dob
      * @return string
      */
-    public function makeStudentPassword($dob) {
+    public function makeStudentPassword($dob)
+    {
         return str_replace('-', '', date('d-m-Y', strtotime($dob)));
     }
 
@@ -54,7 +59,8 @@ class UserService {
      * @param null $image
      * @return Model|null
      */
-    public function createOrUpdateParent($first_name, $last_name, $email, $mobile, $gender, $image = null, $reset_password = null) {
+    public function createOrUpdateParent($first_name, $last_name, $email, $mobile, $gender, $image = null, $reset_password = null)
+    {
         $password = $this->makeParentPassword($mobile);
 
         $parent = array(
@@ -80,7 +86,7 @@ class UserService {
                 $parent['password'] = Hash::make($password);
             }
             $user->assignRole('Guardian');
-            
+
             $user->update($parent);
         } else {
             $parent['password'] = Hash::make($password);
@@ -101,6 +107,8 @@ class UserService {
      * @param string $gender
      * @param \Symfony\Component\HttpFoundation\File\UploadedFile|null $image
      * @param int $classSectionID
+     * @param int $houseID
+     * @param int $categoryID
      * @param string $admissionDate
      * @param null $current_address
      * @param null $permanent_address
@@ -113,7 +121,8 @@ class UserService {
      * @throws Throwable
      */
 
-    public function createStudentUser(string $first_name, string $last_name, string $admission_no, string|null $mobile, string $dob, string $gender, \Symfony\Component\HttpFoundation\File\UploadedFile|null $image, int $classSectionID, int $houseID, int $categoryID, string $admissionDate, $current_address = null, $permanent_address = null, int $sessionYearID, int $guardianID, array $extraFields = [], int $status, $is_send_notification = null) {
+    public function createStudentUser(string $first_name, string $last_name, string $admission_no, string|null $mobile, string $dob, string $gender, \Symfony\Component\HttpFoundation\File\UploadedFile|null $image, int $classSectionID, ?int $houseID, ?int $categoryID, ?int $rollNumber, string $admissionDate, $current_address = null, $permanent_address = null, int $sessionYearID, int $guardianID, array $extraFields = [], int $status, $is_send_notification = null)
+    {
         $password = $this->makeStudentPassword($dob);
         //Create Student User First
         $user = $this->user->create([
@@ -137,18 +146,19 @@ class UserService {
         $roll_number_db = $roll_number_db['max(roll_number)'];
         $roll_number = $roll_number_db + 1;
 
-        $student = $this->student->updateOrCreate( ['user_id' => $user->id] ,[
+
+        $student = $this->student->updateOrCreate(['user_id' => $user->id], [
             'user_id'          => $user->id,
             'class_section_id' => $classSectionID,
-            'student_house_id' => $houseID,
+            'student_house_id' => $houseID ?? null,
             'student_category_id' => $categoryID,
             'admission_no'     => $admission_no,
-            'roll_number'      => $roll_number,
+            'roll_number'      => $rollNumber ?? $roll_number,
             'admission_date'   => date('Y-m-d', strtotime($admissionDate)),
             'guardian_id'      => $guardianID,
             'session_year_id'  => $sessionYearID,
             'join_session_year_id' => $sessionYearID,
-            'leave_session_year_id' => null 
+            'leave_session_year_id' => null
         ]);
 
         // Store Session Years Tracking
@@ -199,7 +209,8 @@ class UserService {
      * @return Model|null
      * @throws JsonException
      */
-    public function updateStudentUser($userID, $first_name, $last_name, $mobile, $dob, $gender, $image, $sessionYearID, array $extraFields = [], $guardianID = null, $current_address = null, $permanent_address = null, $reset_password = null, $classSectionID, $houseID, $categoryID) {
+    public function updateStudentUser($userID, $first_name, $last_name, $mobile, $dob, $gender, $image, $sessionYearID, array $extraFields = [], $guardianID = null, $current_address = null, $permanent_address = null, $reset_password = null, $classSectionID, $houseID, $categoryID)
+    {
         $studentUserData = array(
             'first_name'        => $first_name,
             'last_name'         => $last_name,
@@ -278,10 +289,11 @@ class UserService {
      * @return void
      * @throws Throwable
      */
-    public function sendRegistrationEmail($guardian, $child, $childAdmissionNumber, $childPlainTextPassword) {
+    public function sendRegistrationEmail($guardian, $child, $childAdmissionNumber, $childPlainTextPassword)
+    {
         try {
 
-         
+
             $school_name = Auth::user()->school->name;
 
             $email_body = $this->replacePlaceholders($guardian, $child, $childAdmissionNumber, $childPlainTextPassword);
@@ -301,7 +313,6 @@ class UserService {
                 ResponseService::errorResponse(trans('error_occured'));
             }
         }
-
     }
 
     private function replacePlaceholders($guardian, $child, $childAdmissionNumber, $childPlainTextPassword)
@@ -380,7 +391,7 @@ class UserService {
             '{email}' => $user->email,
             '{password}' => $password,
             '{school_name}' => $schoolSettings['school_name'],
-            
+
             '{support_email}' => $schoolSettings['school_email'] ?? '',
             '{support_contact}' => $schoolSettings['school_phone'] ?? '',
 

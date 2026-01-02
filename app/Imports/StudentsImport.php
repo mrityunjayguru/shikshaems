@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Models\StudentCategory;
 use App\Repositories\FormField\FormFieldsInterface;
 use App\Repositories\SessionYear\SessionYearInterface;
 use App\Repositories\Student\StudentInterface;
@@ -81,13 +82,29 @@ class FirstSheetImport implements ToCollection, WithHeadingRow
         $subscription = app(SubscriptionInterface::class);
         $user = app(UserInterface::class);
         $cache = app(CachingService::class);
+        // dd($collection);
+        $collection = $collection->map(function ($row) {
+            if (isset($row['guardian_gender'])) {
+                $row['guardian_gender'] = trim($row['guardian_gender']);
+            }
+        
+            if (isset($row['gender'])) {
+                $row['gender'] = trim($row['gender']);
+            }
+        
+            if (isset($row['guardian_email'])) {
+                $row['guardian_email'] = trim($row['guardian_email']);
+            }
+        
+            return $row;
+        });
 
         $validator = Validator::make($collection->toArray(), [
             '*.first_name'     => 'required',
             '*.last_name'      => 'required',
             '*.mobile'         => 'nullable|regex:/^([0-9\s\-\+\(\)]*)$/',
             '*.gender'         => ['required', new TrimmedEnum(['male', 'female', 'Male', 'Female']), 'regex:/^(male|female)$/i'],
-            '*.guardian_gender'=> ['required', 'regex:/^(male|female)$/i'],
+            '*.guardian_gender' => ['required', 'regex:/^(male|female)$/i'],
             '*.dob'            => 'required|date',
             '*.admission_date' => 'required|date',
             '*.current_address'      => 'required',
@@ -96,7 +113,8 @@ class FirstSheetImport implements ToCollection, WithHeadingRow
             '*.guardian_first_name' => 'required',
             '*.guardian_last_name'  => 'required',
             '*.guardian_mobile'     => 'required|regex:/^([0-9\s\-\+\(\)]*)$/',
-        ],[
+            '*.roll_number' => 'nullable|integer',
+        ], [
             '*.first_name.required' => 'Please enter the first name.',
             '*.last_name.required' => 'Please enter the last name.',
             '*.mobile.required' => 'Please enter the mobile number.',
@@ -111,30 +129,38 @@ class FirstSheetImport implements ToCollection, WithHeadingRow
             '*.guardian_first_name.required' => 'Please enter the guardian first name.',
             '*.guardian_last_name.required' => 'Please enter the guardian last name.',
             '*.guardian_mobile.required' => 'Please enter the guardian mobile number.',
-            
+            '*.roll_number' => 'Roll Number will be Number',
+
+
         ]);
 
         //             If Validation fails then this will throw the ValidationFail Exception
         $validator->validate();
+        // try {
+        //     $validator->validate();
+        // } catch (\Throwable $e) {
+        //     dd($e->getMessage(), $collection->toArray());
+        // }
 
+       
         // Check free trial package
         $today_date = Carbon::now()->format('Y-m-d');
-        $get_subscription = $subscription->builder()->doesntHave('subscription_bill')->whereDate('start_date','<=',$today_date)->where('end_date','>=',$today_date)->whereHas('package',function($q){
-            $q->where('is_trial',1);
+        $get_subscription = $subscription->builder()->doesntHave('subscription_bill')->whereDate('start_date', '<=', $today_date)->where('end_date', '>=', $today_date)->whereHas('package', function ($q) {
+            $q->where('is_trial', 1);
         })->first();
 
         $userService = app(UserService::class);
         $sessionYear = $sessionYear->findById($this->sessionYearID);
         DB::beginTransaction();
         foreach ($collection as $row) {
-
+         
             // Check free trial package
-            
+
             if ($get_subscription) {
                 $systemSettings = $cache->getSystemSettings();
                 $count_student = $user->builder()->role('Student')->withTrashed()->count();
                 if ($count_student >= $systemSettings['student_limit']) {
-                    $message = "The free trial allows only ".$systemSettings['student_limit']." students.";
+                    $message = "The free trial allows only " . $systemSettings['student_limit'] . " students.";
                     ResponseService::errorResponse($message);
                     break;
                 }
@@ -150,8 +176,9 @@ class FirstSheetImport implements ToCollection, WithHeadingRow
 
 
             $guardian = $userService->createOrUpdateParent($row['guardian_first_name'], $row['guardian_last_name'], $row['guardian_email'], $row['guardian_mobile'], $row['guardian_gender']);
+        
             $get_student = $student->builder()->where('session_year_id', $sessionYear->id)->select('id')->latest('id')->pluck('id')->first();
-            $admission_no = $sessionYear->name .'0'.  Auth::user()->school_id .'0'. ($get_student + 1);
+            $admission_no = $sessionYear->name . '0' .  Auth::user()->school_id . '0' . ($get_student + 1);
             $extraDetails = array();
             // Check that Extra Details Exists
             if (!empty($extraDetailsFields)) {
@@ -196,17 +223,47 @@ class FirstSheetImport implements ToCollection, WithHeadingRow
                         'data'          => NULL,
                     );
                 }
+
+                $categoryID = null;
+
+                if (!empty($row['category'])) {
+                    $category = StudentCategory::where('name', trim($row['category']))->first();
+                    $categoryID = $category ? (int) $category->id : null;
+                }
             }
             //                $userService->createOrUpdateStudentUser($row['first_name'], $row['last_name'], $admission_no, $row['mobile'], $row['dob'], $row['gender'], null, $this->class_section_id, now(), $extraDetails, null, $guardian->id);
             try {
-                $userService->createStudentUser($row['first_name'], $row['last_name'], $admission_no, $row['mobile'], $row['dob'], $row['gender'], null, $this->classSectionID, $row['admission_date'],$row['current_address'],$row['permanent_address'], $sessionYear->id, $guardian->id, $extraDetails, 0, $this->is_send_notification);
+                // $userService->createStudentUser($row['first_name'], $row['last_name'], $admission_no, $row['mobile'], $row['dob'], $row['gender'], null, $this->classSectionID, $row['admission_date'], $row['current_address'], $row['permanent_address'], $sessionYear->id, $guardian->id,  $extraDetails, $categoryID, 0, $this->is_send_notification);
+                // dd($row)
+                $userService->createStudentUser(
+                    $row['first_name'],
+                    $row['last_name'],
+                    $admission_no,
+                    $row['mobile'],
+                    $row['dob'],
+                    $row['gender'],
+                    null,
+                    (int) $this->classSectionID,
+                    null,                  // ✅ houseID (you don't have it)
+                    $categoryID,            // ✅ categoryID
+                    $row['roll_number'] ?? null, // ✅ rollNumber
+                    $row['admission_date'], // ✅ admissionDate
+                    $row['current_address'],
+                    $row['permanent_address'],
+                    (int) $sessionYear->id,
+                    (int) $guardian->id,
+                    $extraDetails,
+                    0,
+                    $this->is_send_notification
+                );
+
             } catch (Throwable $e) {
                 // IF Exception is TypeError and message contains Mail keywords then email is not sent successfully
                 if ($e instanceof TypeError && Str::contains($e->getMessage(), [
-                        'Mail',
-                        'Mailer',
-                        'MailManager'
-                    ])) {
+                    'Mail',
+                    'Mailer',
+                    'MailManager'
+                ])) {
                     continue;
                 }
                 DB::rollBack();

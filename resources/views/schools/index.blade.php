@@ -871,11 +871,15 @@
         const editstateSelect = document.getElementById("edit_state");
 
         indianStates.forEach(state => {
-            let option = document.createElement("option");
-            option.value = state;
-            option.textContent = state;
-            stateSelect.appendChild(option);
-            editstateSelect.appendChild(option);
+            let option1 = document.createElement("option");
+            option1.value = state;
+            option1.textContent = state;
+            stateSelect.appendChild(option1);
+
+            let option2 = document.createElement("option");
+            option2.value = state;
+            option2.textContent = state;
+            editstateSelect.appendChild(option2);
         });
     </script>
 

@@ -2418,6 +2418,7 @@ window.pickupPointEvents = {
     'click .edit-data': function (e, value, row) {
         $('#edit_id').val(row.id);
         $('#edit_name').val(row.name);
+        $('#edit_distance').val(row.distance);
         $('#edit_lat').val(row.latitude);
         $('#edit_lng').val(row.longitude);
         $('#edit_status').val(row.status);

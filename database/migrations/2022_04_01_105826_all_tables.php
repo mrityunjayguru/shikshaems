@@ -202,6 +202,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreignId('class_section_id')->references('id')->on('class_sections')->onDelete('cascade');
+            $table->integer('student_category_id')->nullable();
+            $table->integer('student_house_id')->nullable();
             $table->string('admission_no', 512);
             $table->integer('roll_number')->nullable();
             $table->date('admission_date');
