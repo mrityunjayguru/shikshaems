@@ -12,6 +12,7 @@ class PickupPoint extends Model
 
     protected $fillable = [
         'name',
+        'distance',
         'pickup_time',
         'dropoff_time',
         'latitude',

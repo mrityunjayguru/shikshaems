@@ -42,6 +42,7 @@ return new class extends Migration
             Schema::create('pickup_points', function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
+                $table->double('distance')->nullable();
                 $table->string('latitude');
                 $table->string('longitude');
                 $table->time('pickup_time');
