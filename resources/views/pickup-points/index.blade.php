@@ -27,6 +27,11 @@
                                         class="form-control" required />
                                 </div>
                                 <div class="form-group col-md-6">
+                                    <label>{{ __('Distance') }} <span class="text-danger">*</span></label>
+                                    <input name="distance" type="number" placeholder="{{ __('distance') }}"
+                                        class="form-control" required />
+                                </div>
+                                <div class="form-group col-md-6">
                                     <label>{{ __('status') }}</label>
                                     <select name="status" class="form-control">
                                         <option value="1">{{ __('Active') }}</option>
@@ -115,6 +120,7 @@
                                         {{ __('id') }}</th>
                                     <th scope="col" data-field="no">{{ __('no.') }}</th>
                                     <th scope="col" data-field="name" data-sortable="true">{{ __('name') }}</th>
+                                    <th scope="col" data-field="distance" data-sortable="true">{{ __('Distance') }}</th>
                                     <th scope="col" data-field="pickup_time" data-sortable="true">
                                         {{ __('pickup_time') }}</th>
                                     <th scope="col" data-field="dropoff_time" data-sortable="true">
@@ -154,6 +160,11 @@
                                         <label>{{ __('name') }} <span class="text-danger">*</span></label>
                                         <input name="name" id="edit_name" type="text"
                                             placeholder="{{ __('name') }}" class="form-control" required />
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>{{ __('Distance') }} <span class="text-danger">*</span></label>
+                                        <input name="distance" type="number" placeholder="{{ __('distance') }}"
+                                            class="form-control" id="edit_distance" required />
                                     </div>
                                     <div class="form-group col-md-12">
                                         <label>{{ __('status') }}</label>
