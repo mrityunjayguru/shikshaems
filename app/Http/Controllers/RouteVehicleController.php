@@ -65,15 +65,33 @@ class RouteVehicleController extends Controller
             })
             ->with('staff', 'roles', 'support_school.school')->get();
 
-       $staff = $this->user->builder()
-            ->whereHas('roles', function ($q) {
-                $q->where('custom_role', 1)
-                ->whereNotIn('name', ['Driver', 'Helper']);  
-            })
-            ->with('staff', 'roles', 'support_school.school')->get();
-            // dd($staff);
+        return view('route-vehicle.index', compact('routeVehicles', 'vehicles', 'drivers', 'helpers', 'routes', 'shifts'));
+    }
 
-        return view('route-vehicle.index', compact('routeVehicles', 'vehicles', 'drivers', 'helpers', 'routes', 'shifts','staff'));
+    public function getStaffOrTeacher(Request $request)
+    {
+        $role = $request->role;
+        if ($role == "teacher") {
+            $staff = $this->user->builder()
+                ->where(function ($query) {
+                    $query->whereHas('roles', function ($q) {
+                        $q->where('custom_role', 0);
+                    })->WhereHas('roles', function ($q) {
+                        $q->where('name', 'Teacher');
+                    });
+                })
+                ->with('staff', 'roles', 'support_school.school')->get();
+        } else {
+            $staff = $this->user->builder()
+                ->whereHas('roles', function ($q) {
+                    $q->where('custom_role', 1)
+                        ->whereNotIn('name', ['Driver', 'Helper']);
+                })
+                ->with('staff', 'roles', 'support_school.school')->get();
+        }
+        return response()->json([
+            'data' => $staff
+        ]);
     }
 
     public function store(Request $request)
@@ -189,7 +207,7 @@ class RouteVehicleController extends Controller
         $showDeleted = request('show_deleted');
 
         $sql = $this->routeVehicle->builder()
-            ->with(['vehicle', 'driver', 'helper', 'route.shift']) // preload relationships
+            ->with(['vehicle', 'staff','staff.roles', 'driver', 'helper', 'route.shift']) // preload relationships
             ->when(!empty($showDeleted), function ($query) {
                 $query->onlyTrashed();
             });

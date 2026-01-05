@@ -84,8 +84,17 @@
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6">
+                                    <label for="role">{{ __('role') }} <span class="text-danger">*</span></label>
+                                    <select name="role" id="role" class="form-control" required
+                                        onchange="getTeacherOrStaff()">
+                                        <option value="">{{ __('Select Role') }}</option>
+                                        <option value="teacher">{{ __('Teacher') }}</option>
+                                        <option value="staff">{{ __('Staff') }}</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
                                     <label for="staff_id">{{ __('staff') }} <span class="text-danger">*</span></label>
-                                    <select name="staff_id" id="staff_id"
+                                    {{-- <select name="staff_id" id="staff_id"
                                         class="form-control select2-dropdown select2-hidden-accessible" required>
                                         <option value="">{{ __('select_staff') }}</option>
                                         @if (isset($staff) && $staff->count() < 1)
@@ -94,9 +103,13 @@
                                             @endif
                                         @endif
                                         @foreach ($staff as $value)
-                                            <option value="{{ $value->id }}">{{ $value->first_name .' '. $value->last_name }} 
+                                            <option value="{{ $value->id }}">
+                                                {{ $value->first_name . ' ' . $value->last_name }}
                                             </option>
                                         @endforeach
+                                    </select> --}}
+                                    <select id="user_id" class="form-control mt-2" name="staff_id">
+                                        <option value="">Select</option>
                                     </select>
                                 </div>
                                 <div class="form-group col-md-3">
@@ -246,8 +259,9 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <label for="edit_staff_id">{{ __('staff') }} <span class="text-danger">*</span></label>
+                                {{-- <div class="form-group col-md-6">
+                                    <label for="edit_staff_id">{{ __('staff') }} <span
+                                            class="text-danger">*</span></label>
                                     <select name="edit_staff_id" id="edit_staff_id"
                                         class="form-control select2-dropdown select2-hidden-accessible" required>
                                         <option value="">{{ __('select_staff') }}</option>
@@ -257,11 +271,33 @@
                                             @endif
                                         @endif
                                         @foreach ($staff as $value)
-                                            <option value="{{ $value->id }}">{{ $value->first_name .' '. $value->last_name }} 
+                                            <option value="{{ $value->id }}">
+                                                {{ $value->first_name . ' ' . $value->last_name }}
                                             </option>
                                         @endforeach
                                     </select>
+                                </div> --}}
+                                <!-- ROLE -->
+                                <div class="form-group col-md-3">
+                                    <label for="edit_role">{{ __('Role') }} <span
+                                            class="text-danger">*</span></label>
+                                    <select name="edit_role" id="edit_role" class="form-control"
+                                        onchange="getTeacherOrStaffEdit()">
+                                        <option value="">Select Role</option>
+                                        <option value="teacher">Teacher</option>
+                                        <option value="staff">Staff</option>
+                                    </select>
                                 </div>
+
+                                <!-- USER -->
+                                <div class="form-group col-md-3">
+                                    <label for="edit_staff_id">{{ __('staff') }} <span
+                                            class="text-danger">*</span></label>
+                                    <select name="edit_staff_id" id="edit_user_id" class="form-control">
+                                        <option value="">Select</option>
+                                    </select>
+                                </div>
+
                                 <div class="form-group col-md-3">
                                     <label>{{ __('edit_pickup_trip_start_time') }} <span
                                             class="text-danger">*</span></label>
@@ -304,5 +340,76 @@
 @endsection
 
 @section('js')
-    {{-- JS to handle AJAX operations --}}
+    <script>
+        function getTeacherOrStaff() {
+            const role = document.getElementById('role').value;
+            if (!role) {
+                $('#user_id').html('<option value="">Select</option>');
+                return;
+            }
+
+            $.ajax({
+                url: '/get-teacher-or-staff',
+                type: 'GET',
+                data: {
+                    role: role
+                },
+                dataType: 'json',
+                success: function(response) {
+
+                    let options = '<option value="">Select</option>';
+
+                    if (response.data && response.data.length > 0) {
+                        response.data.forEach(function(user) {
+                            options += `
+                        <option value="${user.id}">
+                            ${user.full_name}
+                        </option>
+                    `;
+                        });
+                    }
+
+                    $('#user_id').html(options);
+                },
+                error: function(xhr) {
+                    console.error(xhr);
+                    alert('Failed to load data');
+                }
+            });
+        }
+
+        function getTeacherOrStaffEdit(selectedUserId = null) {
+
+            const role = $('#edit_role').val();
+
+            if (!role) {
+                $('#edit_user_id').html('<option value="">Select</option>');
+                return;
+            }
+
+            $.ajax({
+                url: '/get-teacher-or-staff',
+                type: 'GET',
+                data: {
+                    role: role
+                },
+                dataType: 'json',
+                success: function(response) {
+
+                    let options = '<option value="">Select</option>';
+
+                    response.data.forEach(function(user) {
+                        options += `
+                    <option value="${user.id}"
+                        ${selectedUserId == user.id ? 'selected' : ''}>
+                        ${user.full_name}
+                    </option>
+                `;
+                    });
+
+                    $('#edit_user_id').html(options).trigger('change');
+                }
+            });
+        }
+    </script>
 @endsection
