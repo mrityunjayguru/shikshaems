@@ -41,7 +41,7 @@ class GuardianController extends Controller {
         $sections = $this->section->builder()->orderBy('name', 'ASC')->get();
 
         $class_sections = $this->classSection->all(['*'], ['class', 'class.stream', 'section', 'medium']);
-
+        // $childs = 
         return view('guardian.index', compact('classes','class_sections'));
     }
 
@@ -82,7 +82,12 @@ class GuardianController extends Controller {
         $sort = request('sort', 'id');
         $order = request('order', 'DESC');
 
-        $sql = $this->user->guardian()->with('child.class_section');
+        $sql = $this->user->guardian()->with([
+                'child.user',         
+                'child.class_section',
+                'child.class_section.class',
+                'child.class_section.section'
+            ]);
 
         if($request->class_id && $request->class_id != 'all')
         {
