@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Models\School;
 use App\Repositories\User\UserInterface;
 use App\Services\CachingService;
 use App\Services\ResponseService;
@@ -31,8 +32,8 @@ class TeacherImport implements ToCollection, WithHeadingRow
         $this->is_send_notification = $is_send_notification;
     }
     /**
-    * @param Collection $collection
-    */
+     * @param Collection $collection
+     */
     public function collection(Collection $collection)
     {
         // dd($collection);
@@ -53,7 +54,7 @@ class TeacherImport implements ToCollection, WithHeadingRow
             '*.current_address'   => 'required',
             '*.permanent_address' => 'required',
             '*.salary' => 'required',
-        ],[
+        ], [
             '*.dob.date' => 'Please ensure that the dob date format you use is either DD-MM-YYYY or MM/DD/YYYY.'
         ]);
 
@@ -61,17 +62,17 @@ class TeacherImport implements ToCollection, WithHeadingRow
 
         // Check free trial package
         $today_date = Carbon::now()->format('Y-m-d');
-        $subscription = $subscription->builder()->doesntHave('subscription_bill')->whereDate('start_date','<=',$today_date)->where('end_date','>=',$today_date)->whereHas('package',function($q){
-            $q->where('is_trial',1);
+        $subscription = $subscription->builder()->doesntHave('subscription_bill')->whereDate('start_date', '<=', $today_date)->where('end_date', '>=', $today_date)->whereHas('package', function ($q) {
+            $q->where('is_trial', 1);
         })->first();
-        
+
         if ($subscription) {
             $systemSettings = $cache->getSystemSettings();
             $staff_count = $user->builder()->role('Teacher')->withTrashed()->orWhereHas('roles', function ($q) {
-                $q->where('custom_role', 1)->whereNotIn('name', ['Teacher','Guardian']);
+                $q->where('custom_role', 1)->whereNotIn('name', ['Teacher', 'Guardian']);
             })->whereNotNull('school_id')->Owner()->count();
             if ($staff_count >= $systemSettings['staff_limit']) {
-                $message = "The free trial allows only ".$systemSettings['staff_limit']." staff.";
+                $message = "The free trial allows only " . $systemSettings['staff_limit'] . " staff.";
                 ResponseService::errorResponse($message);
             }
         }
@@ -79,21 +80,20 @@ class TeacherImport implements ToCollection, WithHeadingRow
         $defaultSessionYear = $cache->getDefaultSessionYear();
 
         DB::beginTransaction();
-        foreach($collection as $row)
-        {
+        foreach ($collection as $row) {
             try {
                 $row = $row->toArray();
-                
+
                 // Find the index of the key after which to split the array to get extra details
                 $splitIndex = array_search('salary', array_keys($row)) + 1;
-                
+
                 // Get The Extra Details fields if they exist
                 $extraDetailsFields = array_slice($row, $splitIndex);
-                
+
                 $existingUser = $user->builder()->where('email', $row['email'])->first();
-                
+
                 $id = $existingUser ? $existingUser->id : null;
-                $users = $user->updateOrCreate( ['id' => $id] ,[
+                $users = $user->updateOrCreate(['id' => $id], [
                     'first_name' => $row['first_name'],
                     'last_name' => $row['last_name'],
                     'mobile' => $row['mobile'],
@@ -110,20 +110,37 @@ class TeacherImport implements ToCollection, WithHeadingRow
                     'deleted_at' => '1970-01-01 01:00:00'
                 ]);
 
-                
+
                 $users->assignRole('Teacher');
 
-                $staff->updateOrCreate( ['user_id' => $users->id] ,[
+                $school = School::where('id', Auth::user()->school_id)->first();
+
+                $shortCode = collect(explode(' ', $school->name))
+                    ->filter()
+                    ->map(fn($word) => $word[0])
+                    ->implode('');
+
+                if (strlen($shortCode) < 3) {
+                    $shortCode = strtoupper(substr(str_replace(' ', '', $school->name), 0, 3));
+                }
+
+
+                $formattedId = str_pad($users->id, 2, '0', STR_PAD_LEFT);
+
+                $teacherCode = $shortCode . $formattedId;
+
+                $staff->updateOrCreate(['user_id' => $users->id], [
+                    'unique_id'       => $teacherCode,
                     'user_id'       => $users->id,
                     'qualification' => $row['qualification'],
                     'salary'        => $row['salary'],
-                    'joining_date'  => isset($row['joining_date']) ? date('Y-m-d',strtotime($row['joining_date'])) : null,
+                    'joining_date'  => isset($row['joining_date']) ? date('Y-m-d', strtotime($row['joining_date'])) : null,
                     'join_session_year_id' => $defaultSessionYear->id
                 ]);
 
                 // Initialize extraDetails array
                 $extraDetails = array();
-                
+
                 // Check that Extra Details Exists
                 if (!empty($extraDetailsFields)) {
                     $extraFieldName = array_map(static function ($d) {
@@ -167,14 +184,12 @@ class TeacherImport implements ToCollection, WithHeadingRow
                             'data'          => NULL,
                         );
                     }
-                    
                 }
 
                 $sendEmail = app(UserService::class);
                 if ($this->is_send_notification) {
                     $sendEmail->sendStaffRegistrationEmail($users, $row['mobile']);
                 }
-
             } catch (Throwable $e) {
                 // IF Exception is TypeError and message contains Mail keywords then email is not sent successfully
                 if (Str::contains($e->getMessage(), ['Failed', 'Mail', 'Mailer', 'MailManager'])) {

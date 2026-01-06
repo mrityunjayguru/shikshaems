@@ -1039,6 +1039,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
     Route::delete('delete-transportation-fees/{id}', [TransportationFeeController::class, 'destroy'])->name('transportation-fees.destroy');
 
     Route::resource('route-vehicle', RouteVehicleController::class);
+    Route::get("get-teacher-or-staff", [RouteVehicleController::class, 'getStaffOrTeacher'])->name('route-vehicle.getStaffOrTeacher');
     Route::put("route-vehicle/{id}/restore", [RouteVehicleController::class, 'restore'])->name('route-vehicle.restore');
     Route::delete("route-vehicle/{id}/trash", [RouteVehicleController::class, 'trash'])->name('route-vehicle.trash');
 
