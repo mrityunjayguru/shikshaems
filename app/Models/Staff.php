@@ -13,6 +13,7 @@ class Staff extends Model
     use DateFormatTrait;
     protected $table = "staffs";
     protected $fillable = [
+        'unique_id',
         'user_id',
         'qualification',
         'salary',
