@@ -316,12 +316,57 @@ window.announcementEvents = {
 
 window.guardianEvents = {
     'click .edit-data': function (e, value, row) {
+        console.log(row.child);
+        
         $('#edit_id').val(row.id);
         $('#first_name').val(row.first_name);
         $('#last_name').val(row.last_name);
         $('input[name=gender][value=' + row.gender + '].edit').prop('checked', true);
         $('#email').val(row.email);
         $('#mobile').val(row.mobile);
+
+        let html = '';
+        $('#childDetails').html(''); // clear old data
+
+        if (row.child && row.child.length > 0) {
+
+            row.child.forEach(function (child) {
+               html += `
+                    <div class="form-group col-md-4 mb-3">
+                        <div class="border rounded p-2">
+                            <div class="form-group col-md-12">
+                                <label><strong>Name :</strong> ${child.full_name}</label>
+                            </div>
+
+                            <div class="form-group col-md-12">
+                                <label>
+                                    <strong>Class :</strong>
+                                    ${child.class_section.class.name}
+                                    (${child.class_section.section.name})
+                                </label>
+                            </div>
+
+                            <div class="form-group col-md-12">
+                                <label><strong>Roll Number :</strong> ${child.roll_number}</label>
+                            </div>
+
+                            <div class="form-group col-md-12">
+                                <label><strong>Admission No :</strong> ${child.admission_no}</label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+        } else {
+            html = `
+                <div class="col-md-12">
+                    <label>No child found</label>
+                </div>
+            `;
+        }
+
+        $('#childDetails').html(html);
     }
 };
 
@@ -2322,16 +2367,29 @@ window.driverHelperEvents = {
 
 window.routeVehicleEvents = {
     'click .edit-data': function (e, value, row) {
+        console.log(row);
+        
         $('#edit_route_id').val(row.route_id).trigger('change');
         $('#edit_vehicle_id').val(row.vehicle_id).trigger('change');
         $('#edit_driver_id').val(row.driver_id).trigger('change');
         $('#edit_helper_id').val(row.helper_id).trigger('change');
-        $('#edit_staff_id').val(row.staff_id).trigger('change');
+        $('#edit_user_id').val(row.staff_id).trigger('change');
         $('#edit_shift_id').val(row.shift_id).trigger('change');
+        
         $('#edit_pickup_trip_start_time').val(moment(row.pickup_start_time, 'HH:mm:ss').format('HH:mm'));
         $('#edit_pickup_trip_end_time').val(moment(row.pickup_end_time, 'HH:mm:ss').format('HH:mm'));
         $('#edit_drop_trip_start_time').val(moment(row.drop_start_time, 'HH:mm:ss').format('HH:mm'));
         $('#edit_drop_trip_end_time').val(moment(row.drop_end_time, 'HH:mm:ss').format('HH:mm'));
+        
+        // 🔹 SET ROLE
+        if(row.staff.role == 'Teacher'){
+            $('#edit_role').val('teacher').trigger('change');
+        }else{
+            $('#edit_role').val('staff').trigger('change');
+        }
+
+        // 🔹 LOAD STAFF / TEACHER AND AUTO SELECT
+        getTeacherOrStaffEdit(row.staff_id);
     }
 };
 

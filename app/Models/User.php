@@ -124,6 +124,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Students::class, 'user_id', 'id');
     }
 
+    public function routeVehicle()
+    {
+        return $this->hasOne(RouteVehicle::class, 'user_id', 'id');
+    }
+
     public function session_year()
     {
         return $this->hasOne(SessionYear::class, 'id', 'session_year_id');

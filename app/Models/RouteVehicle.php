@@ -51,9 +51,14 @@ class RouteVehicle extends Model
         return $this->belongsTo(Shift::class);
     }
 
+    public function teacher()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function staff()
     {
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
     public function transportationPayments()
