@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\School;
+use App\Models\User;
 use App\Repositories\User\UserInterface;
 use App\Services\CachingService;
 use App\Services\ResponseService;
@@ -93,7 +94,26 @@ class TeacherImport implements ToCollection, WithHeadingRow
                 $existingUser = $user->builder()->where('email', $row['email'])->first();
 
                 $id = $existingUser ? $existingUser->id : null;
+
+                $school = School::where('id', Auth::user()->school_id)->first();
+                $lastUser = User::orderBy('created_at', 'DESC')->first();
+                $userId = $lastUser->id + 1;
+
+                $shortCode = collect(explode(' ', $school->name))
+                    ->filter()
+                    ->map(fn($word) => $word[0])
+                    ->implode('');
+
+                if (strlen($shortCode) < 3) {
+                    $shortCode = strtoupper(substr(str_replace(' ', '', $school->name), 0, 3));
+                }
+
+
+                $formattedId = str_pad($userId, 2, '0', STR_PAD_LEFT);
+
+                $teacherCode = $shortCode . $formattedId;
                 $users = $user->updateOrCreate(['id' => $id], [
+                    'unique_id'       => $teacherCode,
                     'first_name' => $row['first_name'],
                     'last_name' => $row['last_name'],
                     'mobile' => $row['mobile'],
@@ -113,24 +133,7 @@ class TeacherImport implements ToCollection, WithHeadingRow
 
                 $users->assignRole('Teacher');
 
-                $school = School::where('id', Auth::user()->school_id)->first();
-
-                $shortCode = collect(explode(' ', $school->name))
-                    ->filter()
-                    ->map(fn($word) => $word[0])
-                    ->implode('');
-
-                if (strlen($shortCode) < 3) {
-                    $shortCode = strtoupper(substr(str_replace(' ', '', $school->name), 0, 3));
-                }
-
-
-                $formattedId = str_pad($users->id, 2, '0', STR_PAD_LEFT);
-
-                $teacherCode = $shortCode . $formattedId;
-
                 $staff->updateOrCreate(['user_id' => $users->id], [
-                    'unique_id'       => $teacherCode,
                     'user_id'       => $users->id,
                     'qualification' => $row['qualification'],
                     'salary'        => $row['salary'],

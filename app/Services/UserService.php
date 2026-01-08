@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\School;
 use App\Repositories\ExtraFormField\ExtraFormFieldsInterface;
 use App\Repositories\Student\StudentInterface;
 use App\Repositories\User\UserInterface;
 use App\Models\StudentCategory;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -76,6 +78,25 @@ class UserService
         if (!empty($image)) {
             $parent['image'] = UploadService::upload($image, 'guardian');
         }
+
+        //unique user id generate
+        $school = School::where('id', Auth::user()->school_id)->first();
+        $lastUser = User::orderBy('created_at', 'DESC')->first();
+        $userId = $lastUser->id + 1;
+
+        $shortCode = collect(explode(' ', $school->name))
+            ->filter()
+            ->map(fn($word) => $word[0])
+            ->implode('');
+
+        if (strlen($shortCode) < 3) {
+            $shortCode = strtoupper(substr(str_replace(' ', '', $school->name), 0, 3));
+        }
+
+
+        $formattedId = str_pad($userId, 2, '0', STR_PAD_LEFT);
+        $userUniqueId = $shortCode . $formattedId;
+
         if (!empty($user)) {
             if (isset($parent['image'])) {
                 if ($user->getRawOriginal('image') && Storage::disk('public')->exists($user->getRawOriginal('image'))) {
@@ -86,11 +107,11 @@ class UserService
                 $parent['password'] = Hash::make($password);
             }
             $user->assignRole('Guardian');
-
             $user->update($parent);
         } else {
             $parent['password'] = Hash::make($password);
             $parent['email'] = $email;
+            $parent['unique_id'] = $userUniqueId;
             $user = $this->user->create($parent);
             $user->assignRole('Guardian');
         }
@@ -123,9 +144,27 @@ class UserService
 
     public function createStudentUser(string $first_name, string $last_name, string $admission_no, string|null $mobile, string $dob, string $gender, \Symfony\Component\HttpFoundation\File\UploadedFile|null $image, int $classSectionID, ?int $houseID, ?int $categoryID, ?int $rollNumber, string $admissionDate, $current_address = null, $permanent_address = null, int $sessionYearID, int $guardianID, array $extraFields = [], int $status, $is_send_notification = null)
     {
+        $school = School::where('id', Auth::user()->school_id)->first();
+        $lastUser = User::orderBy('created_at', 'DESC')->first();
+        $userId = $lastUser->id + 1;
+
+        $shortCode = collect(explode(' ', $school->name))
+            ->filter()
+            ->map(fn($word) => $word[0])
+            ->implode('');
+
+        if (strlen($shortCode) < 3) {
+            $shortCode = strtoupper(substr(str_replace(' ', '', $school->name), 0, 3));
+        }
+
+
+        $formattedId = str_pad($userId, 2, '0', STR_PAD_LEFT);
+
+        $userUniqueId = $shortCode . $formattedId;
         $password = $this->makeStudentPassword($dob);
         //Create Student User First
         $user = $this->user->create([
+            'unique_id'       => $userUniqueId,
             'first_name'        => $first_name,
             'last_name'         => $last_name,
             'email'             => $admission_no,

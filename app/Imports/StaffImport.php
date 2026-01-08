@@ -15,6 +15,8 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\Repositories\Subscription\SubscriptionInterface;
 use App\Models\Role;
+use App\Models\School;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Repositories\Staff\StaffInterface;
 use App\Repositories\StaffSupportSchool\StaffSupportSchoolInterface;
@@ -44,7 +46,7 @@ class StaffImport implements ToCollection, WithHeadingRow
         $staffSupportSchool = app(StaffSupportSchoolInterface::class);
         $sessionYearsTrackingsService = app(SessionYearsTrackingsService::class);
 
-        $school_id = Auth::user()->school_id ;
+        $school_id = Auth::user()->school_id;
 
         $validator = Validator::make($collection->toArray(), [
             '*.first_name'     => 'required',
@@ -53,7 +55,7 @@ class StaffImport implements ToCollection, WithHeadingRow
             '*.email'      => 'required|email',
             '*.dob'            => 'required|date',
             '*.salary'            => 'required|numeric',
-        ],[
+        ], [
             '*.dob.date' => 'Please ensure that the dob date format you use is either DD-MM-YYYY or MM/DD/YYYY.'
         ]);
 
@@ -80,15 +82,32 @@ class StaffImport implements ToCollection, WithHeadingRow
         $defaultSessionYear = $cache->getDefaultSessionYear();
 
         DB::beginTransaction();
-        foreach($collection as $row)
-        {
+        foreach ($collection as $row) {
             try {
                 $role = Role::findOrFail($this->roleID);
-                
+
                 $existingUser = $user->builder()->where('email', $row['email'])->first();
                 $id = $existingUser ? $existingUser->id : null;
 
-                $users = $user->updateOrCreate(['id' => $id ],[
+                $school = School::where('id', Auth::user()->school_id)->first();
+                $lastUser = User::orderBy('created_at', 'DESC')->first();
+                $userId = $lastUser->id + 1;
+
+                $shortCode = collect(explode(' ', $school->name))
+                    ->filter()
+                    ->map(fn($word) => $word[0])
+                    ->implode('');
+
+                if (strlen($shortCode) < 3) {
+                    $shortCode = strtoupper(substr(str_replace(' ', '', $school->name), 0, 3));
+                }
+
+
+                $formattedId = str_pad($userId, 2, '0', STR_PAD_LEFT);
+
+                $userUniquId = $shortCode . $formattedId;
+                $users = $user->updateOrCreate(['id' => $id], [
+                    'unique_id'       => $userUniquId,
                     'first_name' => $row['first_name'],
                     'last_name' => $row['last_name'],
                     'mobile' => $row['mobile'],
@@ -101,7 +120,7 @@ class StaffImport implements ToCollection, WithHeadingRow
                     'two_factor_expires_at' => null,
                     'deleted_at' => '1970-01-01 01:00:00'
                 ]);
-                
+
                 $users->assignRole($role);
 
                 if ($users->school_id) {
@@ -113,21 +132,21 @@ class StaffImport implements ToCollection, WithHeadingRow
                     ];
                     $users->givePermissionTo($leave_permission);
                 }
-                
-                $staff->updateOrCreate( ['user_id' => $users->id] ,[
+
+                $staff->updateOrCreate(['user_id' => $users->id], [
                     'user_id'       => $users->id,
                     'qualification' => null,
                     'salary'        => $row['salary'] ?? 0,
-                    'joining_date'  => isset($row['joining_date']) ? date('Y-m-d',strtotime($row['joining_date'])) : null,
+                    'joining_date'  => isset($row['joining_date']) ? date('Y-m-d', strtotime($row['joining_date'])) : null,
                     'join_session_year_id' => $defaultSessionYear->id
                 ]);
-    
-    
+
+
                 if ($school_id) {
                     $data[] = array(
                         'user_id'   => $users->id,
                         'school_id' => $school_id
-                    );   
+                    );
                     // $staffSupportSchool->upsert($data, ['user_id', 'school_id'], ['user_id', 'school_id']);
                 }
 
@@ -140,7 +159,6 @@ class StaffImport implements ToCollection, WithHeadingRow
 
                 $sessionYear = $cache->getDefaultSessionYear();
                 $sessionYearsTrackingsService->storeSessionYearsTracking('App\Models\Staff', $users->id, Auth::user()->id, $sessionYear->id, Auth::user()->school_id, null);
-
             } catch (Throwable $e) {
                 // IF Exception is TypeError and message contains Mail keywords then email is not sent successfully
                 if (Str::contains($e->getMessage(), ['Failed', 'Mail', 'Mailer', 'MailManager'])) {
@@ -155,5 +173,3 @@ class StaffImport implements ToCollection, WithHeadingRow
         return true;
     }
 }
-
-
