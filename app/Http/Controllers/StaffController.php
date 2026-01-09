@@ -27,6 +27,8 @@ use Throwable;
 use App\Exports\StaffDataExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\StaffImport;
+use App\Models\School;
+use App\Models\User;
 use App\Repositories\ExtraFormField\ExtraFormFieldsInterface;
 use App\Repositories\FormField\FormFieldsInterface;
 use Illuminate\Validation\ValidationException;
@@ -158,6 +160,23 @@ class StaffController extends Controller
 
             $role = Role::findOrFail($request->role_id);
 
+            $school = School::where('id', Auth::user()->school_id)->first();
+            $lastUser = User::orderBy('created_at', 'DESC')->first();
+            $userId = $lastUser->id + 1;
+
+            $shortCode = collect(explode(' ', $school->name))
+                ->filter()
+                ->map(fn($word) => $word[0])
+                ->implode('');
+
+            if (strlen($shortCode) < 3) {
+                $shortCode = strtoupper(substr(str_replace(' ', '', $school->name), 0, 3));
+            }
+
+
+            $formattedId = str_pad($userId, 2, '0', STR_PAD_LEFT);
+
+            $userUniqueId = $shortCode . $formattedId;
             /*If Super admin creates the staff then make it active by default*/
             if (!empty(Auth::user()->school_id)) {
                 $data = array(
@@ -174,6 +193,7 @@ class StaffController extends Controller
                 /*If School Admin creates the Staff then active/inactive staff based on status*/
                 $data = array(
                     ...$request->except('school_id'),
+                    'unique_id'       => $userUniqueId,
                     'password' => Hash::make($request->mobile),
                     'image' => $request->file('image'),
                     'status' => 1,
@@ -297,7 +317,6 @@ class StaffController extends Controller
             }
 
             ResponseService::successResponse('Data Stored Successfully');
-
         } catch (Throwable $e) {
             if (Str::contains($e->getMessage(), ['Failed', 'Mail', 'Mailer', 'MailManager'])) {
                 DB::commit();
@@ -307,7 +326,6 @@ class StaffController extends Controller
                 ResponseService::logErrorResponse($e);
                 ResponseService::errorResponse();
             }
-
         }
     }
 
@@ -380,9 +398,6 @@ class StaffController extends Controller
                     $operate .= BootstrapTableService::button('fa fa-eye', route('staff.payroll-structure', $row->id), ['btn-gradient-warning'], ['title' => __('salary_structure')]);
                 }
                 $operate .= BootstrapTableService::button('fa fa-exclamation-triangle', route('staff.destroy', $row->id), ['deactivate-staff', 'btn-gradient-info'], ['title' => __('inactive')]);
-
-
-
             }
 
             $tempRow = $row->toArray();
@@ -750,8 +765,6 @@ class StaffController extends Controller
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
         }
-
-
     }
 
     public function bulkUploadIndex()
@@ -764,7 +777,6 @@ class StaffController extends Controller
             $schools = $this->school->active()->pluck('name', 'id');
         }
         return response(view('staff.bulk_upload', compact('roles', 'schools')));
-
     }
     public function storeBulkUpload(Request $request)
     {
