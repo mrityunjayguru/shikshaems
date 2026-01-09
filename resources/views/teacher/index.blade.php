@@ -338,7 +338,7 @@
                                     <tr>
                                         <th data-field="state" data-checkbox="true"></th>
                                         <th scope="col" data-field="no">{{ __('no.') }}</th>
-                                        <th scope="col" data-field="staff.unique_id" data-sortable="true" data-visible="false">{{ __('Unique Id') }}</th>
+                                        <th scope="col" data-field="unique_id" data-sortable="true" data-visible="false">{{ __('Unique Id') }}</th>
                                         <th scope="col" data-field="user.full_name" data-formatter="TeacherNameFormatter">{{ __('name') }}</th>
                                         <th scope="col" data-field="gender">{{ __('gender') }}</th>
                                         <th scope="col" data-field="mobile">{{ __('mobile') }}</th>

@@ -23,6 +23,7 @@ use App\Exports\TeacherDataExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\TeacherImport;
 use App\Models\School;
+use App\Models\User;
 use App\Repositories\ExtraFormField\ExtraFormFieldsInterface;
 use App\Repositories\FormField\FormFieldsInterface;
 use App\Services\SessionYearsTrackingsService;
@@ -72,7 +73,7 @@ class TeacherController extends Controller
         } else {
             $extraFields = $this->formFields->defaultModel()->orderBy('rank')->get();
         }
-        // dd(Auth::user());
+
         return view('teacher.index', compact('allowances', 'deductions', 'extraFields'));
     }
 
@@ -139,8 +140,30 @@ class TeacherController extends Controller
                 }
             }
 
+            $school = School::where('id', Auth::user()->school_id)->first();
+            $lastUser = User::orderBy('created_at', 'DESC')->first();
+            $userId = $lastUser->id + 1;
+            // $schoolCode = collect(explode(' ', $school->name))
+            //     ->map(fn($word) => strtoupper(substr($word, 0, 1)))
+            //     ->implode('');
+
+            $shortCode = collect(explode(' ', $school->name))
+                ->filter()
+                ->map(fn($word) => $word[0])
+                ->implode('');
+
+            if (strlen($shortCode) < 3) {
+                $shortCode = strtoupper(substr(str_replace(' ', '', $school->name), 0, 3));
+            }
+
+
+            $formattedId = str_pad($userId, 2, '0', STR_PAD_LEFT);
+
+            $teacherCode = $shortCode . $formattedId;
+
             $user_data = array(
                 ...$request->all(),
+                'unique_id'       => $teacherCode,
                 'password'          => Hash::make($request->mobile),
                 'image'             => $request->file('image'),
                 'status'            => $request->status ?? 0,
@@ -176,28 +199,9 @@ class TeacherController extends Controller
                 $this->extraFormFields->createBulk($extraDetails);
             }
 
-            $school = School::where('id', Auth::user()->school_id)->first();
 
-            // $schoolCode = collect(explode(' ', $school->name))
-            //     ->map(fn($word) => strtoupper(substr($word, 0, 1)))
-            //     ->implode('');
-            
-            $shortCode = collect(explode(' ', $school->name))
-                ->filter()
-                ->map(fn($word) => $word[0])
-                ->implode('');
-
-            if (strlen($shortCode) < 3) {
-                $shortCode = strtoupper(substr(str_replace(' ', '', $school->name), 0, 3));
-            }
-
-
-            $formattedId = str_pad($user->id, 2, '0', STR_PAD_LEFT);
-
-            $teacherCode = $shortCode . $formattedId;
             // dd($teacherCode);
             $staff = $this->staff->create([
-                'unique_id'       => $teacherCode,
                 'user_id'       => $user->id,
                 'qualification' => $request->qualification,
                 'salary'        => $request->salary,
