@@ -1,4 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Pinyon%20Script:wght@900&family=Pinyon%20Script&display=swap');
+
+/* Apply Mulish font only to text elements */
+body,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span:not([class*="mdi-"]):not([class*="fa-"]):not([class*="icon-"]),
+div:not([class*="mdi-"]):not([class*="fa-"]):not([class*="icon-"]),
+label,
+a,
+td,
+th,
+li,
+blockquote,
+pre,
+input,
+code {
+    font-family: 'Mulish', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* Preserve Pinyon Script for certificates */
+.certificate-text,
+[class*="certificate"] {
+    font-family: 'Pinyon Script', cursive !important;
+}
+
 
 .text-color-dashboard-counter-label {
     color: #585353 !important;
@@ -138,6 +169,7 @@
     border: 1px dashed gray;
     position: absolute;
 }
+
 .page-section {
     border: 1px solid lightgray;
     padding: 1rem;
@@ -148,12 +180,15 @@
     padding-top: 1rem;
     border-radius: 6px;
 }
+
 .ms-3 {
     margin-left: 1rem !important;
 }
+
 .action-column {
     text-align: center;
 }
+
 .action-column-dropdown-menu {
     padding: 0 !important;
 }
@@ -161,6 +196,7 @@
 .border-theme {
     border: 1px solid var(--theme-color);
 }
+
 .menu-search {
     border-radius: 10px;
 }
@@ -176,7 +212,7 @@
     opacity: 0;
     position: absolute;
     background-color: #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     padding: 10px;
     z-index: 1;
     transition: opacity 0.3s, visibility 0.3s;
@@ -203,6 +239,7 @@
     cursor: pointer;
     border-radius: 4px;
 }
+
 /* end package hover */
 
 @media (min-width: 992px) {

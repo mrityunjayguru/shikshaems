@@ -4938,7 +4938,7 @@ pre code {
     display: block;
     width: 100%;
     height: 2.875rem;
-    padding: 0.94rem 1.375rem;
+    /* padding: 0.94rem 1.375rem; */
     font-size: 0.8125rem;
     font-weight: 400;
     line-height: 1;
@@ -5091,7 +5091,7 @@ pre code {
 .typeahead::placeholder,
 .tt-query::placeholder,
 .tt-hint::placeholder {
-    color: #c9c8c8;
+    color: #000;
     opacity: 1;
 }
 
@@ -5229,18 +5229,19 @@ select.form-control>option {
 
 .form-control-sm {
     height: 2.575rem;
-    padding: 0.5rem 0.81rem;
+    /* padding: 0.5rem 0.81rem; */
     font-size: 0.875rem;
     line-height: 1.5;
-    border-radius: 0.2rem;
+    border-radius: 4px;
 }
 
 .form-control-lg {
-    height: 3.175rem;
-    padding: 0.94rem 1.94rem;
+    height: 2.175rem;
+    /* padding: 0.94rem 1.94rem; */
     font-size: 1.25rem;
     line-height: 1.5;
-    border-radius: 0.3rem;
+    border: none;
+    border-radius: 4px;
 }
 
 select.form-control[size],
@@ -8258,14 +8259,14 @@ input[type="button"].btn-block {
     align-items: center;
     padding: 0.94rem 1.375rem;
     margin-bottom: 0;
-    font-size: 0.8125rem;
+    font-size: 10px;
     font-weight: 400;
-    line-height: 1;
-    color: #495057;
+    /* line-height: 1; */
+    color: #835DFF;
     text-align: center;
     white-space: nowrap;
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
+    background-color: #D6C9FF;
+    /* border: 1px solid #ced4da; */
     border-radius: 2px;
 }
 
@@ -20980,6 +20981,8 @@ code {
     background-color: #ffffff;
     color: #000;
     outline: none;
+    border: 1px solid #835DFF !important;
+    box-shadow: 0 5px 10px 0 rgba(90, 116, 148, 0.4);
 }
 
 select.form-control,
@@ -28241,6 +28244,7 @@ div.tagsinput span.tag a {
 
 .auth .auth-form-light {
     background: #ffffff;
+    border-radius: 5px;
 }
 
 .auth .auth-form-light select {
@@ -28402,7 +28406,7 @@ div.tagsinput span.tag a {
 }
 
 .auth .brand-logo img {
-    width: 230px;
+    width: 300px;
 }
 
 .auth form .form-group {
@@ -28431,7 +28435,7 @@ div.tagsinput span.tag a {
 .auth form .form-group .tt-query,
 .auth form .form-group .tt-hint {
     background: transparent;
-    border-radius: 0;
+    border-radius: 4px;
     font-size: .9375rem;
 }
 
@@ -31782,7 +31786,7 @@ footer h4 a {
 }
 
 .content-wrapper {
-    background: #f2edf3;
+    background: #EBE9FF;
     padding: 1.75rem 1.25rem;
     width: 100%;
     -webkit-box-flex: 1;
