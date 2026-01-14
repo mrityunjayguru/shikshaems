@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Exports\StudentDataExport;
 use App\Imports\StudentsImport;
+use App\Models\ClassSection;
 use App\Models\School;
 use App\Models\StudentCategory;
 use App\Models\StudentHouse;
+use App\Models\Students;
+use App\Models\TransportationPayment;
 use App\Repositories\ClassSchool\ClassSchoolInterface;
 use App\Repositories\ClassSection\ClassSectionInterface;
 use App\Repositories\FormField\FormFieldsInterface;
@@ -385,6 +388,75 @@ class StudentController extends Controller
             ResponseService::errorResponse();
         }
     }
+
+    public function profile(Request $request, $id)
+    {
+        ResponseService::noPermissionThenRedirect('student-list');
+        $offset = request('offset', 0);
+        $limit = request('limit', 10);
+        $sort = request('sort', 'id');
+        $order = request('order', 'ASC');
+        $search = request('search');
+
+        if (Auth::user()->hasRole('Teacher')) {
+            $request->validate([
+                'class_id' => 'required'
+            ], [
+                'class_id.required' => 'The class field is required.'
+            ]);
+        }
+        // $student = Students::with(['user', 'guardian', 'class_section'])
+        //     ->findOrFail($id);
+        $sql = $this->student->builder()->where('application_type', 'offline')->where('application_type', 'online')
+            ->orwhere(function ($query) {
+                $query->where('application_status', 1); // Only online applications with status 1
+            })
+            ->with('user.extra_student_details.form_field', 'guardian', 'class_section.class.stream', 'class_section.section', 'class_section.class.shift', 'class_section.medium', 'class_section.class_teachers.teacher')
+            ->where(function ($query) use ($search) {
+                $query->when($search, function ($query) use ($search) {
+                    $query->where(function ($query) use ($search) {
+                        $query->where('user_id', 'LIKE', "%$search%")
+                            ->orWhere('class_section_id', 'LIKE', "%$search%")
+                            ->orWhere('admission_no', 'LIKE', "%$search%")
+                            ->orWhere('roll_number', 'LIKE', "%$search%")
+                            ->orWhere('admission_date', 'LIKE', date('Y-m-d', strtotime("%$search%")))
+                            ->orWhereHas('user', function ($q) use ($search) {
+                                $q->where('first_name', 'LIKE', "%$search%")
+                                    ->orwhere('last_name', 'LIKE', "%$search%")
+                                    ->orwhere('email', 'LIKE', "%$search%")
+                                    ->orwhere('dob', 'LIKE', "%$search%")
+                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                            })->orWhereHas('guardian', function ($q) use ($search) {
+                                $q->where('first_name', 'LIKE', "%$search%")
+                                    ->orwhere('last_name', 'LIKE', "%$search%")
+                                    ->orwhere('email', 'LIKE', "%$search%")
+                                    ->orwhere('dob', 'LIKE', "%$search%")
+                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                            });
+                    });
+                });
+                //class filter data
+            })->when(request('class_id') != null, function ($query) {
+                $classId = request('class_id');
+                $query->where(function ($query) use ($classId) {
+                    $query->where('class_section_id', $classId);
+                });
+            });
+
+        if ($request->exam_id && $request->exam_id != 'data-not-found') {
+            $sql = $sql->has('exam_result')->whereHas('exam_result', function ($q) use ($request) {
+                $q->where('exam_id', $request->exam_id);
+            });
+        }
+        $sql->where('id', $id);
+        $student = $sql->get();
+        $route_details = TransportationPayment::where('user_id', $student[0]->user_id)->with('pickupPoint','routeVehicle.route')->get();
+        // $classSection = ClassSection::with('class_teachers.teacher')->find($id);
+
+        // dd($student);
+        return view('students.profile', compact('student','route_details'));
+    }
+
 
     public function changeStatus($userId)
     {

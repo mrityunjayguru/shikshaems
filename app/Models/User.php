@@ -100,6 +100,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(ClassSection::class, 'class_teacher_id')->withTrashed();
     }
 
+     public function transportationPayment()
+    {
+        return $this->hasOne(TransportationPayment::class, 'user_id')->withTrashed();
+    }
+
     /**
      * This method will only work with Teacher Role
      * @return HasManyThrough
