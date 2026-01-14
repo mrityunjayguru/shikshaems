@@ -514,6 +514,8 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::get('list/{id?}', [StudentController::class, 'list'])->name('students.list');
             Route::post('update-profile', [StudentController::class, 'store_update_profile'])->name('students.update-profile');
 
+            Route::get('profile/{id}', [StudentController::class, 'profile'])
+                ->name('students.profile');
 
             Route::get('download-file', [StudentController::class, 'downloadSampleFile'])->name('student.bulk-data-sample');
             Route::delete('change-status/{id}', [StudentController::class, 'changeStatus'])->name('student.change-status');
@@ -1007,7 +1009,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
     Route::put("vehicles/{id}/restore", [VehicleController::class, 'restore'])->name('vehicles.restore');
     Route::delete("vehicles/{id}/trash", [VehicleController::class, 'trash'])->name('vehicles.trash');
     Route::resource('vehicles', VehicleController::class);
-    
+
     Route::post('code-validate', [CodeController::class, 'codeValidate'])->name('ajax.code.validate');
 
     //proximity
