@@ -69,7 +69,7 @@
                                     data-show-export="true"
                                     data-export-options='{ "fileName": "students-list-<?= date('d-m-y') ?>" ,"ignoreColumn":
                                     ["operate"]}' data-query-params="studentDetailsQueryParams"
-                                    data-check-on-init="true" data-escape="true">
+                                    data-check-on-init="true" data-escape="false">
                                     <thead>
                                         <tr>
                                             <th data-field="state" data-checkbox="true"></th>
@@ -166,7 +166,8 @@
                                 <div class="form-group col-sm-12 col-md-12 col-lg-6 col-xl-3">
                                     <label for="student_category">{{ __('category') }} <span
                                             class="text-danger">*</span></label>
-                                    <select name="student_category_id" id="edit_student_category_id" class="form-control select2">
+                                    <select name="student_category_id" id="edit_student_category_id"
+                                        class="form-control select2">
                                         <option value="">{{ __('select') . ' ' . __('Student') . ' ' . __('category') }}
                                         </option>
                                         @if (count($student_category))
@@ -502,6 +503,10 @@
     @endcan
 @endsection
 @section('script')
+    <script>
+            window.studentProfileBaseUrl = @json(url('students/profile'));
+    </script>
+
     <script>
         let originalFormat = "{{ $schoolSettings['date_format'] }}"; // PHP value
         let userIds;

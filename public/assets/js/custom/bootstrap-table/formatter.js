@@ -282,13 +282,25 @@ function assignmentSubmissionFeedbackUpdateFormatter(value, row) {
     }
 }
 
-function imageFormatter(value) {
-    if (value) {
-        return "<a data-toggle='lightbox' href='" + value + "' class=''><img src='" + value + "' class=''  alt='image'  onerror='onErrorImage(event)' /></a>";
-    } else {
-        return '-'
-    }
+// function imageFormatter(value) {
+//     if (value) {
+//         return "<a data-toggle='lightbox' href='" + value + "' class=''><img src='" + value + "' class=''  alt='image'  onerror='onErrorImage(event)' /></a>";
+//     } else {
+//         return '-'
+//     }
+// }
+function imageFormatter(image) {
+    let img = image ?? '/assets/dummy_logo.jpg';
+
+    return `
+        <img src="${img}"
+             class="rounded-circle"
+             width="40"
+             height="40"
+             onerror="onErrorImage(event)">
+    `;
 }
+
 function vehicleImageFormatter(value) {
 
     if (value) {
@@ -299,10 +311,26 @@ function vehicleImageFormatter(value) {
     }
 }
 
+// function StudentNameFormatter(value, row) {
+//     let html = '';
+//     html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.user.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.user.full_name + '</h6> <small class="text-muted"> ' + row.user.email + ' </small> </div> </div>';
+//     return html;
+// }
+
 function StudentNameFormatter(value, row) {
-    let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.user.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.user.full_name + '</h6> <small class="text-muted"> ' + row.user.email + ' </small> </div> </div>';
-    return html;
+    let url = window.studentProfileBaseUrl + '/' + row.id;
+
+    return `
+        <a href="${url}" class="text-decoration-none text-dark">
+            <div class="d-flex align-items-center">
+                ${imageFormatter(row.user.image)}
+                <div class="ms-3">
+                    <h6 class="mb-0 text-primary">${row.user.full_name}</h6>
+                    <small class="text-muted">${row.user.email}</small>
+                </div>
+            </div>
+        </a>
+    `;
 }
 
 function TeacherNameFormatter(value, row) {

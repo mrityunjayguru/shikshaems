@@ -13,6 +13,10 @@
     clear: both
 }
 
+.bootstrap-table .fixed-table-body a {
+    pointer-events: auto;
+}
+
 .bootstrap-table .fixed-table-toolbar .bs-bars,
 .bootstrap-table .fixed-table-toolbar .columns,
 .bootstrap-table .fixed-table-toolbar .search {
