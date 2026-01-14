@@ -114,7 +114,7 @@ class Students extends Model
         $cache = app(CachingService::class);
         $currentSemester = $cache->getDefaultSemesterData($student->school_id);
         // dd($this->toArray());
-//        $class_id = $this->class_section->class->id;
+        //        $class_id = $this->class_section->class->id;
         $class_section_id = $student->class_section->id;
         $core_subjects = $student->class_section->class->core_subjects()->where(function ($query) use ($currentSemester) {
             (isset($currentSemester) && !empty($currentSemester)) ? $query->where('semester_id', $currentSemester->id)->orWhereNull('semester_id') : $query->orWhereNull('semester_id');
@@ -161,6 +161,7 @@ class Students extends Model
     {
         return $this->belongsTo(User::class, 'guardian_id')->withTrashed();
     }
+
 
     public function classSection()
     {
@@ -293,7 +294,7 @@ class Students extends Model
     public function getCreatedAtAttribute()
     {
         return $this->formatDateValue($this->getRawOriginal('created_at'));
-    }   
+    }
 
 
     public function getUpdatedAtAttribute()
@@ -310,5 +311,4 @@ class Students extends Model
     {
         return $this->hasOne(PromoteStudent::class, 'student_id', 'user_id');
     }
-
 }
