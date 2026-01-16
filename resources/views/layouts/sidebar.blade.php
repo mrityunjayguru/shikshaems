@@ -45,7 +45,12 @@
                             <li class="nav-item"><a href="{{ route('subjects.index') }}" class="nav-link"> {{ __('subject') }}
                                 </a></li>
                         @endcan
-
+                        
+                        {{-- @can('syllabus-list') --}}
+                            <li class="nav-item"><a href="{{ route('syllabus.index') }}" class="nav-link"> {{ __('Syllabus') }}
+                                </a></li>
+                        {{-- @endcan --}}
+                                
                         @can('semester-list')
                             <li class="nav-item"><a href="{{ route('semester.index') }}" class="nav-link">
                                     {{ __('Semester') }} </a></li>
