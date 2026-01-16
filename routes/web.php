@@ -59,6 +59,7 @@ use App\Http\Controllers\StaffAttendanceController;
 use App\Http\Controllers\StreamController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\SyllabusController;
 use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\StudentHouseController;
 use App\Http\Controllers\SubscriptionBillPaymentController;
@@ -450,6 +451,17 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::delete("/{id}/deleted", [SubjectController::class, 'trash'])->name('subjects.trash');
         });
         Route::resource('subjects', SubjectController::class);
+        
+        // Syllabus
+        Route::group(['prefix' => 'syllabus'], static function () {
+            Route::get('/',[SyllabusController::class, 'index'])->name('syllabus.index');
+            Route::post('/store',[SyllabusController::class, 'store'])->name('syllabus.store');
+            Route::get('/show/{id}',[SyllabusController::class, 'show'])->name('syllabus.show');
+            Route::get('/details/{id}',[SyllabusController::class, 'details'])->name('syllabus.details');
+            Route::get('/edit/{id}',[SyllabusController::class, 'edit'])->name('syllabus.edit');
+            Route::put('/update/{id}',[SyllabusController::class, 'update'])->name('syllabus.update');
+            Route::delete('/destroy/{id}',[SyllabusController::class, 'destroy'])->name('syllabus.destroy');
+        });
 
         /*** Class ***/
         Route::group(['prefix' => 'class'], static function () {

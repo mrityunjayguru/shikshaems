@@ -200,6 +200,19 @@ function SubjectQueryParams(p) {
     };
 }
 
+function SyllabusQueryParams(p) {
+    let tableListType = $('.table-list-type.active').data('id');
+    return {
+        limit: p.limit,
+        sort: p.sort,
+        order: p.order,
+        offset: p.offset,
+        search: p.search,
+        class_id: $('#filter_class_id').val(),
+        show_deleted: tableListType,
+    };
+}
+
 
 function ExpenseQueryParams(p) {
     return {
