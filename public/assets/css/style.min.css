@@ -4938,14 +4938,15 @@ pre code {
     display: block;
     width: 100%;
     height: 2.875rem;
-    /* padding: 0.94rem 1.375rem; */
+    padding: 0.94rem 1.375rem;
     font-size: 0.8125rem;
     font-weight: 400;
     line-height: 1;
     color: #495057;
-    background-color: #ffffff;
+    background-color: #EBE9FF;
     background-clip: padding-box;
     border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     border-radius: 2px;
     -webkit-transition: border-color 0.15s ease-in-out, -webkit-box-shadow 0.15s ease-in-out;
     transition: border-color 0.15s ease-in-out, -webkit-box-shadow 0.15s ease-in-out;
@@ -5018,6 +5019,7 @@ pre code {
     outline: 0;
     -webkit-box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    transition: all 0.15s ease-in-out;
 }
 
 .form-control::-webkit-input-placeholder,
@@ -5229,10 +5231,13 @@ select.form-control>option {
 
 .form-control-sm {
     height: 2.575rem;
-    /* padding: 0.5rem 0.81rem; */
+    padding: 0.5rem 0.81rem;
     font-size: 0.875rem;
     line-height: 1.5;
     border-radius: 4px;
+    color: #212529 !important;
+    outline : none !important;
+    background-color: #EBE9FF !important;
 }
 
 .form-control-lg {
@@ -20978,7 +20983,7 @@ code {
 .typeahead:focus,
 .tt-query:focus,
 .tt-hint:focus {
-    background-color: #ffffff;
+    background-color: #EBE9FF;
     color: #000;
     outline: none;
     border: 1px solid #835DFF !important;
