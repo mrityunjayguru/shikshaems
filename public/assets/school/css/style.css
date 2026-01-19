@@ -17,11 +17,10 @@
   --primary-background-color: #f2f5f7;
 }
 
-body {
+/* body {
   font-family: 'Mulish' !important;
   background-color: #fff;
-  background-color: #fff;
-}
+} */
 
 body.modal-open {
   overflow: hidden;

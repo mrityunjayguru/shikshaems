@@ -100,12 +100,6 @@ $lang = Session::get('language');
         .form-control:hover {
             border: 1px solid #835DFF !important;
         }
-
-        /* .form-control:focus {
-            border: 1px solid #835DFF !important;
-            drop-shadow: 0 10px 2px -2px #835DFF !important;
-        } */
-
         i {
             color: #835DFF !important;
         }

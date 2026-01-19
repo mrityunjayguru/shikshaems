@@ -2,13 +2,13 @@
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
 
     <div class="sidebar-search pl-4 pr-4">
-        <input type="text" id="menu-search" placeholder="{{ __('search_menu') }}"
-            class="form-control menu-search border-theme form-control-sm">
+        <input type="text" id="menu-search" placeholder="{{ __('Search menu...') }}"
+            class=" menu-search border-theme form-control-sm">
     </div>
 
     <div class="sidebar-search pl-4 pr-4 mt-2">
-        <input type="text" id="menu-search-mini" placeholder="{{ __('search_menu') }}"
-            class="form-control d-lg-none border-theme">
+        <input type="text" id="menu-search-mini" placeholder="{{ __('Search menu...') }}"
+            class="menu-search d-lg-none border-theme">
     </div>
 
     <ul class="nav">
