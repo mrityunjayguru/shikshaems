@@ -295,9 +295,6 @@ Route::group(['prefix' => 'staff'], static function () {
 
         Route::get('student-fees-receipt', [StaffApiController::class, 'feesReceipt']);
         Route::get('allowances-deductions', [StaffApiController::class, 'allowancesDeductions']);
-
-        
-        
     });
 });
 
@@ -396,4 +393,6 @@ Route::group(['middleware' => ['APISwitchDatabase',]], static function () {
 
     Route::get('diaries', [ApiController::class, 'getStudentDiaries']);
 
+    
 });
+Route::post('track-vehicles', [TrasportationApiController::class, 'trackVehicles']);
