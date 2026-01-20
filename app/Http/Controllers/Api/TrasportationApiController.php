@@ -86,7 +86,7 @@ class TrasportationApiController extends Controller
         }
 
         try {
-            $names = array('currency_code', 'currency_symbol', );
+            $names = array('currency_code', 'currency_symbol',);
 
             $settings = $this->schoolSetting->getBulkData($names);
             $transportationFee = TransportationFee::select('id', 'duration', 'fee_amount')
@@ -414,7 +414,6 @@ class TrasportationApiController extends Controller
             } else {
                 return ResponseService::errorResponse('No expense created by this user');
             }
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             return ResponseService::errorResponse();
@@ -727,7 +726,6 @@ class TrasportationApiController extends Controller
             }
 
             return ResponseService::successResponse("Home screen data fetched successfully", $data);
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             return ResponseService::errorResponse();
@@ -1051,7 +1049,7 @@ class TrasportationApiController extends Controller
                     'shift_time' => [
                         'label' => (function ($start) {
                             $hour = date('H', strtotime($start)); // 24-hour format
-        
+
                             if ($hour >= 5 && $hour < 12) {
                                 return 'Morning';
                             } elseif ($hour >= 12 && $hour < 17) {
@@ -1081,8 +1079,6 @@ class TrasportationApiController extends Controller
                 $data = "No on-going trip found";
                 return ResponseService::successResponse("Live route data fetched successfully", $data);
             }
-
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             return ResponseService::errorResponse();
@@ -1126,7 +1122,6 @@ class TrasportationApiController extends Controller
             }
 
             return ResponseService::successResponse("Vehicle assigned", "assigned");
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             return ResponseService::errorResponse();
@@ -1221,7 +1216,6 @@ class TrasportationApiController extends Controller
             ];
 
             return ResponseService::successResponse("Plan fetched successfully", $data);
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             return ResponseService::errorResponse();
@@ -1351,8 +1345,6 @@ class TrasportationApiController extends Controller
             } else {
                 return ResponseService::errorResponse("Unauthorised");
             }
-
-
         } catch (\Throwable $th) {
             DB::rollBack();
             ResponseService::logErrorResponse($th);
@@ -1478,7 +1470,6 @@ class TrasportationApiController extends Controller
             DB::commit();
 
             return ResponseService::successResponse("Attendance stored successfully");
-
         } catch (\Throwable $th) {
             DB::rollBack();
             ResponseService::logErrorResponse($th);
@@ -1711,7 +1702,6 @@ class TrasportationApiController extends Controller
             ];
 
             return ResponseService::successResponse("Dashboard data fetched successfully", $data);
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             return ResponseService::errorResponse();
@@ -1868,7 +1858,6 @@ class TrasportationApiController extends Controller
                             'session_year_id' => $sessionYear->id,
                             'created_by' => $user_id,
                         ];
-
                     }
 
                     $id = RouteVehicleHistory::create($data);
@@ -2059,9 +2048,9 @@ class TrasportationApiController extends Controller
                                         // find attendance for this passenger at this pickup point
                                         $attendance = $transportationAttendance
                                             ->firstWhere(function ($att) use ($user, $pickupPoint) {
-                                            return $att->user_id == $user->user->id &&
-                                                $att->pickup_point_id == $pickupPoint->pickup_point_id;
-                                        });
+                                                return $att->user_id == $user->user->id &&
+                                                    $att->pickup_point_id == $pickupPoint->pickup_point_id;
+                                            });
 
                                         return [
                                             'id' => $user->user->id,
@@ -2101,7 +2090,7 @@ class TrasportationApiController extends Controller
                                 'id' => $routeVehicleHistory->shift->id,
                                 'label' => (function ($start) {
                                     $hour = date('H', strtotime($start)); // 24-hour format
-        
+
                                     if ($hour >= 5 && $hour < 12) {
                                         return 'Morning';
                                     } elseif ($hour >= 12 && $hour < 17) {
@@ -2136,7 +2125,7 @@ class TrasportationApiController extends Controller
                                 'id' => $routeVehicleHistory->shift->id,
                                 'label' => (function ($start) {
                                     $hour = date('H', strtotime($start)); // 24-hour format
-        
+
                                     if ($hour >= 5 && $hour < 12) {
                                         return 'Morning';
                                     } elseif ($hour >= 12 && $hour < 17) {
@@ -2224,7 +2213,7 @@ class TrasportationApiController extends Controller
                                 'id' => $routeVehicle->route->shift_id,
                                 'label' => (function ($start) {
                                     $hour = date('H', strtotime($start)); // 24-hour format
-        
+
                                     if ($hour >= 5 && $hour < 12) {
                                         return 'Morning';
                                     } elseif ($hour >= 12 && $hour < 17) {
@@ -2282,7 +2271,7 @@ class TrasportationApiController extends Controller
                                 'id' => $routeVehicle->route->shift_id,
                                 'label' => (function ($start) {
                                     $hour = date('H', strtotime($start)); // 24-hour format
-        
+
                                     if ($hour >= 5 && $hour < 12) {
                                         return 'Morning';
                                     } elseif ($hour >= 12 && $hour < 17) {
@@ -2372,10 +2361,42 @@ class TrasportationApiController extends Controller
             }
 
             return ResponseService::successResponse("Attendance records fetched successfully", $data);
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             return ResponseService::errorResponse();
         }
+    }
+
+    public function trackVehicles(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'vehicle_id' => 'required'
+        ], [
+            'vehicle_id.required' => 'Vehicle id is required.'
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseService::validationError($validator->errors()->first());
+        }
+
+        $vehicleDetails = DB::connection('pgsql')
+            ->table('tc_devices as td')
+            ->leftJoin('tc_positions as tp', 'td.positionid', '=', 'tp.id')
+            ->where('td.name', $request->vehicle_id)
+            ->select(
+                'td.id',
+                'td.name',
+                'td.positionid',
+                'tp.latitude',
+                'tp.longitude',
+                'tp.speed',
+                'tp.course'
+            )
+            ->get();
+
+
+        // dd($vehicleDetails);
+        return ResponseService::successResponse("Vehicles records fetched successfully", $vehicleDetails);
     }
 }

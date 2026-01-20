@@ -68,6 +68,17 @@ window.subjectEvents = {
     }
 };
 
+window.syllabusEvents = {
+    'click .edit-data': function (e, value, row) {
+        $('#edit_id').val(row.id);
+        $('#edit_name').val(row.name);
+        $('#edit_code').val(row.code);
+        $('#edit_bg_color').asColorPicker('val', row.bg_color);
+        $('input[name=medium_id][value=' + row.medium_id + '].edit').prop('checked', true);
+        $('input[name=type][value=' + row.eng_type + '].edit').prop('checked', true);
+    }
+};
+
 
 window.classGroupEvents = {
     'click .edit-data': function (e, value, row) {
