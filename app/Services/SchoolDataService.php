@@ -279,6 +279,7 @@ class SchoolDataService
             ...self::permission('class'),
             ...self::permission('class-section'),
             ...self::permission('subject'),
+            ...self::permission('syllabus'),
             ...self::permission('teacher'),
             ...self::permission('guardian'),
             ...self::permission('session-year'),
@@ -454,6 +455,11 @@ class SchoolDataService
             'subject-create',
             'subject-edit',
             'subject-delete',
+
+            'syllabus-list',
+            'syllabus-create',
+            'syllabus-edit',
+            'syllabus-delete',
 
             'teacher-list',
             'teacher-create',
