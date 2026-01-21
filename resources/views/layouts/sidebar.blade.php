@@ -1,21 +1,26 @@
 <!-- partial:../../partials/_sidebar.html -->
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
 
-    <div class="sidebar-search pl-4 pr-4">
+    <div class="sidebar-search pl-4 my-2">
         <input type="text" id="menu-search" placeholder="{{ __('Search menu...') }}"
-            class=" menu-search border-theme form-control-sm">
+            class=" menu-search border-theme form-control-sm form-conrol">
     </div>
 
-    <div class="sidebar-search pl-4 pr-4 mt-2">
+    <div class="sidebar-search pl-4 pr-4 my-2">
         <input type="text" id="menu-search-mini" placeholder="{{ __('Search menu...') }}"
-            class="menu-search d-lg-none border-theme">
+            class="menu-search d-lg-none border-theme form-conrol">
     </div>
 
     <ul class="nav">
         {{-- dashboard --}}
         <li class="nav-item">
             <a href="{{ url('/dashboard') }}" class="nav-link">
-                <i class="fa fa-home menu-icon"></i>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-2" style="min-width: 22px;">
+                    <path d="M8.25 20.1667H13.75C18.3333 20.1667 20.1667 18.3334 20.1667 13.75V8.25004C20.1667 3.66671 18.3333 1.83337 13.75 1.83337H8.25C3.66667 1.83337 1.83333 3.66671 1.83333 8.25004V13.75C1.83333 18.3334 3.66667 20.1667 8.25 20.1667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9.16667 1.83337V20.1667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9.16667 7.79163H20.1667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9.16667 14.2084H20.1667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
                 <span class="menu-title">{{ __('dashboard') }}</span>
             </a>
         </li>
@@ -25,7 +30,7 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#academics-menu" aria-expanded="false"
                     aria-controls="academics-menu">
-                    <i class="fa fa-university menu-icon"></i>
+                    <img src="{{ asset('assets/icons/admin-icons/school.svg') }}" alt="school" class="w-5 h-5 svg-theme-stroke mr-2">
                     <span class="menu-title">{{ __('academics') }}</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -116,7 +121,7 @@
         @role('Teacher')
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('class-section.index') }}">
-                    <i class="fa fa-university menu-icon"></i>
+                    <img src="{{ asset('assets/icons/admin-icons/school.svg') }}" alt="school" class="w-5 h-5 svg-theme-stroke mr-2">
                     <span class="menu-title"> {{ __('Class Section') }} </span>
                 </a>
             </li>
@@ -297,7 +302,13 @@
                 @can('holiday-list')
                     <a href="{{ route('holiday.index') }}" class="nav-link"
                         data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Holiday Management')">
-                        <i class="fa fa-calendar-check-o menu-icon"></i>
+                        <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M17.4167 7.33337C18.9354 7.33337 20.1667 6.10216 20.1667 4.58337C20.1667 3.06459 18.9354 1.83337 17.4167 1.83337C15.8979 1.83337 14.6667 3.06459 14.6667 4.58337C14.6667 6.10216 15.8979 7.33337 17.4167 7.33337Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.41667 11.9166H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.41667 15.5834H14.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.8333 1.83337H8.25C3.66667 1.83337 1.83333 3.66671 1.83333 8.25004V13.75C1.83333 18.3334 3.66667 20.1667 8.25 20.1667H13.75C18.3333 20.1667 20.1667 18.3334 20.1667 13.75V9.16671" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
                         <span class="menu-title">{{ __('holiday_list') }}</span>
                     </a>
                 @endcan
@@ -306,7 +317,13 @@
         <li class="nav-item">
             {{-- @can('holiday-list') --}}
             <a href="{{ route('event.index') }}" class="nav-link">
-                <i class="fa fa-calendar-check-o menu-icon"></i>
+                <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M17.4167 7.33337C18.9354 7.33337 20.1667 6.10216 20.1667 4.58337C20.1667 3.06459 18.9354 1.83337 17.4167 1.83337C15.8979 1.83337 14.6667 3.06459 14.6667 4.58337C14.6667 6.10216 15.8979 7.33337 17.4167 7.33337Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.41667 11.9166H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.41667 15.5834H14.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.8333 1.83337H8.25C3.66667 1.83337 1.83333 3.66671 1.83333 8.25004V13.75C1.83333 18.3334 3.66667 20.1667 8.25 20.1667H13.75C18.3333 20.1667 20.1667 18.3334 20.1667 13.75V9.16671" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
                 <span class="menu-title">{{ __('event_list') }}</span>
             </a>
             {{-- @endcan --}}
@@ -825,7 +842,18 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#school-menu" aria-expanded="false"
                     aria-controls="school-menu">
-                    <i class="fa fa-university menu-icon"></i>
+                    <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M11.3392 1.97089L19.5892 5.27087C19.91 5.3992 20.1667 5.7842 20.1667 6.12336V9.1667C20.1667 9.67087 19.7542 10.0834 19.25 10.0834H2.75C2.24583 10.0834 1.83333 9.67087 1.83333 9.1667V6.12336C1.83333 5.7842 2.09001 5.3992 2.41084 5.27087L10.6608 1.97089C10.8442 1.89756 11.1558 1.89756 11.3392 1.97089Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20.1667 20.1667H1.83333V17.4167C1.83333 16.9125 2.24583 16.5 2.75 16.5H19.25C19.7542 16.5 20.1667 16.9125 20.1667 17.4167V20.1667Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3.66667 16.5V10.0834" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.33333 16.5V10.0834" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11 16.5V10.0834" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.6667 16.5V10.0834" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18.3333 16.5V10.0834" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M0.916666 20.1666H21.0833" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11 7.79163C11.7594 7.79163 12.375 7.17602 12.375 6.41663C12.375 5.65723 11.7594 5.04163 11 5.04163C10.2406 5.04163 9.625 5.65723 9.625 6.41663C9.625 7.17602 10.2406 7.79163 11 7.79163Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
                     <span class="menu-title">{{ __('schools') }}</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -867,16 +895,20 @@
         @canany(['package-list', 'package-create', 'package-edit', 'package-delete'])
             <li class="nav-item">
                 <a href="{{ route('package.index') }}" class="nav-link">
-                    <i class="fa fa-codepen menu-icon"></i>
+                   <svg width="22" height="22" class="mr-2 viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M2.90583 6.81995L11 11.5041L19.0392 6.84745" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11 19.8092V11.495" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.1025 2.27331L4.2075 4.98664C3.09833 5.60081 2.19083 7.14081 2.19083 8.40581V13.585C2.19083 14.85 3.09833 16.39 4.2075 17.0041L9.1025 19.7266C10.1475 20.3041 11.8617 20.3041 12.9067 19.7266L17.8017 17.0041C18.9108 16.39 19.8183 14.85 19.8183 13.585V8.40581C19.8183 7.14081 18.9108 5.60081 17.8017 4.98664L12.9067 2.26414C11.8525 1.68664 10.1475 1.68664 9.1025 2.27331Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
                     <span class="menu-title">{{ __('package') }}</span>
                 </a>
             </li>
         @endcan
-        {{-- package --}}
+        {{-- Addons --}}
         @canany(['addons-list', 'addons-create', 'addons-edit', 'addons-delete'])
             <li class="nav-item">
                 <a href="{{ route('addons.index') }}" class="nav-link">
-                    <i class="fa fa-puzzle-piece menu-icon"></i>
+                    <img src="{{ asset('assets/icons/admin-icons/addons.svg') }}" alt="addons" class="w-5 h-5 svg-theme-stroke mr-2">
                     <span class="menu-title">{{ __('addons') }}</span>
                 </a>
             </li>
@@ -887,7 +919,7 @@
             'package-edit', 'package-delete'])
             <li class="nav-item">
                 <a href="{{ url('features') }}" class="nav-link">
-                    <i class="fa fa-list-ul menu-icon"></i>
+                    <img src="{{ asset('assets/icons/admin-icons/features.svg') }}" alt="features" class="w-5 h-5 svg-theme-stroke mr-2">
                     <span class="menu-title">{{ __('features') }}</span>
                 </a>
             </li>
@@ -897,14 +929,14 @@
         @can('subscription-view')
             <li class="nav-item">
                 <a href="{{ url('subscriptions/report') }}" class="nav-link">
-                    <i class="fa fa-puzzle-piece menu-icon"></i>
+                    <img src="{{ asset('assets/icons/admin-icons/subscription.svg') }}" alt="subscription" class="w-5 h-5 svg-theme-stroke mr-2">
                     <span class="menu-title">{{ __('subscription') }}</span>
                 </a>
             </li>
 
             <li class="nav-item">
                 <a href="{{ url('subscriptions/transactions') }}" class="nav-link">
-                    <i class="fa fa-money menu-icon"></i>
+                    <img src="{{ asset('assets/icons/admin-icons/transaction.svg') }}" alt="transaction" class="w-5 h-5 svg-theme-stroke mr-2">
                     <span class="menu-title">{{ __('subscription_transaction') }}</span>
                 </a>
             </li>
@@ -1138,7 +1170,7 @@
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="collapse" href="#staff-management" aria-expanded="false"
                         aria-controls="staff-management-menu">
-                        <i class="fa fa-user-secret menu-icon"></i>
+                        <img src="{{ asset('assets/icons/admin-icons/staff-management.svg') }}" alt="staff-management" class="w-5 h-5 svg-theme-stroke mr-2">
                         <span class="menu-title">{{ __('Staff Management') }}</span>
                         <i class="menu-arrow"></i>
                     </a>
@@ -1164,7 +1196,7 @@
         @canany(['custom-school-email'])
             <li class="nav-item">
                 <a href="{{ route('schools.send.mail') }}" class="nav-link">
-                    <i class="fa fa-envelope menu-icon"></i>
+                    <img src="{{ asset('assets/icons/admin-icons/mail.svg') }}" alt="mail" class="w-5 h-5 svg-theme-stroke mr-2">
                     <span class="menu-title">{{ __('email_schools') }}</span>
                 </a>
             </li>
@@ -1203,7 +1235,7 @@
                                     <li class="nav-item">
                                         <a class="nav-link" data-toggle="collapse" href="#subscription" aria-expanded="false"
                                             aria-controls="subscription-menu">
-                                            <i class="fa fa-puzzle-piece menu-icon"></i>
+                                            <img src="{{ asset('assets/icons/admin-icons/addons.svg') }}" alt="addons" class="w-5 h-5 svg-theme-stroke mr-2">
                                             <span class="menu-title">{{ __('subscription') }}</span>
                                             <i class="menu-arrow"></i>
                                         </a>
@@ -1244,7 +1276,7 @@
         @canany(['contact-inquiry-list'])
                                     <li class="nav-item">
                                         <a href="{{ url('contact-inquiry') }}" class="nav-link">
-                                            <i class="fa fa-envelope-o menu-icon"></i>
+                                            <img src="{{ asset('assets/icons/admin-icons/contect-inquiry.svg') }}" alt="contect-inquiry" class="w-5 h-5 svg-theme-stroke mr-2">
                                             <span class="menu-title">{{ __('Contact Inquiry') }}</span>
                                         </a>
                                     </li>
@@ -1254,7 +1286,7 @@
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#web_settings" aria-expanded="false"
                                     aria-controls="web_settings-menu">
-                                    <i class="fa fa-cogs menu-icon"></i>
+                                    <img src="{{ asset('assets/icons/admin-icons/web-settings.svg') }}" alt="web-settings" class="w-5 h-5 svg-theme-stroke mr-2">
                                     <span class="menu-title">{{ __('web_settings') }}</span>
                                     <i class="menu-arrow"></i>
                                 </a>
@@ -1285,7 +1317,7 @@
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#web_settings" aria-expanded="false"
                                     aria-controls="web_settings-menu" data-access="@hasFeatureAccess('Website Management')">
-                                    <i class="fa fa-cogs menu-icon"></i>
+                                    <img src="{{ asset('assets/icons/admin-icons/web-settings.svg') }}" alt="web-settings" class="w-5 h-5 svg-theme-stroke mr-2">
                                     <span class="menu-title">{{ __('web_settings') }}</span>
                                     <i class="menu-arrow"></i>
                                 </a>
@@ -1317,7 +1349,7 @@
                                     <li class="nav-item">
                                         <a class="nav-link" data-toggle="collapse" href="#settings-menu" aria-expanded="false"
                                             aria-controls="settings-menu">
-                                            <i class="fa fa-cog menu-icon"></i>
+                                            <img src="{{ asset('assets/icons/admin-icons/system-settings.svg') }}" alt="system-settings" class="w-5 h-5 svg-theme-stroke mr-2">
                                             <span class="menu-title">{{ __('system_settings') }}</span>
                                             <i class="menu-arrow"></i>
                                         </a>
@@ -1511,7 +1543,7 @@
               @if (Auth::user()->hasRole(['Super Admin']))
         <li class="nav-item">
             <a class="nav-link" href="https://wrteam-in.github.io/eSchool-SaaS-Doc/" target="_blank">
-                <i class="fa fa-book menu-icon"></i>
+                <img src="{{ asset('assets/icons/admin-icons/documentation.svg') }}" alt="documentation" class="w-5 h-5 svg-theme-stroke mr-2">
                 <span class="menu-title">{{ __('Documentation') }}</span>
             </a>
         </li>
@@ -1519,7 +1551,7 @@
         @if (Auth::user()->hasRole(['Super Admin', 'School Admin']) || Auth::user()->hasPermissionTo('database-backup'))
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('database-backup.index') }}">
-                    <i class="fa fa-database menu-icon"></i>
+                    <img src="{{ asset('assets/icons/admin-icons/database-backup.svg') }}" alt="database-backup" class="w-5 h-5 svg-theme-stroke mr-2">
                     <span class="menu-title">{{ __('database_backup') }}</span>
                 </a>
             </li>
@@ -1527,7 +1559,7 @@
         @if (Auth::user()->hasRole('Super Admin'))
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('system-update.index') }}">
-                    <i class="fa fa-cloud-download menu-icon"></i>
+                    <img src="{{ asset('assets/icons/admin-icons/system-update.svg') }}" alt="system-update" class="w-5 h-5 svg-theme-stroke mr-2">
                     <span class="menu-title">{{ __('system_update') }}</span>
                 </a>
             </li>

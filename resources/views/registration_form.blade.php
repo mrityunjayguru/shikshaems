@@ -21,37 +21,43 @@
                             <div class="formWrapper">
                                 <div class="row">
                                     <div class="col-lg-6">
-                                        <div class="inputWrapper">
-                                            <label for="name">{{ __('name') }} <span class="text-danger">*</span></label>
-                                            <input type="text" name="school_name" id="name" placeholder="{{ __('enter_your_school_name') }}" required>
+                                        <div class="inputWrapper form-group">
+                                            <label for="name" class>{{ __('name') }} <span class="text-danger">*</span></label>
+                                            <input type="text" name="school_name" id="name" placeholder="{{ __('enter_your_school_name') }}" required class="form-control rounded-[4px] form-control-lg">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
-                                        <div class="inputWrapper">
+                                        <div class="inputWrapper form-group">
                                             <label for="supportEmail">{{ __('email') }} <span class="text-danger">*</span></label>
                                             <input type="email" name="school_email" id="support-email"
-                                                placeholder="{{ __('enter_your_school_email') }}" required>
+                                                placeholder="{{ __('enter_your_school_email') }}" required class="form-control rounded-[4px] form-control-lg">
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
-                                        <div class="inputWrapper">
+                                        <div class="inputWrapper form-group">
                                             <label for="supportPhone">{{ __('mobile') }} <span class="text-danger">*</span></label>
                                             <input type="text" oninput="this.value=this.value.replace(/[^0-9]/g,'');" name="school_phone" id="supportPhone"
                                                 placeholder="{{ __('enter_your_school_mobile_number') }}" maxlength="15" pattern="[0-9]{6,15}" 
-                                                title="Please enter a valid mobile number (6-15 digits)" required>
+                                                title="Please enter a valid mobile number (6-15 digits)" required
+                                                class="form-control rounded-[4px] form-control-lg"
+                                                >
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
-                                        <div class="inputWrapper">
+                                        <div lass="inputWrapper form-group">
                                             <label for="address">{{ __('address') }} <span class="text-danger">*</span></label>
                                             <input type="text" name="school_address" id="address"
-                                                placeholder="{{ __('enter_your_school_address') }}" required>
+                                                placeholder="{{ __('enter_your_school_address') }}" required
+                                                class="form-control rounded-[4px] form-control-lg"
+                                                >
                                         </div>
                                     </div>
                                     <div class="col-12">
-                                        <div class="inputWrapper">
+                                        <div lass="inputWrapper form-group">
                                             <label for="tagline">{{ __('tagline') }} <span class="text-danger">*</span></label>
-                                            <input type="text" name="school_tagline" id="tagline" placeholder="{{ __('tagline') }}" required>
+                                            <input type="text" name="school_tagline" id="tagline" placeholder="{{ __('tagline') }}" required
+                                            class="form-control rounded-[4px] form-control-lg"
+                                            >
                                         </div>
                                     </div>
                                 </div>
@@ -177,7 +183,7 @@
                                             
                                         </div>
                                         <div>
-                                            <input type="submit" class="commonBtn" value="{{ __('submit') }}">
+                                            <input type="submit" class="btn btn-block btn-theme btn-lg font-weight-medium auth-form-btn rounded-lg" value="{{ __('submit') }}" >
                                         </div>
                                     </div>
                                 </div>

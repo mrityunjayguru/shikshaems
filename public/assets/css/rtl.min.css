@@ -5229,7 +5229,7 @@ select.form-control>option {
 
 .form-control-sm {
     height: 2.575rem;
-    padding: 0.5rem 0.81rem;
+    padding: 0.5rem 1.2rem;
     font-size: 0.875rem;
     line-height: 1.5;
     border-radius: 0.2rem;
@@ -31775,7 +31775,7 @@ footer h4 a {
 }
 
 .content-wrapper {
-    background: #EBE9FF;
+    background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
     padding: 2.75rem 2.25rem;
     width: 100%;
     -webkit-box-flex: 1;
