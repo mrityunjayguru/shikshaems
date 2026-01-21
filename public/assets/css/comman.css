@@ -30,6 +30,10 @@ code {
     font-family: 'Pinyon Script', cursive !important;
 }
 
+label {
+    color: #808080 !important;
+}
+
 
 .text-color-dashboard-counter-label {
     color: #585353 !important;
@@ -159,6 +163,12 @@ code {
 
 .cache-clear {
     margin: auto 0px !important;
+    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    color: var(--theme-color) !important;
+    outline: none !important;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 8px 10px;
 }
 
 .fa-table-layout:before {
@@ -198,7 +208,18 @@ code {
 }
 
 .menu-search {
-    border-radius: 10px;
+    border-radius: 4px;
+    outline: none !important;
+    border: none;
+}
+
+.menu-search:hover {
+    cursor: pointer;
+}
+
+.menu-search:focus {
+    border: 1px solid var(--theme-color);
+    transition: all 0.5s ease;
 }
 
 /* package hover */
@@ -259,4 +280,190 @@ code {
 
 .list-wrapper ul li .form-check {
     max-width: 100%;
+}
+
+/* Active Navigation Styling with Dull Theme Color Background */
+/* Only apply background to parent nav items, not sub-menu items */
+/* .sidebar .nav>.nav-item.active {
+   
+} */
+
+.sidebar .nav>.nav-item.active>.nav-link {
+    background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    border-radius: 4px !important;
+    padding: 10px 6px;
+}
+
+.sidebar .nav>.nav-item.active>.nav-link .menu-title {
+    color: var(--theme-color) !important;
+    font-weight: 600;
+}
+
+.sidebar .nav>.nav-item.active>.nav-link i {
+    color: var(--theme-color) !important;
+}
+
+/* Apply theme color to SVG icons in active menu items */
+.sidebar .nav>.nav-item.active>.nav-link .svg-theme-stroke {
+    color: var(--theme-color) !important;
+    stroke: var(--theme-color) !important;
+}
+
+.sidebar .nav>.nav-item.active>.nav-link svg {
+    color: var(--theme-color) !important;
+}
+
+/* Sub-menu items styling - add left padding for visual separation */
+.sidebar .nav .sub-menu .nav-item {
+    padding-left: 1rem;
+}
+
+/* Active sub-menu items - only text color, no background */
+.sidebar .nav .sub-menu .nav-item.active {
+    background: transparent !important;
+}
+
+.sidebar .nav .sub-menu .nav-item.active .nav-link {
+    color: var(--theme-color) !important;
+    font-weight: 600;
+    background: transparent !important;
+}
+
+
+
+
+.form-control {
+    border-radius: 4px !important;
+    background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+}
+
+.form-control:focus {
+    border: 1px solid var(--theme-color) !important;
+}
+
+.svg-theme-color svg,
+.svg-theme-color {
+    fill: var(--theme-color) !important;
+}
+
+.svg-theme-color-light svg,
+.svg-theme-color-light {
+    fill: color-mix(in srgb, var(--theme-color) 60%, white) !important;
+}
+
+.svg-theme-color-dark svg,
+.svg-theme-color-dark {
+    fill: color-mix(in srgb, var(--theme-color) 80%, black) !important;
+}
+
+.svg-theme-stroke svg,
+.svg-theme-stroke {
+    stroke: var(--theme-color) !important;
+    fill: none !important;
+    color: var(--theme-color) !important;
+}
+
+.svg-theme-stroke-light svg,
+.svg-theme-stroke-light {
+    stroke: color-mix(in srgb, var(--theme-color) 60%, white) !important;
+    fill: none !important;
+}
+
+.svg-theme-full svg,
+.svg-theme-full {
+    fill: var(--theme-color) !important;
+    stroke: var(--theme-color) !important;
+}
+
+.svg-theme-filter {
+    filter: brightness(0) saturate(100%) invert(var(--theme-invert, 50%)) sepia(var(--theme-sepia, 100%)) saturate(var(--theme-saturate, 500%)) hue-rotate(var(--theme-hue, 0deg));
+}
+
+.svg-bg-theme {
+    background-color: var(--theme-color) !important;
+}
+
+.svg-bg-theme svg {
+    fill: white !important;
+}
+
+.svg-bg-theme-light {
+    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+}
+
+.svg-bg-theme-light svg {
+    fill: var(--theme-color) !important;
+}
+
+.svg-hover-theme:hover svg,
+.svg-hover-theme:hover {
+    fill: var(--theme-color) !important;
+    transition: fill 0.3s ease;
+}
+
+.svg-hover-theme-bg:hover {
+    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    transition: background-color 0.3s ease;
+}
+
+.svg-hover-theme-bg:hover svg {
+    fill: var(--theme-color) !important;
+    transition: fill 0.3s ease;
+}
+
+/* Method 7: Active state for SVG icons */
+.svg-active-theme.active svg,
+.svg-active-theme.active {
+    fill: var(--theme-color) !important;
+}
+
+.svg-active-theme-bg.active {
+    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+}
+
+.svg-active-theme-bg.active svg {
+    fill: var(--theme-color) !important;
+}
+
+/* Method 8: SVG path specific targeting */
+.svg-theme-path svg path {
+    fill: var(--theme-color) !important;
+}
+
+.svg-theme-path-stroke svg path {
+    stroke: var(--theme-color) !important;
+    fill: none !important;
+}
+
+/* Method 9: Opacity variations */
+.svg-theme-opacity-10 svg {
+    fill: var(--theme-color) !important;
+    opacity: 0.1;
+}
+
+.svg-theme-opacity-30 svg {
+    fill: var(--theme-color) !important;
+    opacity: 0.3;
+}
+
+.svg-theme-opacity-50 svg {
+    fill: var(--theme-color) !important;
+    opacity: 0.5;
+}
+
+.svg-theme-opacity-70 svg {
+    fill: var(--theme-color) !important;
+    opacity: 0.7;
+}
+
+/* Method 10: For inline SVG with currentColor */
+.svg-current-color svg {
+    fill: currentColor !important;
+    color: var(--theme-color) !important;
+}
+
+.svg-current-color-stroke svg {
+    stroke: currentColor !important;
+    color: var(--theme-color) !important;
+    fill: none !important;
 }

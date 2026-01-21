@@ -13,9 +13,9 @@
         </button>
 
         <div class="align-items-stretch d-none d-md-block d-sm-block cache-clear">
-            <a class="btn btn-sm btn-inverse-info align-self-center" href="{{ url('cache-flush') }}">
+            <span class="align-self-center cache-clear" onclick="window.location.href = '{{ url('cache-flush') }}'">
                 {{ __('cache_clear') }}
-            </a>
+            </span>
         </div>
 
         @if ($schoolSettings['school_name'] ?? '')
@@ -56,7 +56,8 @@
 
             <li class="nav-item dropdown">
                 <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#" data-toggle="dropdown" aria-expanded="false">
-                    <i class="fa fa-language"></i>
+                    <!-- <i class="fa fa-language"></i> -->
+                     <img src="{{ asset('assets/icons/languages.svg') }}" alt="languages" class="w-5 h-5 svg-theme-stroke">
                 </a>
                 <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="messageDropdown">
                     @foreach ($languages as $key => $language)

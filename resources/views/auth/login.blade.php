@@ -71,37 +71,16 @@ $lang = Session::get('language');
         .modal .modal-dialog {
             margin-top: unset !important;
         }
-
-        a {
-            color: #835DFF !important;
-        }
-
         .eye-slash {
-            background-color: #835DFF !important;
-        }
-
-        label {
-            color: #808080 !important;
+            background-color: var(--theme-color) !important;
         }
 
         .form-check .form-check-label input {
             opacity: 1 !important;
         }
 
-        .page-body-wrapper {
-            background-color: #EBE9FF;
-        }
-
-        .form-control {
-            border: none !important;
-            background-color: #EBE9FF !important;
-        }
-
-        .form-control:hover {
-            border: 1px solid #835DFF !important;
-        }
-        i {
-            color: #835DFF !important;
+        a {
+        color: var(--theme-color) !important;
         }
     </style>
     <script async src="https://www.google.com/recaptcha/api.js"></script>

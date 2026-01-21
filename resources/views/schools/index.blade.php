@@ -303,11 +303,12 @@
                                 @endif
                             </div>
 
-                            <input class="btn btn-theme float-right ml-3" id="create-btn" type="submit"
-                                value={{ __('submit') }} {{ $email_verified == 0 ? 'disabled' : '' }}>
+                            <input class="btn btn-secondary float-left px-10 py-6 ml-3" type="reset" value={{ __('reset') }} style="border-radius: 4px; min-width: 150px; background: #fff; color: var(--theme-color); border: 1px solid var(--theme-color);">
+
+                            <input class="btn btn-theme float-left ml-3 px-10 py-6" id="create-btn" type="submit"
+                                value={{ __('submit') }} {{ $email_verified == 0 ? 'disabled' : '' }} style="border-radius: 4px; min-width: 150px; background: var(--theme-color); color: white; border: 1px solid var(--theme-color);">
 
 
-                            <input class="btn btn-secondary float-right" type="reset" value={{ __('reset') }}>
 
                             <div class="p-4 mt-5 mb-4">
                                 @if ($email_verified == 0)
