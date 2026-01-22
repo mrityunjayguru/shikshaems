@@ -967,7 +967,7 @@ class FeesController extends Controller
                 }
             ])->firstOrFail();
 
-            $student = $this->student->builder()->with('user:id,first_name,last_name', 'class_section.class.stream', 'class_section.section', 'class_section.medium')->whereHas('user', function ($q) use ($feesPaid) {
+            $student = $this->student->builder()->with('user:id,first_name,last_name,mobile,current_address','guardian:id,first_name,last_name,mobile', 'class_section.class.stream', 'class_section.section', 'class_section.medium')->whereHas('user', function ($q) use ($feesPaid) {
                 $q->where('id', $feesPaid->student_id);
             })->firstOrFail();
 
@@ -981,7 +981,7 @@ class FeesController extends Controller
                 $data = explode("storage/", $systemSettings['horizontal_logo'] ?? '');
                 $school['horizontal_logo'] = end($data);
             }
-
+            // dd($feesPaid);
             $pdf = Pdf::loadView('fees.fees_receipt', compact('school', 'feesPaid', 'student'));
             return $pdf->stream('fees-receipt.pdf');
         } catch (Throwable $e) {

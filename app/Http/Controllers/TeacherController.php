@@ -349,7 +349,7 @@ class TeacherController extends Controller
             'last_name'         => 'required',
             'gender'            => 'required',
             'email'             => 'required|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email,' . $id,
-            'mobile'            => 'required|numeric|digits_between:6,15|unique:mobile,email,' . $id,
+            'mobile'            => 'required|numeric|digits_between:6,15|unique:users,mobile,' . $id,
             'dob'               => 'required|date',
             'qualification'     => 'required',
             'current_address'   => 'required',
