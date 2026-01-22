@@ -467,3 +467,73 @@ label {
     color: var(--theme-color) !important;
     fill: none !important;
 }
+
+.icon-card-active {
+    width: 80px;
+    height: 80px;
+    background-color: #eafff3; /* light green background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-active img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+
+.icon-card-inactive {
+    width: 80px;
+    height: 80px;
+    background-color: #FFF7F5; /* light red background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-inactive img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+
+.icon-card-school {
+    width: 80px;
+    height: 80px;
+    background-color: #F6F4FF; /* light purple background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-school img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.icon-card-package {
+    width: 80px;
+    height: 80px;
+    background-color: #EDF3FF; /* light blue background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-package img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
