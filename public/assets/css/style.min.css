@@ -28703,7 +28703,7 @@ div.tagsinput span.tag a {
 
 footer {
     padding: 85px 0 30px 0;
-    background-color: #007bff;
+    background-color: color-mix(in srgb, var(--theme-color) 0%, white) !important;
 }
 
 footer img {
@@ -30745,7 +30745,7 @@ footer h4 a {
 
     .navbar .navbar-brand-wrapper .navbar-brand.brand-logo {
         display: inline-block;
-        margin-left: 5px ;
+        margin-left: 5px;
     }
 
     .navbar .navbar-brand-wrapper .navbar-brand.brand-logo-mini {
