@@ -30,7 +30,7 @@
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#academics-menu" aria-expanded="false"
                 aria-controls="academics-menu">
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M11.3392 1.97089L19.5892 5.27087C19.91 5.3992 20.1667 5.7842 20.1667 6.12336V9.1667C20.1667 9.67087 19.7542 10.0834 19.25 10.0834H2.75C2.24583 10.0834 1.83333 9.67087 1.83333 9.1667V6.12336C1.83333 5.7842 2.09001 5.3992 2.41084 5.27087L10.6608 1.97089C10.8442 1.89756 11.1558 1.89756 11.3392 1.97089Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
                     <path d="M20.1667 20.1667H1.83333V17.4167C1.83333 16.9125 2.24583 16.5 2.75 16.5H19.25C19.7542 16.5 20.1667 16.9125 20.1667 17.4167V20.1667Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
                     <path d="M3.66667 16.5V10.0834" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
@@ -119,7 +119,12 @@
         @canany(['form-fields-list', 'form-fields-create', 'form-fields-edit', 'form-fields-delete'])
         <li class="nav-item">
             <a class="nav-link" href="{{ route('form-fields.index') }}">
-                <i class="fa fa-list-alt menu-icon"></i>
+                <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.4166 7.33337C18.9354 7.33337 20.1666 6.10216 20.1666 4.58337C20.1666 3.06459 18.9354 1.83337 17.4166 1.83337C15.8978 1.83337 14.6666 3.06459 14.6666 4.58337C14.6666 6.10216 15.8978 7.33337 17.4166 7.33337Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M6.41663 11.9166H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M6.41663 15.5834H14.6666" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M12.8334 1.83337H8.25004C3.66671 1.83337 1.83337 3.66671 1.83337 8.25004V13.75C1.83337 18.3334 3.66671 20.1667 8.25004 20.1667H13.75C18.3334 20.1667 20.1667 18.3334 20.1667 13.75V9.16671" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
                 <span class="menu-title"> {{ __('custom_fields') }} </span>
             </a>
         </li>
@@ -153,7 +158,13 @@
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#student-menu" aria-expanded="false"
                 aria-controls="academics-menu">
-                <i class="fa fa-graduation-cap menu-icon"></i>
+                <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 11C13.5313 11 15.5833 8.94801 15.5833 6.41671C15.5833 3.8854 13.5313 1.83337 11 1.83337C8.46865 1.83337 6.41663 3.8854 6.41663 6.41671C6.41663 8.94801 8.46865 11 11 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M17.6092 14.4284L14.3641 17.6734C14.2358 17.8017 14.1167 18.04 14.0892 18.2142L13.915 19.4517C13.8508 19.9008 14.1625 20.2125 14.6117 20.1483L15.8491 19.9742C16.0233 19.9467 16.2708 19.8275 16.39 19.6992L19.635 16.4542C20.1941 15.895 20.46 15.2442 19.635 14.4192C18.8191 13.6033 18.1683 13.8692 17.6092 14.4284Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M17.1417 14.8959C17.4167 15.8859 18.1867 16.6558 19.1767 16.9308" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M3.12585 20.1667C3.12585 16.6192 6.65505 13.75 11 13.75C11.9534 13.75 12.87 13.8875 13.7225 14.1442" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+
                 <span class="menu-title">{{ __('students') }}</span>
                 <i class="menu-arrow"></i>
             </a>
@@ -222,7 +233,12 @@
     <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#teacher-menu" aria-expanded="false"
             aria-controls="academics-menu">
-            <i class="fa fa-user menu-icon"></i>
+            <svg width="22" height="22" class="mr-2" Box="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.3233 7.86507V14.135C19.3233 15.1617 18.7733 16.1151 17.8841 16.6376L12.4391 19.7817C11.55 20.2951 10.45 20.2951 9.55165 19.7817L4.10665 16.6376C3.21748 16.1242 2.66748 15.1709 2.66748 14.135V7.86507C2.66748 6.83841 3.21748 5.88503 4.10665 5.36253L9.55165 2.21837C10.4408 1.70504 11.5408 1.70504 12.4391 2.21837L17.8841 5.36253C18.7733 5.88503 19.3233 6.82924 19.3233 7.86507Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M11.0001 10.0833C12.1797 10.0833 13.1359 9.12703 13.1359 7.94744C13.1359 6.76785 12.1797 5.81165 11.0001 5.81165C9.8205 5.81165 8.86426 6.76785 8.86426 7.94744C8.86426 9.12703 9.8205 10.0833 11.0001 10.0833Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14.6667 15.2716C14.6667 13.6216 13.0259 12.2833 11 12.2833C8.97421 12.2833 7.33337 13.6216 7.33337 15.2716" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+
             <span class="menu-title">{{ __('teacher') }}</span>
             <i class="menu-arrow"></i>
         </a>
@@ -251,7 +267,12 @@
     <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#student-diary-menu" aria-expanded="false"
             aria-controls="academics-menu">
-            <i class="fa fa-envelope-square menu-icon"></i>
+            <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8.25004 20.1667H13.75C18.3334 20.1667 20.1667 18.3334 20.1667 13.75V8.25004C20.1667 3.66671 18.3334 1.83337 13.75 1.83337H8.25004C3.66671 1.83337 1.83337 3.66671 1.83337 8.25004V13.75C1.83337 18.3334 3.66671 20.1667 8.25004 20.1667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M16.8483 13.9975V6.9483C16.8483 6.24247 16.28 5.72914 15.5833 5.78414H15.5466C14.3183 5.88498 12.4575 6.51749 11.4125 7.16832L11.3116 7.23249C11.1466 7.33333 10.8624 7.33333 10.6883 7.23249L10.5416 7.14082C9.50578 6.48999 7.64495 5.8758 6.41662 5.77497C5.71995 5.71997 5.15161 6.24249 5.15161 6.93915V13.9975C5.15161 14.5566 5.60993 15.0883 6.1691 15.1525L6.33409 15.18C7.59909 15.345 9.56081 15.9958 10.6791 16.61L10.7066 16.6192C10.8624 16.7108 11.1191 16.7108 11.2658 16.6192C12.3841 15.9958 14.3549 15.3541 15.6291 15.18L15.8216 15.1525C16.39 15.0883 16.8483 14.5658 16.8483 13.9975Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M11 7.42493V16.1883" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+
             <span class="menu-title">{{ __('student_diary') }}</span>
             <i class="menu-arrow"></i>
         </a>
@@ -278,7 +299,17 @@
     <li class="nav-item">
         <a href="{{ route('timetable.teacher.show', Auth::user()->id) }}" class="nav-link"
             data-access="@hasFeatureAccess('Timetable Management')">
-            <i class="fa fa-calendar menu-icon"></i>
+            <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.33337 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14.6666 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M16.6833 19.6167C18.3034 19.6167 19.6167 18.3034 19.6167 16.6833C19.6167 15.0633 18.3034 13.75 16.6833 13.75C15.0633 13.75 13.75 15.0633 13.75 16.6833C13.75 18.3034 15.0633 19.6167 16.6833 19.6167Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M20.1667 20.1667L19.25 19.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M3.20837 8.33252H18.7917" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M12.2558 20.1667H7.33333C4.125 20.1667 2.75 18.3334 2.75 15.5834V7.79171C2.75 5.04171 4.125 3.20837 7.33333 3.20837H14.6667C17.875 3.20837 19.25 5.04171 19.25 7.79171V11.9167" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.9959 12.5583H11.0041" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.60308 12.5583H7.61131" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.60308 15.3083H7.61131" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
             <span class="menu-title">{{ __('timetable') }}</span>
         </a>
     </li>
@@ -287,7 +318,17 @@
     <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#timetable-menu" aria-expanded="false"
             aria-controls="timetable-menu" data-access="@hasFeatureAccess('Timetable Management')">
-            <i class="fa fa-calendar menu-icon"></i>
+            <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.33337 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14.6666 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M16.6833 19.6167C18.3034 19.6167 19.6167 18.3034 19.6167 16.6833C19.6167 15.0633 18.3034 13.75 16.6833 13.75C15.0633 13.75 13.75 15.0633 13.75 16.6833C13.75 18.3034 15.0633 19.6167 16.6833 19.6167Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M20.1667 20.1667L19.25 19.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M3.20837 8.33252H18.7917" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M12.2558 20.1667H7.33333C4.125 20.1667 2.75 18.3334 2.75 15.5834V7.79171C2.75 5.04171 4.125 3.20837 7.33333 3.20837H14.6667C17.875 3.20837 19.25 5.04171 19.25 7.79171V11.9167" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.9959 12.5583H11.0041" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.60308 12.5583H7.61131" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.60308 15.3083H7.61131" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
             <span class="menu-title">{{ __('timetable') }}</span>
             <i class="menu-arrow"></i>
         </a>
@@ -323,12 +364,12 @@
         <a href="{{ route('holiday.index') }}" class="nav-link"
             data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Holiday Management')">
             <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.4167 7.33337C18.9354 7.33337 20.1667 6.10216 20.1667 4.58337C20.1667 3.06459 18.9354 1.83337 17.4167 1.83337C15.8979 1.83337 14.6667 3.06459 14.6667 4.58337C14.6667 6.10216 15.8979 7.33337 17.4167 7.33337Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M6.41667 11.9166H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M6.41667 15.5834H14.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M12.8333 1.83337H8.25C3.66667 1.83337 1.83333 3.66671 1.83333 8.25004V13.75C1.83333 18.3334 3.66667 20.1667 8.25 20.1667H13.75C18.3333 20.1667 20.1667 18.3334 20.1667 13.75V9.16671" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.33337 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14.6666 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14.6667 3.20837C17.7192 3.37337 19.25 4.53754 19.25 8.84587V14.5109C19.25 18.2875 18.3333 20.1759 13.75 20.1759H8.25C3.66667 20.1759 2.75 18.2875 2.75 14.5109V8.84587C2.75 4.53754 4.28083 3.38254 7.33333 3.20837H14.6667Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M19.0208 16.1333H2.97913" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M11 7.5625C9.87254 7.5625 8.91921 8.17667 8.91921 9.36833C8.91921 9.93667 9.18504 10.3675 9.58837 10.6425C9.02921 10.9725 8.70837 11.5042 8.70837 12.1275C8.70837 13.2642 9.57921 13.97 11 13.97C12.4117 13.97 13.2917 13.2642 13.2917 12.1275C13.2917 11.5042 12.9709 10.9633 12.4025 10.6425C12.815 10.3583 13.0717 9.93667 13.0717 9.36833C13.0717 8.17667 12.1275 7.5625 11 7.5625ZM11 10.1658C10.5234 10.1658 10.175 9.88167 10.175 9.4325C10.175 8.97417 10.5234 8.70833 11 8.70833C11.4767 8.70833 11.825 8.97417 11.825 9.4325C11.825 9.88167 11.4767 10.1658 11 10.1658ZM11 12.8333C10.395 12.8333 9.95504 12.5308 9.95504 11.9808C9.95504 11.4308 10.395 11.1375 11 11.1375C11.605 11.1375 12.045 11.44 12.045 11.9808C12.045 12.5308 11.605 12.8333 11 12.8333Z" fill="currentColor" />
             </svg>
-
             <span class="menu-title">{{ __('holiday_list') }}</span>
         </a>
         @endcan
@@ -385,7 +426,12 @@
     <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#student-assignment-menu" aria-expanded="false"
             aria-controls="student-assignment-menu" data-access="@hasFeatureAccess('Assignment Management')">
-            <i class="fa fa-tasks menu-icon"></i>
+            <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.90503 10.1016V14.6574C3.90503 16.3258 3.90503 16.3258 5.4817 17.3891L9.81753 19.8916C10.4684 20.2674 11.5317 20.2674 12.1825 19.8916L16.5184 17.3891C18.095 16.3258 18.095 16.3258 18.095 14.6574V10.1016C18.095 8.43328 18.095 8.43328 16.5184 7.36995L12.1825 4.86745C11.5317 4.49161 10.4684 4.49161 9.81753 4.86745L5.4817 7.36995C3.90503 8.43328 3.90503 8.43328 3.90503 10.1016Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M16.0417 6.99421V4.58337C16.0417 2.75004 15.125 1.83337 13.2917 1.83337H8.70837C6.87504 1.83337 5.95837 2.75004 5.95837 4.58337V6.93004" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M11.5775 10.0741L12.1 10.89C12.1825 11.0183 12.3658 11.1466 12.5033 11.1833L13.4383 11.4216C14.0158 11.5683 14.1717 12.0633 13.7958 12.5216L13.1817 13.2641C13.09 13.3833 13.0167 13.5941 13.0258 13.7408L13.0808 14.7033C13.1175 15.2991 12.6958 15.6016 12.1458 15.3816L11.2475 15.0241C11.11 14.9691 10.8808 14.9691 10.7433 15.0241L9.845 15.3816C9.295 15.6016 8.87334 15.29 8.91 14.7033L8.965 13.7408C8.97417 13.5941 8.90084 13.3741 8.80917 13.2641L8.195 12.5216C7.81917 12.0633 7.975 11.5683 8.5525 11.4216L9.4875 11.1833C9.63417 11.1466 9.8175 11.0091 9.89084 10.89L10.4133 10.0741C10.7433 9.57913 11.2567 9.57913 11.5775 10.0741Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+
             <span class="menu-title">{{ __('student_assignment') }}</span>
             <i class="menu-arrow"></i>
         </a>
@@ -417,7 +463,12 @@
     <li class="nav-item">
         <a href="{{ route('sliders.index') }}" class="nav-link"
             data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Slider Management')">
-            <i class="fa fa-list menu-icon"></i>
+            <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.9258 2.67671L17.3341 5.07838C18.8925 5.76588 18.8925 6.90254 17.3341 7.59004L11.9258 9.99171C11.3116 10.2667 10.3033 10.2667 9.68914 9.99171L4.28081 7.59004C2.72248 6.90254 2.72248 5.76588 4.28081 5.07838L9.68914 2.67671C10.3033 2.40171 11.3116 2.40171 11.9258 2.67671Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M2.75 10.0834C2.75 10.8534 3.3275 11.7425 4.03333 12.0542L10.2575 14.8225C10.7342 15.0334 11.275 15.0334 11.7425 14.8225L17.9667 12.0542C18.6725 11.7425 19.25 10.8534 19.25 10.0834" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M2.75 14.6666C2.75 15.5191 3.25417 16.2891 4.03333 16.6375L10.2575 19.4058C10.7342 19.6166 11.275 19.6166 11.7425 19.4058L17.9667 16.6375C18.7458 16.2891 19.25 15.5191 19.25 14.6666" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+
             <span class="menu-title">{{ __('sliders') }}</span>
         </a>
     </li>
@@ -427,7 +478,12 @@
     <li class="nav-item">
         <a href="{{ route('notifications.index') }}" class="nav-link"
             data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Announcement Management')">
-            <i class="fa fa-bell menu-icon"></i>
+            <svg width="22" height="22" viewBox="0 0 22 22" class="mr-2" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 5.90332V8.95582" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" />
+                <path d="M11.0184 1.83337C7.64503 1.83337 4.91336 4.56504 4.91336 7.93837V9.86337C4.91336 10.4867 4.6567 11.4217 4.33586 11.9534L3.1717 13.8967C2.4567 15.0975 2.95169 16.4359 4.27169 16.8759C8.65336 18.3334 13.3925 18.3334 17.7742 16.8759C19.0117 16.4634 19.5434 15.015 18.8742 13.8967L17.71 11.9534C17.3892 11.4217 17.1325 10.4775 17.1325 9.86337V7.93837C17.1234 4.58337 14.3734 1.83337 11.0184 1.83337Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" />
+                <path d="M14.0525 17.2517C14.0525 18.9292 12.6775 20.3042 11 20.3042C10.1658 20.3042 9.39584 19.9559 8.84584 19.4059C8.29584 18.8559 7.94751 18.0859 7.94751 17.2517" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" />
+            </svg>
+
             <span class="menu-title">{{ __('notification') }}</span>
         </a>
     </li>
@@ -438,7 +494,17 @@
     <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#attendance-menu" data-access="@hasFeatureAccess('Attendance Management')"
             aria-expanded="false" aria-controls="attendance-menu">
-            <i class="fa fa-check menu-icon"></i>
+           <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M7.33337 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.6666 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3.20837 8.33252H18.7917" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M17.6092 14.4558L14.3642 17.7008C14.2358 17.8291 14.1167 18.0675 14.0892 18.2416L13.915 19.4791C13.8508 19.9283 14.1625 20.24 14.6117 20.1758L15.8492 20.0017C16.0233 19.9742 16.2708 19.855 16.39 19.7266L19.635 16.4817C20.1942 15.9225 20.46 15.2717 19.635 14.4467C18.8192 13.6308 18.1683 13.8966 17.6092 14.4558Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M17.1417 14.9233C17.4167 15.9133 18.1867 16.6833 19.1767 16.9583" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11 20.1667H7.33333C4.125 20.1667 2.75 18.3334 2.75 15.5834V7.79171C2.75 5.04171 4.125 3.20837 7.33333 3.20837H14.6667C17.875 3.20837 19.25 5.04171 19.25 7.79171V11" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M10.9959 12.5583H11.0041" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.60308 12.5583H7.61131" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.60308 15.3083H7.61131" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
             <span class="menu-title">{{ __('attendance') }}</span>
             <i class="menu-arrow"></i>
         </a>
@@ -1331,7 +1397,18 @@
 
     <li class="nav-item">
         <a href="{{ url('features') }}" class="nav-link">
-            <i class="fa fa-list-ul menu-icon"></i>
+            <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M7.33333 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.6667 1.83337V4.58337" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16.6833 19.6167C18.3034 19.6167 19.6167 18.3034 19.6167 16.6833C19.6167 15.0633 18.3034 13.75 16.6833 13.75C15.0633 13.75 13.75 15.0633 13.75 16.6833C13.75 18.3034 15.0633 19.6167 16.6833 19.6167Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M20.1667 20.1667L19.25 19.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3.20833 8.33252H18.7917" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.2558 20.1667H7.33333C4.125 20.1667 2.75 18.3334 2.75 15.5834V7.79171C2.75 5.04171 4.125 3.20837 7.33333 3.20837H14.6667C17.875 3.20837 19.25 5.04171 19.25 7.79171V11.9167" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M10.9959 12.5583H11.0041" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.60312 12.5583H7.61135" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.60312 15.3083H7.61135" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
             <span class="menu-title">{{ __('features') }}</span>
         </a>
     </li>

@@ -106,7 +106,7 @@
                                 </div>
                                 @endif
 
-                                <input class="btn btn-theme float-right ml-3" id="create-btn" type="submit" value={{ __('submit') }}>
+                                <input class="btn btn-theme float-right ml-3 mt-4" id="create-btn" type="submit" value={{ __('submit') }}>
 
                             </div>
                         </form>
