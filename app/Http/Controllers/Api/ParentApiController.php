@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TimetableCollection;
 use App\Http\Resources\UserDataResource;
 use App\Models\School;
+use App\Models\StudentLeave;
 use App\Repositories\Announcement\AnnouncementInterface;
 use App\Repositories\Assignment\AssignmentInterface;
 use App\Repositories\AssignmentSubmission\AssignmentSubmissionInterface;
@@ -316,7 +317,6 @@ class ParentApiController extends Controller
             $lessonData = $lessonQuery->get();
 
             ResponseService::successResponse("Lessons Fetched Successfully", $lessonData);
-
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
@@ -585,10 +585,10 @@ class ParentApiController extends Controller
         }
         try {
             //            $childData = Auth::user()->guardianRelationChild()->where('id', $request->child_id)->with(['class_section' => function ($query) {
-//                $query->with('section', 'class', 'medium', 'class.shift', 'class.stream');
-//            }, 'guardian', 'user'                                                                                      => function ($q) {
-//                $q->with('extra_student_details.form_field', 'school');
-//            }])->first();
+            //                $query->with('section', 'class', 'medium', 'class.shift', 'class.stream');
+            //            }, 'guardian', 'user'                                                                                      => function ($q) {
+            //                $q->with('extra_student_details.form_field', 'school');
+            //            }])->first();
 
             $childData = Auth::user()->guardianRelationChild()->with([
                 'class_section' => function ($query) {
@@ -780,7 +780,7 @@ class ParentApiController extends Controller
         }
         try {
             // Student Data
-//            $studentData = $this->student->findById($request->child_id, ['id', 'user_id', 'class_section_id'], ['class_section']);
+            //            $studentData = $this->student->findById($request->child_id, ['id', 'user_id', 'class_section_id'], ['class_section']);
             $studentData = Auth::user()->guardianRelationChild()->where('id', $request->child_id)->whereHas('user', function ($q) {
                 $q->whereNull('deleted_at');
             })->first();
@@ -805,8 +805,7 @@ class ParentApiController extends Controller
                                     }
                                 ]);
                             }
-                        ]);
-                    ;
+                        ]);;
                 }
             ])->where('student_id', $studentData->user_id)->get();
 
@@ -1639,7 +1638,6 @@ class ParentApiController extends Controller
                 if ($request->advance > $remainingAmount) {
                     ResponseService::errorResponse("Advance Amount cannot be greater then : " . $remainingAmount);
                 }
-
             } else {
                 /* Full Payment */
                 $dueChargesAmount = 0;
@@ -1967,52 +1965,52 @@ class ParentApiController extends Controller
 
 
     // add the transaction data in transaction table
-//    public function completeFeeTransaction(Request $request) {
-//        $validator = Validator::make($request->all(), [
-//            'child_id'               => 'required',
-//            'payment_transaction_id' => 'required',
-//            'payment_id'             => 'required',
-//            'payment_signature'      => 'required',
-//        ]);
-//        if ($validator->fails()) {
-//            ResponseService::validationError($validator->errors()->first());
-//        }
-//        try {
-//            DB::beginTransaction();
-//            $child = $this->student->findById($request->child_id);
-//            $this->paymentTransaction->update($request->payment_transaction_id, ['payment_id' => $request->payment_id, 'payment_signature' => $request->payment_signature, 'school_id' => $child->school_id]);
-//            DB::commit();
-//            ResponseService::successResponse("Data Updated Successfully");
-//        } catch (Throwable $e) {
-//            DB::rollBack();
-//            ResponseService::logErrorResponse($e);
-//            ResponseService::errorResponse();
-//        }
-//    }
+    //    public function completeFeeTransaction(Request $request) {
+    //        $validator = Validator::make($request->all(), [
+    //            'child_id'               => 'required',
+    //            'payment_transaction_id' => 'required',
+    //            'payment_id'             => 'required',
+    //            'payment_signature'      => 'required',
+    //        ]);
+    //        if ($validator->fails()) {
+    //            ResponseService::validationError($validator->errors()->first());
+    //        }
+    //        try {
+    //            DB::beginTransaction();
+    //            $child = $this->student->findById($request->child_id);
+    //            $this->paymentTransaction->update($request->payment_transaction_id, ['payment_id' => $request->payment_id, 'payment_signature' => $request->payment_signature, 'school_id' => $child->school_id]);
+    //            DB::commit();
+    //            ResponseService::successResponse("Data Updated Successfully");
+    //        } catch (Throwable $e) {
+    //            DB::rollBack();
+    //            ResponseService::logErrorResponse($e);
+    //            ResponseService::errorResponse();
+    //        }
+    //    }
 
     //get the fees paid list
-//    public function feesPaidList(Request $request) {
-//        $validator = Validator::make($request->all(), [
-//            'child_id'        => 'required',
-//            'session_year_id' => 'nullable'
-//        ]);
-//
-//        if ($validator->fails()) {
-//            ResponseService::validationError($validator->errors()->first());
-//        }
-//        try {
-//            $child = $this->student->findById($request->child_id);
-//            $currentSessionYear = $this->cache->getDefaultSessionYear($child->user->school_id);
-//            $sessionYearId = $request->session_year_id ?? $currentSessionYear->id;
-//            $fees_paid = $this->feesPaid->builder()->where(['student_id' => $child->user_id, 'session_year_id' => $sessionYearId])->with('session_year:id,name', 'class.medium')->get();
-//
-//            ResponseService::successResponse("", $fees_paid);
-//        } catch (Throwable $e) {
-//            DB::rollBack();
-//            ResponseService::logErrorResponse($e);
-//            ResponseService::errorResponse();
-//        }
-//    }
+    //    public function feesPaidList(Request $request) {
+    //        $validator = Validator::make($request->all(), [
+    //            'child_id'        => 'required',
+    //            'session_year_id' => 'nullable'
+    //        ]);
+    //
+    //        if ($validator->fails()) {
+    //            ResponseService::validationError($validator->errors()->first());
+    //        }
+    //        try {
+    //            $child = $this->student->findById($request->child_id);
+    //            $currentSessionYear = $this->cache->getDefaultSessionYear($child->user->school_id);
+    //            $sessionYearId = $request->session_year_id ?? $currentSessionYear->id;
+    //            $fees_paid = $this->feesPaid->builder()->where(['student_id' => $child->user_id, 'session_year_id' => $sessionYearId])->with('session_year:id,name', 'class.medium')->get();
+    //
+    //            ResponseService::successResponse("", $fees_paid);
+    //        } catch (Throwable $e) {
+    //            DB::rollBack();
+    //            ResponseService::logErrorResponse($e);
+    //            ResponseService::errorResponse();
+    //        }
+    //    }
 
 
     // // Make Transaction Fail API
@@ -2097,6 +2095,34 @@ class ParentApiController extends Controller
                 ->firstOrFail();
 
             ResponseService::successResponse("Student Diary Fetched Successfully", $diaryStudents);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function applyLeave(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required',
+            'reason' => 'required',
+            'from_date' => 'required',
+            'to_date' => 'required',
+            'days' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+        try {
+            $leave = new StudentLeave();
+            $leave->user_id = $request->user_id; 
+            $leave->reason = $request->reason;
+            $leave->from_date = $request->from_date;
+            $leave->to_date = $request->to_date;
+            $leave->days = $request->days;
+            $leave->save();
+            ResponseService::successResponse("Leave Apllied Successfully");
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();

@@ -2371,9 +2371,9 @@ class TrasportationApiController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            'vehicle_id' => 'required'
+            'vehicle_number' => 'required'
         ], [
-            'vehicle_id.required' => 'Vehicle id is required.'
+            'vehicle_number.required' => 'Vehicle id is required.'
         ]);
 
         if ($validator->fails()) {
@@ -2383,7 +2383,7 @@ class TrasportationApiController extends Controller
         $vehicleDetails = DB::connection('pgsql')
             ->table('tc_devices as td')
             ->leftJoin('tc_positions as tp', 'td.positionid', '=', 'tp.id')
-            ->where('td.name', $request->vehicle_id)
+            ->where('td.name', $request->vehicle_number)
             ->select(
                 'td.id',
                 'td.name',

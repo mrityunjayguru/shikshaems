@@ -2936,12 +2936,12 @@ class TeacherApiController extends Controller
                 });
             }
 
-           
+
             if ($request->student_id) {
                 $users->where('id', $request->student_id);
             }
 
-            
+
             $diaryStudentFilter = function ($q) use ($request, $sortType) {
                 // Category filter
                 if ($request->category_id) {
@@ -3129,6 +3129,47 @@ class TeacherApiController extends Controller
                 ResponseService::logErrorResponse($e);
                 ResponseService::errorResponse();
             }
+        }
+    }
+
+    //parent
+    public function getTeachersForChild(Request $request)
+    {
+        try {
+            $student = $this->student->builder()
+                ->where('id', $request->child_id)
+                ->firstOrFail();
+
+            $classSectionId = $student->class_section_id;
+
+            // Class Teacher
+            $classTeacher = ClassSection::with([
+                'class_teacher.teacher:id,first_name,last_name'
+            ])
+                ->where('id', $classSectionId)
+                ->first();
+
+            $classTeacherUser = $classTeacher->class_teacher?->teacher;
+
+            $name = $classTeacherUser->first_name . ' ' . $classTeacherUser->last_name;
+
+
+            // Subject Teachers
+            $subjectTeachers = $this->subjectTeacher->builder()
+                ->with(['teacher:id,first_name,last_name', 'subject:id,name,type'])
+                ->where('class_section_id', $classSectionId);
+
+            if ($request->filled('subject_id')) {
+                $subjectTeachers->where('subject_id', $request->subject_id);
+            }
+
+            return response()->json([
+                'class_teacher' => $name ?? null,
+                'subject_teachers' => $subjectTeachers->get()
+            ]);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            return ResponseService::errorResponse();
         }
     }
 }
