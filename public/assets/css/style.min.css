@@ -18691,7 +18691,9 @@ code {
 .ajax-upload-dragdrop .btn-rounded.ajax-file-upload,
 .swal2-modal .swal2-buttonswrapper .btn-rounded.swal2-styled,
 .wizard>.actions a.btn-rounded {
-    border-radius: 50px;
+    border-radius: 10px;
+    width: 36px;
+    height: 36px;
 }
 
 .btn.btn-fw,
@@ -18764,8 +18766,8 @@ code {
 .ajax-upload-dragdrop .btn-icon.ajax-file-upload,
 .swal2-modal .swal2-buttonswrapper .btn-icon.swal2-styled,
 .wizard>.actions a.btn-icon {
-    width: 42px;
-    height: 42px;
+    width: 36px;
+    height: 36px;
     padding: 0;
 }
 
