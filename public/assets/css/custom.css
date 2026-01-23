@@ -273,3 +273,83 @@ label.filter-menu {
     background-color: #007bff !important;
     color: #fff !important;
 }
+
+/* Custom styles for Edit and Delete button icons and backgrounds */
+/* Edit Button - Orange background with white outlined pen icon */
+.btn-gradient-primary {
+    background: #FF9500 !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+
+.btn-gradient-primary:hover {
+    opacity: 0.9 !important;
+    background: #FF6B35  !important;
+    color: #ffffff !important;
+}
+
+.btn-gradient-primary:not([disabled]):not(.disabled):active,
+.btn-gradient-primary:not([disabled]):not(.disabled).active,
+.show > .btn-gradient-primary.dropdown-toggle {
+    background: #FF9500 !important;
+    color: #ffffff !important;
+}
+
+/* Delete Button - Pink background with white outlined trash icon */
+.btn-gradient-dark {
+    background: #FF69B4 !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+
+.btn-gradient-dark:hover {
+    opacity: 0.9 !important;
+    background: #FF1493 !important;
+    color: #ffffff !important;
+}
+
+.btn-gradient-dark:not([disabled]):not(.disabled):active,
+.btn-gradient-dark:not([disabled]):not(.disabled).active,
+.show > .btn-gradient-dark.dropdown-toggle {
+    background: #FF69B4 !important;
+    color: #ffffff !important;
+}
+
+/* Ensure Material Design Icons display properly in action buttons */
+.btn-gradient-primary i.mdi,
+.btn-gradient-dark i.mdi {
+    color: #ffffff !important;
+    font-size: 16px !important;
+    display: inline-block;
+}
+
+/* Ensure SVG icons display properly in action buttons */
+.btn-gradient-primary svg,
+.btn-gradient-dark svg {
+    width: 20px !important;
+    height: 20px !important;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Ensure buttons have rounded square appearance */
+.btn-gradient-primary.btn-rounded,
+.btn-gradient-dark.btn-rounded {
+    border-radius: 8px !important;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+}
+
+
+.action-icon{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* margin-top: 8px; */
+}
