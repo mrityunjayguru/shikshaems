@@ -342,7 +342,7 @@
                 </div>
                 <div class="d-block">
                     <div class="">
-                        <div class="col-12 text-right d-flex justify-content-end text-right align-items-end">
+                        <div class="col-12 text-right d-flex justify-content-end align-items-end">
                             <b><a href="#" class="table-list-type active mr-2"
                                     data-id="0">{{ __('all') }}</a></b> |
                             <a href="#" class="ml-2 table-list-type"
