@@ -130,7 +130,9 @@
                         </p>
                         <p class="mt-2 text-success font-weight-bold"> </p>
                     </div>
-                    <img class="ml-auto" src="{{ url('images/teachers.svg') }}" alt="">
+                    <span class="icon-card-teacher">
+                        <img src="{{ url('assets/icons/school-dashboard-icons/teacher.svg') }}" alt="teacher">
+                    </span>
                 </div>
             </div>
         </div>
@@ -147,7 +149,9 @@
                         </p>
                         <p class="mt-2 text-success font-weight-bold"> </p>
                     </div>
-                    <img class="ml-auto" src="{{ url('images/students.svg') }}" alt="">
+                    <span class="icon-card-active">
+                        <img src="{{ url('assets/icons/school-dashboard-icons/students.svg') }}" alt="teacher">
+                    </span>
                 </div>
             </div>
         </div>
@@ -164,7 +168,9 @@
                         </p>
                         <p class="mt-2 text-success font-weight-bold"> </p>
                     </div>
-                    <img class="ml-auto" src="{{ url('images/guardians.svg') }}" alt="">
+                    <span class="icon-card-inactive">
+                        <img src="{{ url('assets/icons/school-dashboard-icons/guardians.svg') }}" alt="teacher">
+                    </span>
                 </div>
             </div>
         </div>
@@ -181,7 +187,9 @@
                         </p>
                         <p class="mt-2 text-success font-weight-bold"> </p>
                     </div>
-                    <img class="ml-auto" src="{{ url('images/classes.svg') }}" alt="">
+                    <span class="icon-card-package">
+                        <img src="{{ url('assets/icons/school-dashboard-icons/classes.svg') }}" alt="teacher">
+                    </span>
                 </div>
             </div>
         </div>
@@ -198,7 +206,9 @@
                         </p>
                         <p class="mt-2 text-success font-weight-bold"> </p>
                     </div>
-                    <img class="ml-auto" src="{{ url('images/stream.svg') }}" alt="">
+                    <span class="icon-card-screams">
+                        <img src="{{ url('assets/icons/school-dashboard-icons/screams.svg') }}" alt="teacher">
+                    </span>
                 </div>
             </div>
         </div>
