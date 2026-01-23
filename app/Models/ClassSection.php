@@ -9,47 +9,63 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\DateFormatTrait;
 
-class ClassSection extends Model {
+class ClassSection extends Model
+{
     use SoftDeletes;
     use HasFactory, DateFormatTrait;
 
     protected $fillable = ['class_id', 'section_id', 'class_teacher_id', 'school_id', 'medium_id'];
     protected $appends = ['name', 'full_name'];
-    protected $hidden = ['created_at','updated_at'];
+    protected $hidden = ['created_at', 'updated_at'];
 
-    public function class() {
+    public function class()
+    {
         return $this->belongsTo(ClassSchool::class)->withTrashed();
     }
-    
-    public function shift() {
+
+    public function shift()
+    {
         return $this->belongsTo(Shift::class)->withTrashed();
     }
 
-    public function section() {
+    public function section()
+    {
         return $this->belongsTo(Section::class)->withTrashed();
     }
 
-    public function medium() {
+    public function medium()
+    {
         return $this->belongsTo(Mediums::class)->withTrashed();
     }
 
-    public function class_teachers() {
+    public function class_teachers()
+    {
         return $this->hasMany(ClassTeacher::class, 'class_section_id');
     }
 
-    public function announcement() {
+    public function class_teacher()
+    {
+        return $this->hasOne(ClassTeacher::class, 'class_section_id');
+    }
+
+
+    public function announcement()
+    {
         return $this->morphMany(Announcement::class, 'table');
     }
 
-    public function subject_teachers() {
+    public function subject_teachers()
+    {
         return $this->hasMany(SubjectTeacher::class);
     }
 
-    public function timetable() {
+    public function timetable()
+    {
         return $this->hasMany(Timetable::class)->orderBy('start_time');
     }
 
-    public function scopeClassTeacher($query) {
+    public function scopeClassTeacher($query)
+    {
         $user = Auth::user();
         if ($user->hasRole('Teacher')) {
             return $query->WhereHas('class_teachers', function ($q) use ($user) {
@@ -59,12 +75,14 @@ class ClassSection extends Model {
         return $query;
     }
 
-    public function subjects() {
+    public function subjects()
+    {
         return $this->belongsToMany(Subject::class, ClassSubject::class, 'class_id', 'subject_id', 'class_id')->withPivot('id as class_subject_id')->withTrashed();
     }
 
-    public function students(){
-        return $this->hasMany(Students::class,'class_section_id')->withTrashed();
+    public function students()
+    {
+        return $this->hasMany(Students::class, 'class_section_id')->withTrashed();
     }
 
     /**
@@ -78,7 +96,8 @@ class ClassSection extends Model {
     }
 
 
-    public function scopeOwner($query) {
+    public function scopeOwner($query)
+    {
         if (Auth::user() && Auth::user()->school_id) {
             if (Auth::user()->hasRole('School Admin')) {
                 return $query->where('school_id', Auth::user()->school_id);
@@ -87,7 +106,7 @@ class ClassSection extends Model {
             if (Auth::user()->hasRole('Teacher')) {
                 // $subjectTeacher = SubjectTeacher::where('teacher_id', Auth::user()->id)->pluck('class_section_id');
                 $currentSemester = app(CachingService::class)->getDefaultSemesterData();
-                $subjectTeacher = SubjectTeacher::where('teacher_id', Auth::user()->id)->whereHas('class_subject', function($q) use($currentSemester){
+                $subjectTeacher = SubjectTeacher::where('teacher_id', Auth::user()->id)->whereHas('class_subject', function ($q) use ($currentSemester) {
                     (!empty($currentSemester)) ? $q->where('semester_id', $currentSemester->id)->orWhereNull('semester_id') : $q->orWhereNull('semester_id');
                 })->pluck('class_section_id');
 
@@ -110,7 +129,8 @@ class ClassSection extends Model {
         return $query;
     }
 
-    public function getNameAttribute() {
+    public function getNameAttribute()
+    {
         $name = '';
         if ($this->relationLoaded('class')) {
             $name .= $this->class->name;
@@ -124,7 +144,8 @@ class ClassSection extends Model {
         return $name;
     }
 
-    public function getFullNameAttribute() {
+    public function getFullNameAttribute()
+    {
         $name = '';
         if ($this->relationLoaded('class')) {
             $name .= $this->class->name;
@@ -159,11 +180,9 @@ class ClassSection extends Model {
     {
         return $this->formatDateValue($this->getRawOriginal('created_at'));
     }
-    
+
     public function getUpdatedAtAttribute()
     {
         return $this->formatDateValue($this->getRawOriginal('updated_at'));
     }
-    
-
 }
