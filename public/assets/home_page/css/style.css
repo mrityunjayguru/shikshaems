@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap');
+
 
 * {
     margin: 0;
@@ -6,7 +7,7 @@
 }
 
 body {
-    font-family: 'Lato' !important;
+    font-family: 'Mulish' !important;
     background-color: #fff;
 }
 
@@ -131,6 +132,7 @@ a {
     transition: background-color 0.3s;
     margin-right: 1rem;
 }
+
 .button-potision {
     display: flex;
     justify-content: flex-end;
@@ -248,7 +250,7 @@ a {
 }
 
 .commonTag {
-    
+
     color: var(--secondary-color1);
     padding: 8px;
     border-radius: 4px;
@@ -563,7 +565,7 @@ a {
     filter: grayscale(0);
 }
 
-.swiperSect .card img{
+.swiperSect .card img {
     width: 100%;
     height: 100px;
     object-fit: contain;
@@ -1017,7 +1019,8 @@ a {
     display: inline-block !important;
 }
 
-.rightTickImg ,.wrongTickImg{
+.rightTickImg,
+.wrongTickImg {
     margin-right: 12px;
 }
 
@@ -1118,12 +1121,13 @@ a {
     .rightTickImg {
         width: 24px !important;
     }
-    
+
     .wrongTickImg {
         width: 18px !important;
     }
-    
-    .rightTickImg ,.wrongTickImg{
+
+    .rightTickImg,
+    .wrongTickImg {
         margin-right: 8px;
     }
 }
@@ -1542,7 +1546,7 @@ footer .commonDesc {
 }
 
 footer .socialIcons span {
-    
+
     color: var(--secondary-color1) !important;
     padding: 4px 12px;
     border-radius: 4px;
@@ -1784,7 +1788,7 @@ footer .copyright {
     position: absolute;
     left: auto;
     right: -10px;
-    clip-path: polygon(50% 0%,100% 0%,100% 100%,0% 100%,14% 52%,0% 0%);
+    clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 0% 100%, 14% 52%, 0% 0%);
     width: 130px;
     height: 38px;
     top: 8px;
@@ -1794,16 +1798,19 @@ footer .copyright {
     justify-content: center;
     font-size: 18px;
 }
-.pricing .premium .badge{
+
+.pricing .premium .badge {
     right: -4px;
 }
 
 .postpaid {
     background: var(--primary-color);
 }
+
 .prepaid {
     background: var(--secondary-color);
 }
+
 .footer-text {
     display: flex;
     justify-content: center;
@@ -1838,15 +1845,18 @@ footer .copyright {
     border-bottom-left-radius: 6px !important;
 }
 
-.btn-themes{
+.btn-themes {
     background-color: var(--primary-color) !important;
     color: #fff !important;
     border-top-left-radius: 0 !important;
     border-bottom-left-radius: 0 !important;
 }
+
 .select-fields option {
-    white-space: pre-wrap !important; /* Enables word wrapping */
+    white-space: pre-wrap !important;
+    /* Enables word wrapping */
     overflow-wrap: break-word !important;
     word-wrap: break-word !important;
-    max-width: 200px !important; /* Adjust as needed */
+    max-width: 200px !important;
+    /* Adjust as needed */
 }

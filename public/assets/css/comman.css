@@ -1,4 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Pinyon%20Script:wght@900&family=Pinyon%20Script&display=swap');
+
+/* Apply Mulish font only to text elements */
+body,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span:not([class*="mdi-"]):not([class*="fa-"]):not([class*="icon-"]),
+div:not([class*="mdi-"]):not([class*="fa-"]):not([class*="icon-"]),
+label,
+a,
+td,
+th,
+li,
+blockquote,
+pre,
+input,
+code {
+    font-family: 'Mulish', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* Preserve Pinyon Script for certificates */
+.certificate-text,
+[class*="certificate"] {
+    font-family: 'Pinyon Script', cursive !important;
+}
+
+label {
+    color: #808080 !important;
+}
+
 
 .text-color-dashboard-counter-label {
     color: #585353 !important;
@@ -128,6 +163,12 @@
 
 .cache-clear {
     margin: auto 0px !important;
+    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    color: var(--theme-color) !important;
+    outline: none !important;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 8px 10px;
 }
 
 .fa-table-layout:before {
@@ -138,6 +179,7 @@
     border: 1px dashed gray;
     position: absolute;
 }
+
 .page-section {
     border: 1px solid lightgray;
     padding: 1rem;
@@ -148,12 +190,15 @@
     padding-top: 1rem;
     border-radius: 6px;
 }
+
 .ms-3 {
     margin-left: 1rem !important;
 }
+
 .action-column {
     text-align: center;
 }
+
 .action-column-dropdown-menu {
     padding: 0 !important;
 }
@@ -161,8 +206,20 @@
 .border-theme {
     border: 1px solid var(--theme-color);
 }
+
 .menu-search {
-    border-radius: 10px;
+    border-radius: 4px;
+    outline: none !important;
+    border: none;
+}
+
+.menu-search:hover {
+    cursor: pointer;
+}
+
+.menu-search:focus {
+    border: 1px solid var(--theme-color);
+    transition: all 0.5s ease;
 }
 
 /* package hover */
@@ -176,7 +233,7 @@
     opacity: 0;
     position: absolute;
     background-color: #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     padding: 10px;
     z-index: 1;
     transition: opacity 0.3s, visibility 0.3s;
@@ -203,6 +260,7 @@
     cursor: pointer;
     border-radius: 4px;
 }
+
 /* end package hover */
 
 @media (min-width: 992px) {
@@ -222,4 +280,296 @@
 
 .list-wrapper ul li .form-check {
     max-width: 100%;
+}
+
+/* Active Navigation Styling with Dull Theme Color Background */
+/* Only apply background to parent nav items, not sub-menu items */
+/* .sidebar .nav>.nav-item.active {
+   
+} */
+
+.sidebar .nav>.nav-item.active>.nav-link {
+    background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    border-radius: 4px !important;
+    padding: 10px 6px;
+}
+
+.sidebar .nav>.nav-item.active>.nav-link .menu-title {
+    color: var(--theme-color) !important;
+    font-weight: 600;
+}
+
+.sidebar .nav>.nav-item.active>.nav-link i {
+    color: var(--theme-color) !important;
+}
+
+/* Apply theme color to SVG icons in active menu items */
+.sidebar .nav>.nav-item.active>.nav-link .svg-theme-stroke {
+    color: var(--theme-color) !important;
+    stroke: var(--theme-color) !important;
+}
+
+.sidebar .nav>.nav-item.active>.nav-link svg {
+    color: var(--theme-color) !important;
+}
+
+/* Sub-menu items styling - add left padding for visual separation */
+.sidebar .nav .sub-menu .nav-item {
+    padding-left: 1rem;
+}
+
+/* Active sub-menu items - only text color, no background */
+.sidebar .nav .sub-menu .nav-item.active {
+    background: transparent !important;
+}
+
+.sidebar .nav .sub-menu .nav-item.active .nav-link {
+    color: var(--theme-color) !important;
+    font-weight: 600;
+    background: transparent !important;
+}
+
+
+
+
+.form-control {
+    border-radius: 4px !important;
+    background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+}
+
+.form-control:focus {
+    border: 1px solid var(--theme-color) !important;
+}
+
+.svg-theme-color svg,
+.svg-theme-color {
+    fill: var(--theme-color) !important;
+}
+
+.svg-theme-color-light svg,
+.svg-theme-color-light {
+    fill: color-mix(in srgb, var(--theme-color) 60%, white) !important;
+}
+
+.svg-theme-color-dark svg,
+.svg-theme-color-dark {
+    fill: color-mix(in srgb, var(--theme-color) 80%, black) !important;
+}
+
+.svg-theme-stroke svg,
+.svg-theme-stroke {
+    stroke: var(--theme-color) !important;
+    fill: none !important;
+    color: var(--theme-color) !important;
+}
+
+.svg-theme-stroke-light svg,
+.svg-theme-stroke-light {
+    stroke: color-mix(in srgb, var(--theme-color) 60%, white) !important;
+    fill: none !important;
+}
+
+.svg-theme-full svg,
+.svg-theme-full {
+    fill: var(--theme-color) !important;
+    stroke: var(--theme-color) !important;
+}
+
+.svg-theme-filter {
+    filter: brightness(0) saturate(100%) invert(var(--theme-invert, 50%)) sepia(var(--theme-sepia, 100%)) saturate(var(--theme-saturate, 500%)) hue-rotate(var(--theme-hue, 0deg));
+}
+
+.svg-bg-theme {
+    background-color: var(--theme-color) !important;
+}
+
+.svg-bg-theme svg {
+    fill: white !important;
+}
+
+.svg-bg-theme-light {
+    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+}
+
+.svg-bg-theme-light svg {
+    fill: var(--theme-color) !important;
+}
+
+.svg-hover-theme:hover svg,
+.svg-hover-theme:hover {
+    fill: var(--theme-color) !important;
+    transition: fill 0.3s ease;
+}
+
+.svg-hover-theme-bg:hover {
+    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    transition: background-color 0.3s ease;
+}
+
+.svg-hover-theme-bg:hover svg {
+    fill: var(--theme-color) !important;
+    transition: fill 0.3s ease;
+}
+
+/* Method 7: Active state for SVG icons */
+.svg-active-theme.active svg,
+.svg-active-theme.active {
+    fill: var(--theme-color) !important;
+}
+
+.svg-active-theme-bg.active {
+    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+}
+
+.svg-active-theme-bg.active svg {
+    fill: var(--theme-color) !important;
+}
+
+/* Method 8: SVG path specific targeting */
+.svg-theme-path svg path {
+    fill: var(--theme-color) !important;
+}
+
+.svg-theme-path-stroke svg path {
+    stroke: var(--theme-color) !important;
+    fill: none !important;
+}
+
+/* Method 9: Opacity variations */
+.svg-theme-opacity-10 svg {
+    fill: var(--theme-color) !important;
+    opacity: 0.1;
+}
+
+.svg-theme-opacity-30 svg {
+    fill: var(--theme-color) !important;
+    opacity: 0.3;
+}
+
+.svg-theme-opacity-50 svg {
+    fill: var(--theme-color) !important;
+    opacity: 0.5;
+}
+
+.svg-theme-opacity-70 svg {
+    fill: var(--theme-color) !important;
+    opacity: 0.7;
+}
+
+/* Method 10: For inline SVG with currentColor */
+.svg-current-color svg {
+    fill: currentColor !important;
+    color: var(--theme-color) !important;
+}
+
+.svg-current-color-stroke svg {
+    stroke: currentColor !important;
+    color: var(--theme-color) !important;
+    fill: none !important;
+}
+
+.icon-card-active {
+    width: 80px;
+    height: 80px;
+    background-color: #eafff3; /* light green background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-active img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+
+.icon-card-inactive {
+    width: 80px;
+    height: 80px;
+    background-color: #FFF7F5; /* light red background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-inactive img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+
+.icon-card-school {
+    width: 80px;
+    height: 80px;
+    background-color: #F6F4FF; /* light purple background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-school img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.icon-card-package {
+    width: 80px;
+    height: 80px;
+    background-color: #EDF3FF; /* light blue background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-package img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.icon-card-screams {
+    width: 80px;
+    height: 80px;
+    background-color: #FFEFD7; /* light yallow background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-screams img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+
+
+.icon-card-teacher {
+    width: 80px;
+    height: 80px;
+    background-color: #F6F4FF; /* light yallow background */
+    border-radius: 12px; /* rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* pushes icon to right */
+}
+
+.icon-card-teacher img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
 }
