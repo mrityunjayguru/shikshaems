@@ -58,7 +58,7 @@
                                         <button class="file-upload-browse btn btn-theme" type="button">{{ __('upload') }}</button>
                                     </span>
                                 </div>
-                                <div style="width: 40px;">
+                                <div style="width: 40px; margin-top:4px;">
                                     <img src="{{$userData->image}}" id="edit-user-image-tag" class="img-fluid w-100" alt=""/>
                                 </div>
                             </div>
