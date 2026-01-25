@@ -23,6 +23,7 @@ class CheckChild {
      * @return JsonResponse
      */
     public function handle(Request $request, Closure $next) {
+        // dd($request->child_id);
         $url = $request->getRequestUri();
         // For api routes
         if (strpos($url, 'api') !== false) {
