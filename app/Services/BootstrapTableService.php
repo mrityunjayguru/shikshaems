@@ -7,7 +7,7 @@ class BootstrapTableService
     private static string $defaultClasses = "btn btn-xs btn-rounded btn-icon";
 
     /**
-     * @param string $iconClass
+     * @param string $iconClass - Can be a CSS class (e.g., "fa fa-edit") or SVG markup (e.g., "<svg>...</svg>")
      * @param string $url
      * @param array $customClass
      * @param array $customAttributes
@@ -23,7 +23,18 @@ class BootstrapTableService
                 $attributes .= $key . '="' . $value . '" ';
             }
         }
-        return '<a href="' . $url . '" class="' . $class . '" ' . $attributes . '><i class="' . $iconClass . '"></i></a>&nbsp;&nbsp;';
+
+        // Check if iconClass is SVG markup
+        $iconHtml = '';
+        if (stripos(trim($iconClass), '<svg') === 0) {
+            // It's SVG markup, render directly
+            $iconHtml = $iconClass;
+        } else {
+            // It's a CSS class, wrap in <i> tag
+            $iconHtml = '<i class="' . $iconClass . '"></i>';
+        }
+
+        return '<a href="' . $url . '" class="' . $class . '" ' . $attributes . '>' . $iconHtml . '</a>&nbsp;&nbsp;';
     }
 
     /**
@@ -47,7 +58,11 @@ class BootstrapTableService
             $customClass[] = "set-form-url";
         }
 
-        $iconClass = "fa fa-edit";
+        $iconClass = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M11 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22H15C20 22 22 20 22 15V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16.04 3.02001L8.16 10.9C7.86 11.2 7.56 11.79 7.5 12.22L7.07 15.23C6.91 16.32 7.68 17.08 8.77 16.93L11.78 16.5C12.2 16.44 12.79 16.14 13.1 15.84L20.98 7.96001C22.34 6.60001 22.98 5.02001 20.98 3.02001C18.98 1.02001 17.4 1.66001 16.04 3.02001Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14.91 4.1499C15.58 6.5399 17.45 8.4099 19.85 9.0899" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>';
         return self::button($iconClass, $url, $customClass, $customAttributes);
     }
 
@@ -61,7 +76,12 @@ class BootstrapTableService
         $customAttributes = [
             "title" => trans("Delete"),
         ];
-        $iconClass = "fa fa-trash";
+        $iconClass = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M17.9 9.04997C15.72 8.82997 13.52 8.71997 11.33 8.71997C10.03 8.71997 8.72997 8.78997 7.43997 8.91997L6.09998 9.04997" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.70996 8.38994L9.84996 7.52994C9.94996 6.90994 10.03 6.43994 11.14 6.43994H12.86C13.97 6.43994 14.0499 6.92994 14.1499 7.52994L14.2899 8.37994" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16.49 9.12988L16.06 15.7299C15.99 16.7599 15.93 17.5599 14.1 17.5599H9.89C8.06 17.5599 7.99999 16.7599 7.92999 15.7299L7.5 9.12988" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>';
         return self::button($iconClass, $url, $customClass, $customAttributes);
     }
 
@@ -76,7 +96,7 @@ class BootstrapTableService
         $customAttributes = [
             "title" => trans($title),
         ];
-        $iconClass = "fa fa-refresh";
+        $iconClass = "fa fa-refresh action-icon";
         return self::button($iconClass, $url, $customClass, $customAttributes);
     }
 
@@ -90,7 +110,7 @@ class BootstrapTableService
         $customAttributes = [
             "title" => trans("Delete Permanent"),
         ];
-        $iconClass = "fa fa-times";
+        $iconClass = "fa fa-times action-icon" ;
         return self::button($iconClass, $url, $customClass, $customAttributes);
     }
 
@@ -109,7 +129,8 @@ class BootstrapTableService
      * @param $url
      * @return string
      */
-    public static function viewRelatedDataButton($url,  bool $modal = true) {
+    public static function viewRelatedDataButton($url,  bool $modal = true)
+    {
         $customClass = ["edit-data", "btn-gradient-primary"];
         $customAttributes = [
             "title" => trans("View Related Data")
@@ -124,7 +145,7 @@ class BootstrapTableService
             $customClass[] = "set-form-url";
         }
 
-        $iconClass = "fa fa-eye";
+        $iconClass = "fa fa-eye action-icon";
         return self::button($iconClass, $url, $customClass, $customAttributes);
     }
 
@@ -139,7 +160,7 @@ class BootstrapTableService
                 $attributes .= $key . '="' . $value . '" ';
             }
         }
-        return '<a href="' . $url . '" class="dropdown-item p-2 ' . $customClassStr . '" ' . $attributes . '>'. trans($title) .'</a>';
+        return '<a href="' . $url . '" class="dropdown-item p-2 ' . $customClassStr . '" ' . $attributes . '>' . trans($title) . '</a>';
     }
 
     public static function menuEditButton($title, $url, bool $modal = true)
@@ -187,23 +208,25 @@ class BootstrapTableService
 
         // return '<div class="dropdown"> <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> Dropdown </button> <div class="dropdown-menu" aria-labelledby="dropdownMenu2"> '. $operate .' </div> </div>';
 
-        return '<div class="dropdown table-action-column d-flex align-items-center"> <button class="btn btn-sm btn-inverse-dark d-flex align-items-center" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-ellipsis-v"></i> </button> <div class="dropdown-menu action-column-dropdown-menu" aria-labelledby="dropdownMenuButton"> '. $operate .' </div> </div>';
+        return '<div class="dropdown table-action-column d-flex align-items-center"> <button class="btn btn-sm btn-inverse-dark d-flex align-items-center" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="fa fa-ellipsis-v"></i> </button> <div class="dropdown-menu action-column-dropdown-menu" aria-labelledby="dropdownMenuButton"> ' . $operate . ' </div> </div>';
     }
 
     /**
      * @param $url
      * @return string
      */
-    public static function downloadButton($urls) {
+    public static function downloadButton($urls)
+    {
         $customClass = ["related-data-form", "btn-inverse-primary"];
         $customAttributes = [
             "title" => trans("database_download"),
         ];
-        $iconClass = "fa fa-download";
+        $iconClass = "fa fa-download action-icon";
         return self::download_urls($iconClass, $urls, $customClass, $customAttributes);
     }
-    
-    public static function download_urls(string $iconClass, array $urls, array $customClass = [], array $customAttributes = []) {
+
+    public static function download_urls(string $iconClass, array $urls, array $customClass = [], array $customAttributes = [])
+    {
 
         $customClassStr = implode(" ", $customClass);
         $class = self::$defaultClasses . ' ' . $customClassStr;
@@ -215,16 +238,17 @@ class BootstrapTableService
         }
 
         return '<a href="' . $urls[0] . '" class="' . $class . '" ' . $attributes . ' ><i class="' . $iconClass . '"></i></a>  <a href="' . $urls[1] . '" class="' . $class . '" ' . $attributes . ' ><i class="fa fa-image"></i></a>  ';
-
     }
 
     // View Button
-    public static function viewButton($url, $customClass = [], $customAttributes = []) {
-        $iconClass = "fa fa-eye";
-        return self::button($iconClass, $url, 
-            array_merge(["btn-gradient-primary"], $customClass), 
+    public static function viewButton($url, $customClass = [], $customAttributes = [])
+    {
+        $iconClass = "fa fa-eye action-icon";
+        return self::button(
+            $iconClass,
+            $url,
+            array_merge(["btn-gradient-primary"], $customClass),
             array_merge(["title" => trans("View")], $customAttributes)
         );
     }
-
 }

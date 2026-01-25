@@ -48,7 +48,7 @@
                                                     <div class="form-group">
                                                         <input type="hidden" name="class_subject_id" class="class_subject_id"/>
                                                         <label for="core_subject_id" class="d-none"></label>
-                                                        <select name="id" id="core_subject_id" class="form-control subject" required="required">
+                                                        <select name="id" id="core_subject_id" class="form-control subject " required="required">
                                                             <option value="">{{ __('Select Subject') }}</option>
                                                             @foreach ($subjects as $subject)
                                                                 <option value="{{ $subject->id }}">{{ $subject->name }} - {{ __($subject->type)}}</option>
@@ -106,8 +106,8 @@
                                                                     <div class="col-md-10 col-sm-10 col-12">
                                                                         <input type="hidden" name="class_subject_id" class="class_subject_id"/>
                                                                         <label for="elective_id" class="d-none"></label>
-                                                                        <select name="id" id="elective_id" class="form-control subject" required="required">
-                                                                            <option value="">{{ __('Select Subject') }}</option>
+                                                                        <select name="id" id="elective_id" class="form-control subject " required="required">
+                                                                            <option value="" class=""> {{ __('Select Subject') }}</option>
                                                                             @foreach ($subjects as $subject)
                                                                                 <option value="{{ $subject->id }}">{{ $subject->name }} - {{ __($subject->type)}}</option>
                                                                             @endforeach
