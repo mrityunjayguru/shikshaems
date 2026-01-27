@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\Students;
 use App\Models\SubjectTeacher;
 use App\Models\User;
+use App\Models\Events;
 use App\Models\TransportationPayment;
 use App\Models\TransportationFee;
 use App\Repositories\Attachment\AttachmentInterface;
@@ -158,6 +159,95 @@ class ApiController extends Controller
         }
     }
 
+    public function getEvents(Request $request)
+    {
+        try {
+            $query = Events::query();
+            $sessionYear = $this->cache->getDefaultSessionYear();
+
+            // if ($request->filled('child_id')) {
+            //     $child = $this->student->findById($request->child_id);
+
+            //     if (!$child) {
+            //         return response()->json([
+            //             'message' => 'Child not found'
+            //         ], 404);
+            //     }
+
+            //     $query->where('school_id', $child->user->school_id);
+            // }
+
+            $events = $query->whereBetween('date', [
+                $sessionYear->start_date,
+                $sessionYear->end_date
+            ])->get();
+
+            ResponseService::successResponse("Event Fetched Successfully", $events);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function getBirthdays(Request $request)
+    {
+        try {
+            $month = $request->month ?? Carbon::now()->month;
+
+
+            $sql = Students::with(
+                'user:id,first_name,last_name,dob',
+                'class_section.class.stream',
+                'class_section.section',
+                'class_section.class.shift',
+                'class_section.medium'
+            )
+                ->whereHas('user', function ($q) use ($month) {
+                    $q->whereNotNull('dob')
+                        ->whereMonth('dob', $month);
+                });
+
+
+            /* 🔹 Filter by class */
+            if ($request->class_id) {
+                $sql->whereHas('class_section', function ($q) use ($request) {
+                    $q->where('class_id', $request->class_id);
+                });
+            }
+
+
+            /* 🔹 Filter by class section */
+            if ($request->class_section_id) {
+                $sql->where('class_section_id', $request->class_section_id);
+            }
+
+            $sql->select('students.id', 'students.user_id', 'students.class_section_id');
+            /* 🔹 Owner scope */
+            $sql = $sql->owner();
+
+
+            /* 🔹 Search */
+            // if (!empty($request->search)) {
+            //     $search = $request->search;
+            //     $sql->where(function ($query) use ($search) {
+            //         $query->where('id', 'LIKE', "%$search%")
+            //             ->orWhere('first_name', 'LIKE', "%$search%")
+            //             ->orWhere('last_name', 'LIKE', "%$search%")
+            //             ->orWhere('gender', 'LIKE', "%$search%")
+            //             ->orWhere('email', 'LIKE', "%$search%")
+            //             ->orWhere('mobile', 'LIKE', "%$search%");
+            //     });
+            // }
+
+            /* 🔹 Execute */
+            $students = $sql->get();
+            ResponseService::successResponse("Data Fetched Successfully", $students);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
     public function getSettings(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -222,15 +312,12 @@ class ApiController extends Controller
                     } else {
                         ResponseService::errorResponse("Cannot send Reset Password Link.Try again later", null, config('constants.RESPONSE_CODE.RESET_PASSWORD_FAILED'));
                     }
-
                 } else {
                     return response()->json(['error' => true, 'message' => 'Invalid school code'], 200);
                 }
             } else {
                 return response()->json(['error' => true, 'message' => 'Unauthenticated'], 200);
             }
-
-
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
@@ -644,10 +731,10 @@ class ApiController extends Controller
                     $q->where('type', 'Full');
                 }
             ])->withCount([
-                        'leave_detail as half_leave' => function ($q) {
-                            $q->whereNot('type', 'Full');
-                        }
-                    ]);
+                'leave_detail as half_leave' => function ($q) {
+                    $q->whereNot('type', 'Full');
+                }
+            ]);
 
             if ($request->session_year_id) {
                 $sql->whereHas('leave_master', function ($q) use ($request) {
@@ -733,10 +820,10 @@ class ApiController extends Controller
                     $q->where('type', 'Full');
                 }
             ])->withCount([
-                        'leave_detail as half_leave' => function ($q) {
-                            $q->whereNot('type', 'Full');
-                        }
-                    ])->where('user_id', $request->staff_id);
+                'leave_detail as half_leave' => function ($q) {
+                    $q->whereNot('type', 'Full');
+                }
+            ])->where('user_id', $request->staff_id);
 
             if ($request->session_year_id) {
                 $sql->whereHas('leave_master', function ($q) use ($request) {
@@ -1087,7 +1174,6 @@ class ApiController extends Controller
 
                 ResponseService::successResponse("Data Stored Successfully", $message);
             }
-
         } catch (\Throwable $th) {
             $notificationStatus = app(GeneralFunctionService::class)->wrongNotificationSetup($th);
             if ($notificationStatus) {
@@ -1125,7 +1211,6 @@ class ApiController extends Controller
                 ->paginate(10);
 
             ResponseService::successResponse("data_fetch_successfully", $data);
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
@@ -1143,7 +1228,6 @@ class ApiController extends Controller
         try {
             $this->message->builder()->whereIn('id', $request->id)->delete();
             ResponseService::successResponse("Data Deleted Successfully");
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
@@ -1162,7 +1246,6 @@ class ApiController extends Controller
             $read_at = Carbon::now();
             $this->message->builder()->whereIn('id', $request->message_id)->update(['read_at' => $read_at]);
             ResponseService::successResponse("Data Updated Successfully");
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
@@ -1234,7 +1317,6 @@ class ApiController extends Controller
                             $q->where('school_id', Auth::user()->school_id)
                                 ->where('class_section_id', $request->class_section_id);
                         })->with('child:id,user_id,guardian_id,class_section_id', 'child.user:id,first_name,last_name,image');
-
                     } else if ($request->role == 'Staff') {
                         // Get staff list
 
@@ -1378,7 +1460,7 @@ class ApiController extends Controller
                         switch ($request->role) {
                             case 'Staff':
                                 $roleNames = ['Driver', 'Helper', 'Teacher'];
-                                if(Auth::user()->hasRole('Guardian')){
+                                if (Auth::user()->hasRole('Guardian')) {
                                     $roleNames = ['Driver', 'Helper'];
                                 }
                                 $q->whereHas('receiver', function ($receiverQ) use ($userId, $roleNames) {
@@ -1445,7 +1527,6 @@ class ApiController extends Controller
             }
 
             ResponseService::successResponse("Data Fetched Successfully", $data);
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
@@ -1479,7 +1560,6 @@ class ApiController extends Controller
                 ->get();
 
             ResponseService::successResponse("Data Fetched Successfully", $users);
-
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
@@ -1517,11 +1597,9 @@ class ApiController extends Controller
                         'school_logo' => $settings['horizontal_logo'],
                         'school_images' => $gallery_images ?? []
                     );
-
                 } else {
                     return response()->json(['message' => 'Invalid school code'], 400);
                 }
-
             } else {
                 return response()->json(['message' => 'Unauthenticated'], 400);
             }
@@ -1575,21 +1653,17 @@ class ApiController extends Controller
                             $body = "Pay fees if you didn't paid !!";
                             $type = "fee-reminder";
                             send_notification($user, $title, $body, $type);
-
                         }
                     }
-
                 } else {
                     return response()->json(['message' => 'Invalid school code'], 400);
                 }
-
             } else {
                 return response()->json(['message' => 'Unauthenticated'], 400);
             }
 
 
-            ResponseService::successResponse("Notification Sent Successfully", );
-
+            ResponseService::successResponse("Notification Sent Successfully",);
         } catch (\Throwable $e) {
             ResponseService::logErrorResponse($e);
             return ResponseService::errorResponse();
@@ -1767,5 +1841,4 @@ class ApiController extends Controller
             ResponseService::errorResponse();
         }
     }
-
 }
