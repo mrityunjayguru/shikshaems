@@ -312,6 +312,8 @@ Route::get('school-details', [ApiController::class, 'schoolDetails']);
 Route::group(['middleware' => ['APISwitchDatabase',]], static function () {
     Route::get('school-settings', [ApiController::class, 'getSchoolSettings']);
     Route::get('holidays', [ApiController::class, 'getHolidays']);
+    Route::get('events', [ApiController::class, 'getEvents']);
+    Route::get('birthdays', [ApiController::class, 'getBirthdays']);
     Route::post('change-password', [ApiController::class, 'changePassword']);
     //    Route::get('test', [ApiController::class, 'getPaymentMethod']);
     Route::get('payment-confirmation', [ApiController::class, 'getPaymentConfirmation'])->name('payment-confirmation');
@@ -394,6 +396,6 @@ Route::group(['middleware' => ['APISwitchDatabase',]], static function () {
     Route::post('transport/user/attendance-list', [TrasportationApiController::class, 'getTransportationAteendaceRecordForUser']);
 
     Route::get('diaries', [ApiController::class, 'getStudentDiaries']);
-    
+
     Route::post('track-vehicles', [TrasportationApiController::class, 'trackVehicles']);
 });

@@ -16,6 +16,19 @@
 @endsection
 
 @section('content')
+    @php
+        $student = $student[0] ?? null;
+        $route_details = $route_details[0] ?? null;
+        $pickup_point = $pickup_point[0] ?? null;
+
+        $pickupPoint = $route_details ? $route_details->pickupPoint : null;
+
+        if (isset($student->class_section) && isset($student->class_section->class_teachers)) {
+            $classTeacher = $student->class_section->class_teachers[0] ?? null;
+        } else {
+            $classTeacher = null;
+        }
+    @endphp
     <div class="content-wrapper">
 
         {{-- Page Header --}}
@@ -36,7 +49,7 @@
 
                                 {{-- Profile Image --}}
                                 <div class="col-md-2 text-center">
-                                    <img src="{{ $student[0]->user->image ?? asset('assets/dummy_logo.jpg') }}"
+                                    <img src="{{ $student->user->image ?? asset('assets/dummy_logo.jpg') }}"
                                         class="rounded-circle mb-2" width="90" height="90"
                                         onerror="this.src='{{ asset('assets/dummy_logo.jpg') }}'">
                                 </div>
@@ -56,12 +69,12 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td class="fw-semibold">{{ $student[0]->full_name }}</td>
-                                                <td>{{ $student[0]->admission_no }}</td>
-                                                <td>{{ $student[0]->class_section->class->name ?? '-' }}</td>
-                                                <td>{{ $student[0]->class_section->section->name ?? '-' }}</td>
-                                                <td>{{ $student[0]->user->dob }}</td>
-                                                <td>{{ ucfirst($student[0]->user->gender) }}</td>
+                                                <td class="fw-semibold">{{ $student->full_name }}</td>
+                                                <td>{{ $student->admission_no }}</td>
+                                                <td>{{ $student->class_section->class->name ?? '-' }}</td>
+                                                <td>{{ $student->class_section->section->name ?? '-' }}</td>
+                                                <td>{{ $student->user->dob }}</td>
+                                                <td>{{ ucfirst($student->user->gender) }}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -79,7 +92,7 @@
                                         <h6 class="text-warning mb-3">Location</h6>
 
                                         <p class="mb-1">
-                                            Address :- {{ $student[0]->user->current_address ?? 'N/A' }}
+                                            Address :- {{ $student->user->current_address ?? 'N/A' }}
                                         </p>
 
                                         <div class="row small text-muted">
@@ -101,15 +114,15 @@
                                         <h6 class="text-warning mb-3">Pickup Point</h6>
 
                                         <p class="mb-1">
-                                            Address :- {{ $route_details[0]->pickupPoint->name ?? 'N/A' }}
+                                            Address :- {{ $pickupPoint->name ?? 'N/A' }}
                                         </p>
 
                                         <div class="row small text-muted">
                                             <div class="col-6">Latitude: <span
-                                                    id="pickup_lat">{{ $route_details[0]->pickupPoint->latitude }}</span><br>
+                                                    id="pickup_lat">{{ $pickupPoint->latitude ?? '-' }}</span><br>
                                             </div>
                                             <div class="col-6">Longitude: <span
-                                                    id="pickup_lng">{{ $route_details[0]->pickupPoint->longitude }}</span>
+                                                    id="pickup_lng">{{ $pickupPoint->longitude ?? '-' }}</span>
                                             </div>
                                         </div>
 
@@ -130,8 +143,8 @@
                                             <img src="{{ asset('assets/dummy_logo.jpg') }}" class="rounded-circle"
                                                 width="35" height="35">
                                             <div class="ms-2">
-                                                <div class="fw-semibold">{{ $student[0]->guardian->full_name }}</div>
-                                                <small class="text-muted">{{ $student[0]->guardian->mobile }}</small>
+                                                <div class="fw-semibold">{{ $student->guardian->full_name }}</div>
+                                                <small class="text-muted">{{ $student->guardian->mobile }}</small>
                                             </div>
                                         </div>
                                     </div>
@@ -145,14 +158,18 @@
                                         <h6 class="text-warning mb-3">Class Staff</h6>
 
                                         {{-- @foreach ($classStaff as $staff) --}}
-                                        <div class="d-flex align-items-center mb-2">
-                                            <img src="{{ asset('assets/dummy_logo.jpg') }}" class="rounded-circle"
-                                                width="35" height="35">
-                                            <div class="ms-2">
-                                                <div class="fw-semibold">{{ $student[0]->class_section->class_teachers[0]->teacher->full_name}}</div>
-                                                <small class="text-muted">Class Teacher</small>
+                                        @if ($classTeacher && isset($classTeacher->teacher))
+                                            <div class="d-flex align-items-center mb-2">
+                                                <img src="{{ asset('assets/dummy_logo.jpg') }}" class="rounded-circle"
+                                                    width="35" height="35">
+                                                <div class="ms-2">
+                                                    <div class="fw-semibold">
+                                                        {{ $classTeacher->teacher->full_name }}
+                                                    </div>
+                                                    <small class="text-muted">Class Teacher</small>
+                                                </div>
                                             </div>
-                                        </div>
+                                        @endif
                                         {{-- @endforeach --}}
                                     </div>
                                 </div>
@@ -161,20 +178,25 @@
                         </div>
 
                         <div class="row mt-3">
-                             {{-- ROUTE --}}
+                            {{-- ROUTE --}}
                             <div class="col-md-3">
                                 <div class="card h-100">
                                     <div class="card-body">
                                         <h6 class="text-warning mb-3">Route Plan</h6>
 
                                         <p class="mb-1">
-                                            Route :- {{ $route_details[0]->routeVehicle->route->name ?? 'N/A' }}
+                                            Route :- {{ $route_details->routeVehicle->route->name ?? 'N/A' }}
                                         </p>
 
                                         <div class="row small text-muted">
-                                            <div class="col-6">Stop: <span id="stop"> {{ $route_details[0]->pickupPoint->name ?? 'N/A' }}</span><br></div>
-                                            <div class="col-6">pickup time: <span>{{ $route_details[0]->pickupPoint->pickup_time ?? 'N/A' }}</span><br></div>
-                                            <div class="col-6 mt-2">drop time: <span>{{ $route_details[0]->pickupPoint->dropoff_time ?? 'N/A' }}</span></div>
+                                            <div class="col-6">Stop: <span id="stop">
+                                                    {{ $pickupPoint->name ?? 'N/A' }}</span><br></div>
+                                            <div class="col-6">pickup time:
+                                                <span>{{ $pickupPoint->pickup_time ?? 'N/A' }}</span><br>
+                                            </div>
+                                            <div class="col-6 mt-2">drop time:
+                                                <span>{{ $pickupPoint->dropoff_time ?? 'N/A' }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -199,8 +221,8 @@
         let map1, marker1;
         let map2, marker2;
 
-        const pickupLat = {{ $pickup_point[0]->pickupPoint->latitude ?? 25.9644 }};
-        const pickupLng = {{ $pickup_point[0]->pickupPoint->longitude ?? 85.2722 }};
+        const pickupLat = {{ $pickup_point->pickupPoint->latitude ?? 25.9644 }};
+        const pickupLng = {{ $pickup_point->pickupPoint->longitude ?? 85.2722 }};
 
         function initMap() {
 
