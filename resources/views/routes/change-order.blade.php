@@ -149,7 +149,7 @@
         const routes = @json($route->routePickupPoints);
         const routeColor = @json($route->route_color);
         
-        function initMap() {
+        function initMaps() {
 
             const defaultPosition = {
                 lat: 20.5937,

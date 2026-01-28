@@ -85,6 +85,11 @@
                                     <input type="text" id="lng" placeholder="Longitude" name="longitude"
                                         class="form-control mt-2" required>
                                 </div>
+                                <div class="form-group col-md-6">
+                                    <label>Address<span class="text-danger">*</span></label>
+                                    <input type="text" id="address" placeholder="Address" name="address"
+                                        class="form-control mt-2" required>
+                                </div>
                                 <div class="form-group col-md-12">
                                     <div id="map" style="height: 400px; width: 100%;"></div>
                                 </div>
@@ -110,8 +115,8 @@
                             data-fixed-columns="false" data-fixed-number="2" data-fixed-right-number="1"
                             data-trim-on-search="false" data-mobile-responsive="true" data-sort-name="id"
                             data-sort-order="desc" data-maintain-selected="true" data-query-params="queryParams"
-                            data-show-export="true" data-export-options='{"fileName": "pickup-points-list-<?= date('d-m-y')
-                            ?>","ignoreColumn":
+                            data-show-export="true"
+                            data-export-options='{"fileName": "pickup-points-list-<?= date('d-m-y') ?>","ignoreColumn":
                             ["operate"]}'
                             data-escape="true">
                             <thead>
@@ -120,7 +125,8 @@
                                         {{ __('id') }}</th>
                                     <th scope="col" data-field="no">{{ __('no.') }}</th>
                                     <th scope="col" data-field="name" data-sortable="true">{{ __('name') }}</th>
-                                    <th scope="col" data-field="distance" data-sortable="true">{{ __('Distance') }}</th>
+                                    <th scope="col" data-field="distance" data-sortable="true">{{ __('Distance') }}
+                                    </th>
                                     <th scope="col" data-field="pickup_time" data-sortable="true">
                                         {{ __('pickup_time') }}</th>
                                     <th scope="col" data-field="dropoff_time" data-sortable="true">
@@ -225,6 +231,11 @@
                                             class="form-control mt-2" required>
                                     </div>
                                     <div class="form-group col-md-12">
+                                        <label>Address<span class="text-danger">*</span></label>
+                                        <input type="text" id="edit_address" placeholder="Address" name="address"
+                                            class="form-control mt-2" required>
+                                    </div>
+                                    <div class="form-group col-md-12">
                                         <div id="edit_map" style="height: 400px; width: 100%;"></div>
                                     </div>
                                 </div>
@@ -243,6 +254,30 @@
 @endsection
 @section('js')
     <script>
+        function initMaps() {
+            if (typeof google === "undefined") {
+                console.error("Google Maps not loaded");
+                return;
+            }
+
+
+            if (document.getElementById("map")) {
+                initMap();
+            }
+        }
+
+        function openEditMap() {
+            if (typeof google === "undefined") {
+                console.error("Google Maps not loaded");
+                return;
+            }
+
+
+            if (document.getElementById("edit_map")) {
+                initEditMap();
+            }
+        }
+
         let map, marker, editMap, editMarker;
 
         function initMap() {
@@ -267,8 +302,13 @@
 
             // Update lat/lng on marker drag
             google.maps.event.addListener(marker, 'dragend', function(event) {
-                document.getElementById("lat").value = event.latLng.lat().toFixed(6);
-                document.getElementById("lng").value = event.latLng.lng().toFixed(6);
+                const lat = event.latLng.lat().toFixed(6);
+                const lng = event.latLng.lng().toFixed(6);
+
+                document.getElementById("lat").value = lat;
+                document.getElementById("lng").value = lng;
+
+                fetchAddress(lat, lng, 'address'); // 👈 API CALL
             });
 
             let input = document.createElement("input");
@@ -300,6 +340,13 @@
                 // Update inputs
                 document.getElementById("lat").value = place.geometry.location.lat().toFixed(6);
                 document.getElementById("lng").value = place.geometry.location.lng().toFixed(6);
+
+                fetchAddress(
+                    place.geometry.location.lat(),
+                    place.geometry.location.lng(),
+                    'address'
+                );
+
             });
 
         }
@@ -323,12 +370,14 @@
 
                 // Recenter the map
                 map.setCenter(newPos);
+                fetchAddress(lat, lng, 'address');
             }
         }
 
         function initEditMap() {
             let lat = parseFloat($('#edit_lat').val());
             let lng = parseFloat($('#edit_lng').val());
+            console.log(lat, lng);
 
             // If empty, use India center
             if (!lat || !lng) {
@@ -355,48 +404,66 @@
 
             // Update inputs on drag
             google.maps.event.addListener(editMarker, 'dragend', function(event) {
-                $('#edit_lat').val(event.latLng.lat().toFixed(6));
-                $('#edit_lng').val(event.latLng.lng().toFixed(6));
+                const lat = event.latLng.lat().toFixed(6);
+                const lng = event.latLng.lng().toFixed(6);
+
+                $('#edit_lat').val(lat);
+                $('#edit_lng').val(lng);
+
+                fetchAddress(lat, lng, 'edit_address');
             });
 
             // Click on map to move marker
             google.maps.event.addListener(editMap, 'click', function(event) {
                 editMarker.setPosition(event.latLng);
-                $('#edit_lat').val(event.latLng.lat().toFixed(6));
-                $('#edit_lng').val(event.latLng.lng().toFixed(6));
+
+                const lat = event.latLng.lat().toFixed(6);
+                const lng = event.latLng.lng().toFixed(6);
+
+                $('#edit_lat').val(lat);
+                $('#edit_lng').val(lng);
+
+                fetchAddress(lat, lng, 'edit_address');
             });
 
             // ---- Search box inside map ----
-            // const input = document.createElement("input");
-            // input.className = "map-search mt-2";
-            // input.placeholder = "Search location…";
+            const input = document.createElement("input");
+            input.className = "mt-2 edit_map_search form-control";
+            input.placeholder = "Search location…";
 
-            // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+            editMap.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
 
-            // const autocomplete = new google.maps.places.Autocomplete(input);
-            // autocomplete.bindTo("bounds", map);
 
-            // autocomplete.addListener("place_changed", function() {
-            //     const place = autocomplete.getPlace();
+            const autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.bindTo("bounds", editMap);
+            autocomplete.addListener("place_changed", function() {
+                const place = autocomplete.getPlace();
 
-            //     if (!place.geometry || !place.geometry.location) {
-            //         alert("Location not found!");
-            //         return;
-            //     }
+                if (!place.geometry || !place.geometry.location) {
+                    alert("Location not found!");
+                    return;
+                }
 
-            //     map.setCenter(place.geometry.location);
-            //     map.setZoom(15);
-            //     marker.setPosition(place.geometry.location);
+                editMap.setCenter(place.geometry.location);
+                editMap.setZoom(15);
+                editMarker.setPosition(place.geometry.location);
 
-            //     document.getElementById("edit_lat").value = place.geometry.location.lat().toFixed(6);
-            //     document.getElementById("edit_lng").value = place.geometry.location.lng().toFixed(6);
-            // });
+                $('#edit_lat').val(place.geometry.location.lat().toFixed(6));
+                $('#edit_lng').val(place.geometry.location.lng().toFixed(6));
+
+                // call address API for edit
+                fetchAddress(
+                    place.geometry.location.lat(),
+                    place.geometry.location.lng(),
+                    "edit_address"
+                );
+            });
         }
 
-        document.getElementById("edit_lat").addEventListener("input", updateMarkerPosition);
-        document.getElementById("edit_lng").addEventListener("input", updateMarkerPosition);
+        document.getElementById("edit_lat").addEventListener("input", updateEditMarkerPosition);
+        document.getElementById("edit_lng").addEventListener("input", updateEditMarkerPosition);
 
-        function updateMarkerPosition() {
+        function updateEditMarkerPosition() {
             let lat = parseFloat(document.getElementById("edit_lat").value);
             let lng = parseFloat(document.getElementById("edit_lng").value);
 
@@ -413,6 +480,35 @@
                 // Recenter the map
                 map.setCenter(newPos);
             }
+        }
+
+        function fetchAddress(lat, lng, targetInputId) {
+            fetch("https://app.trackroutepro.com/common/jioCode", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        latitude: lat,
+                        longitude: lng
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    let address = "";
+
+                    if (data?.address) {
+                        address = data.address;
+                    } else if (data?.result?.address) {
+                        address = data.result.address;
+                    }
+
+                    if (targetInputId) {
+                        const input = document.getElementById(targetInputId);
+                        if (input) input.value = address;
+                    }
+                })
+                .catch(err => console.error("Jio API error:", err));
         }
     </script>
     <script>
