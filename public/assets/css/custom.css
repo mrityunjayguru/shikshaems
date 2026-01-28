@@ -34,11 +34,11 @@
     margin-bottom: 1rem;
 }
 
-.form-group > label {
+.form-group>label {
     margin-bottom: 10px;
 }
 
-#delete-modal .modal-footer > .btn {
+#delete-modal .modal-footer>.btn {
 
     border-radius: 3px !important;
     padding: 0 8px !important;
@@ -65,8 +65,9 @@
     padding: 0;
 }
 
-.context-menu ul > li {
-    display: block;;
+.context-menu ul>li {
+    display: block;
+    ;
     padding: 5px 15px;
     list-style-type: none;
     color: #333;
@@ -76,7 +77,7 @@
     font-size: 13px;
 }
 
-.context-menu ul > li:hover {
+.context-menu ul>li:hover {
     color: #fff;
     background-color: #007bff;
     border-radius: 2px;
@@ -162,20 +163,25 @@ label.filter-menu {
 .total_paidable_amount {
     background-color: lightgray;
 }
+
 .dashboard-description {
     font-size: 13px;
 }
+
 .v-scroll {
     height: 385px;
     overflow-y: scroll;
 }
+
 .custom-card-body {
     padding: 1.25rem !important;
 }
+
 .image-tile img {
     height: 200px;
     object-fit: cover;
 }
+
 .text-wrap div {
     white-space: normal !important;
 }
@@ -184,7 +190,7 @@ label.filter-menu {
     position: absolute;
     left: auto;
     right: -10px;
-    clip-path: polygon(50% 0%,100% 0%,100% 100%,0% 100%,14% 52%,0% 0%);
+    clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 0% 100%, 14% 52%, 0% 0%);
     width: 130px;
     height: 38px;
     top: 8px;
@@ -194,13 +200,15 @@ label.filter-menu {
     justify-content: center;
     font-size: 18px;
 }
-.package-type-badge{
+
+.package-type-badge {
     right: -2px;
 }
 
 .postpaid-color {
     background: var(--primary-color);
 }
+
 .prepaid-color {
     background: var(--secondary-color);
 }
@@ -208,14 +216,15 @@ label.filter-menu {
 .addon-border-primary {
     overflow: hidden;
 }
+
 .addon-ribbon {
     font: bold 15px sans-serif;
     color: #333;
     text-align: center;
     -webkit-transform: rotate(-45deg);
-    -moz-transform:    rotate(-45deg);
-    -ms-transform:     rotate(-45deg);
-    -o-transform:      rotate(-45deg);
+    -moz-transform: rotate(-45deg);
+    -ms-transform: rotate(-45deg);
+    -o-transform: rotate(-45deg);
     position: absolute;
     padding: 7px 0;
     top: 15px;
@@ -224,22 +233,27 @@ label.filter-menu {
     background-color: #ff0000;
     color: #fff;
 }
+
 .sidebar .nav .nav-item .nav-link i.menu-icon {
     margin-left: 5px !important;
     width: 30px;
 }
+
 .sidebar .nav .nav-item {
     padding: 0 1.25rem !important;
 }
+
 @media (min-width: 992px) {
     .sidebar-icon-only .sidebar .nav .nav-item {
         position: relative;
         padding: 0 !important;
     }
 }
+
 .sidebar .nav .nav-item .nav-link i.menu-arrow {
     font-size: 1.5rem !important;
 }
+
 .student-id-card-demo {
     position: fixed;
     width: -webkit-fill-available;
@@ -249,6 +263,7 @@ label.filter-menu {
 .action-column-dropdown-menu {
     left: -2rem !important;
 }
+
 .action-column-menu {
 
     /* position: absolute; */
@@ -277,7 +292,7 @@ label.filter-menu {
 /* Custom styles for Edit and Delete button icons and backgrounds */
 /* Edit Button - Orange background with white outlined pen icon */
 .btn-gradient-primary {
-    background: #FF9500 !important;
+    background: linear-gradient(to right, #FF9C00, #FF9500) !important;
     border: 0 !important;
     color: #ffffff !important;
     border-radius: 8px !important;
@@ -285,20 +300,113 @@ label.filter-menu {
 
 .btn-gradient-primary:hover {
     opacity: 0.9 !important;
-    background: #FF6B35  !important;
+    background: linear-gradient(to right, #FF9C00, #FF9500) !important;
+    color: #ffffff !important;
+}
+
+.btn-download {
+    background: linear-gradient(to right, #05BBFF, #09B3F2) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+
+.btn-download:hover {
+    opacity: 0.9 !important;
+    background: linear-gradient(to right, #05BBFF, #09B3F2) !important;
+    color: #ffffff !important;
+}
+
+.btn-view {
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+
+.btn-view:hover {
+    opacity: 0.9 !important;
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    color: #ffffff !important;
+}
+
+.btn-view:not([disabled]):not(.disabled):active,
+.btn-view:not([disabled]):not(.disabled).active,
+.show>.btn-view.dropdown-toggle {
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    color: #ffffff !important;
+}
+
+
+.btn-alertbox {
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+
+.btn-alertbox:hover {
+    opacity: 0.9 !important;
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    color: #ffffff !important;
+}
+
+.btn-alertbox:not([disabled]):not(.disabled):active,
+.btn-alertbox:not([disabled]):not(.disabled).active,
+.show>.btn-alertbox.dropdown-toggle {
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    color: #ffffff !important;
+}
+
+
+.btn-active-inactive {
+    background: linear-gradient(to right, #B092FF, #6F47F5) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+
+.btn-active-inactive:hover {
+    opacity: 0.9 !important;
+    background: linear-gradient(to right, #B092FF, #6F47F5) !important;
+
+    color: #ffffff !important;
+}
+
+.btn-active-inactive:not([disabled]):not(.disabled):active,
+.btn-active-inactive:not([disabled]):not(.disabled).active,
+.show>.btn-active-inactive.dropdown-toggle {
+    background: linear-gradient(to right, #B092FF, #6F47F5) !important;
+
+    color: #ffffff !important;
+}
+
+.btn-active-inactive:not([disabled]):not(.disabled):active,
+.btn-active-inactive:not([disabled]):not(.disabled).active,
+.show>.btn-active-inactive.dropdown-toggle {
+    background: linear-gradient(to right, #B092FF, #6F47F5) !important;
+
+    color: #ffffff !important;
+}
+
+.btn-active-inactive:not([disabled]):not(.disabled):active,
+.btn-active-inactive:not([disabled]):not(.disabled).active,
+.show>.btn-active-inactive.dropdown-toggle {
+    background: linear-gradient(to right, #B092FF, #6F47F5) !important;
+
     color: #ffffff !important;
 }
 
 .btn-gradient-primary:not([disabled]):not(.disabled):active,
 .btn-gradient-primary:not([disabled]):not(.disabled).active,
-.show > .btn-gradient-primary.dropdown-toggle {
-    background: #FF9500 !important;
+.show>.btn-gradient-primary.dropdown-toggle {
+    background: linear-gradient(to right, #FF9C00, #FF9500) !important;
     color: #ffffff !important;
 }
 
 /* Delete Button - Pink background with white outlined trash icon */
 .btn-gradient-dark {
-    background: #FF69B4 !important;
+    background: linear-gradient(to right, #FF70A6, #FF3081) !important;
     border: 0 !important;
     color: #ffffff !important;
     border-radius: 8px !important;
@@ -306,20 +414,44 @@ label.filter-menu {
 
 .btn-gradient-dark:hover {
     opacity: 0.9 !important;
-    background: #FF1493 !important;
+    background: linear-gradient(to right, #FF70A6, #FF3081) !important;
     color: #ffffff !important;
 }
 
 .btn-gradient-dark:not([disabled]):not(.disabled):active,
 .btn-gradient-dark:not([disabled]):not(.disabled).active,
-.show > .btn-gradient-dark.dropdown-toggle {
-    background: #FF69B4 !important;
+.show>.btn-gradient-dark.dropdown-toggle {
+    background: linear-gradient(to right, #FF70A6, #FF3081) !important;
+    color: #ffffff !important;
+}
+
+
+.btn-eye {
+    background: linear-gradient(to right, #1FC285, #00BE78) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+
+.btn-eye:hover {
+    opacity: 0.9 !important;
+    background: linear-gradient(to right, #1FC285, #00BE78) !important;
+    color: #ffffff !important;
+}
+
+.btn-eye:not([disabled]):not(.disabled):active,
+.btn-eye:not([disabled]):not(.disabled).active,
+.show>.btn-eye.dropdown-toggle {
+    background: linear-gradient(to right, #1FC285, #00BE78) !important;
     color: #ffffff !important;
 }
 
 /* Ensure Material Design Icons display properly in action buttons */
 .btn-gradient-primary i.mdi,
-.btn-gradient-dark i.mdi {
+.btn-gradient-dark i.mdi,
+.btn-download i.mdi,
+.btn-gradient-danger i.mdi,
+.btn-active-inactive i.mdi,.btn-eye i.mdi {
     color: #ffffff !important;
     font-size: 16px !important;
     display: inline-block;
@@ -327,7 +459,11 @@ label.filter-menu {
 
 /* Ensure SVG icons display properly in action buttons */
 .btn-gradient-primary svg,
-.btn-gradient-dark svg {
+.btn-gradient-dark svg,
+.btn-gradient-danger svg,
+.btn-download svg,
+.btn-eye svg,
+.btn-active-inactive svg {
     width: 20px !important;
     height: 20px !important;
     display: inline-block;
@@ -336,7 +472,11 @@ label.filter-menu {
 
 /* Ensure buttons have rounded square appearance */
 .btn-gradient-primary.btn-rounded,
-.btn-gradient-dark.btn-rounded {
+.btn-gradient-dark.btn-rounded,
+.btn-download.btn-rounded,
+.btn-active-inactive.btn-rounded,
+.btn-eye.btn-rounded,
+.btn-gradient-danger.btn-rounded {
     border-radius: 8px !important;
     width: 36px;
     height: 36px;
@@ -347,7 +487,7 @@ label.filter-menu {
 }
 
 
-.action-icon{
+.action-icon {
     display: flex;
     justify-content: center;
     align-items: center;
