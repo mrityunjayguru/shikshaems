@@ -191,57 +191,39 @@ class ApiController extends Controller
 
     public function getBirthdays(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'child_id' => 'required',
+            'class_section_id' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
         try {
             $month = $request->month ?? Carbon::now()->month;
 
+            $classSectionId = $request->class_section_id;
 
-            $sql = Students::with(
+            $students = Students::with(
                 'user:id,first_name,last_name,dob',
                 'class_section.class.stream',
                 'class_section.section',
                 'class_section.class.shift',
                 'class_section.medium'
             )
+                ->where('class_section_id', $classSectionId) // 🔥 FORCE SECTION
                 ->whereHas('user', function ($q) use ($month) {
                     $q->whereNotNull('dob')
                         ->whereMonth('dob', $month);
-                });
+                })
+                ->select('students.id', 'students.user_id', 'students.class_section_id')
+                ->owner()   // 🔹 owner scope
+                ->get();
 
-
-            /* 🔹 Filter by class */
-            if ($request->class_id) {
-                $sql->whereHas('class_section', function ($q) use ($request) {
-                    $q->where('class_id', $request->class_id);
-                });
-            }
-
-
-            /* 🔹 Filter by class section */
-            if ($request->class_section_id) {
-                $sql->where('class_section_id', $request->class_section_id);
-            }
-
-            $sql->select('students.id', 'students.user_id', 'students.class_section_id');
-            /* 🔹 Owner scope */
-            $sql = $sql->owner();
-
-
-            /* 🔹 Search */
-            // if (!empty($request->search)) {
-            //     $search = $request->search;
-            //     $sql->where(function ($query) use ($search) {
-            //         $query->where('id', 'LIKE', "%$search%")
-            //             ->orWhere('first_name', 'LIKE', "%$search%")
-            //             ->orWhere('last_name', 'LIKE', "%$search%")
-            //             ->orWhere('gender', 'LIKE', "%$search%")
-            //             ->orWhere('email', 'LIKE', "%$search%")
-            //             ->orWhere('mobile', 'LIKE', "%$search%");
-            //     });
-            // }
-
-            /* 🔹 Execute */
-            $students = $sql->get();
-            ResponseService::successResponse("Data Fetched Successfully", $students);
+            ResponseService::successResponse(
+                "Data Fetched Successfully",
+                $students
+            );
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();

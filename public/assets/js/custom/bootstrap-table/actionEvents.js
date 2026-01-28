@@ -1016,7 +1016,6 @@ window.sliderEvents = {
 
 window.schoolEvents = {
     'click .edit-data': function (e, value, row) {
-        editInitMap();
         $('#edit_id').val(row.id);
         $('#edit_school_name').val(row.name);
         $('#edit-school-logo-tag').attr('src', row.logo);
@@ -1094,7 +1093,9 @@ window.schoolEvents = {
         }
 
         setTimeout(() => {
-
+            if (document.getElementById("editMap")) {
+                editInitMap();
+            }
             // Fill the Extra Field's Data
             if (row.extra_fields.length) {
                 $.each(row.extra_fields, function (index, value) {
@@ -1172,6 +1173,7 @@ window.schoolEvents = {
                 return false;
             }
         }
+      
     },
     'click .update-admin-data': function (e, value, row) {
         $('#edit_school_id').val(row.id);
@@ -2491,6 +2493,7 @@ window.pickupPointEvents = {
         $('#edit_lat').val(row.latitude);
         $('#edit_lng').val(row.longitude);
         $('#edit_status').val(row.status);
+        // $('#edit_address').val(row.address ?? '');
 
         if (row.pickup_time) {
             let pickupParts = row.pickup_time.split(":"); // "01:03" → ["01", "03"]
@@ -2505,7 +2508,8 @@ window.pickupPointEvents = {
         }
 
         setTimeout(() => {
-             initEditMap();
+            openEditMap();
+            fetchAddress(row.latitude, row.longitude,'edit_address');
         }, 0);
     }
 };

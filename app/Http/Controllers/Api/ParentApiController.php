@@ -7,6 +7,8 @@ use App\Http\Resources\TimetableCollection;
 use App\Http\Resources\UserDataResource;
 use App\Models\School;
 use App\Models\StudentLeave;
+use App\Models\ParentSupport;
+use App\Models\ClassSection;
 use App\Repositories\Announcement\AnnouncementInterface;
 use App\Repositories\Assignment\AssignmentInterface;
 use App\Repositories\AssignmentSubmission\AssignmentSubmissionInterface;
@@ -2101,6 +2103,46 @@ class ParentApiController extends Controller
         }
     }
 
+    public function getTeachersForChild(Request $request)
+    {
+        try {
+            $student = $this->student->builder()
+                ->where('id', $request->child_id)
+                ->firstOrFail();
+
+            $classSectionId = $student->class_section_id;
+
+            // Class Teacher
+            $classTeacher = ClassSection::with([
+                'class_teacher.teacher:id,first_name,last_name'
+            ])
+                ->where('id', $classSectionId)
+                ->first();
+
+            $classTeacherUser = $classTeacher->class_teacher?->teacher;
+
+            $name = $classTeacherUser->first_name . ' ' . $classTeacherUser->last_name;
+
+
+            // Subject Teachers
+            $subjectTeachers = $this->subjectTeacher->builder()
+                ->with(['teacher:id,first_name,last_name', 'subject:id,name,type'])
+                ->where('class_section_id', $classSectionId);
+
+            if ($request->filled('subject_id')) {
+                $subjectTeachers->where('subject_id', $request->subject_id);
+            }
+
+            return response()->json([
+                'class_teacher' => $name ?? null,
+                'subject_teachers' => $subjectTeachers->get()
+            ]);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            return ResponseService::errorResponse();
+        }
+    }
+
     public function applyLeave(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -2116,13 +2158,39 @@ class ParentApiController extends Controller
         }
         try {
             $leave = new StudentLeave();
-            $leave->user_id = $request->user_id; 
+            $leave->user_id = $request->user_id;
             $leave->reason = $request->reason;
             $leave->from_date = $request->from_date;
             $leave->to_date = $request->to_date;
             $leave->days = $request->days;
             $leave->save();
             ResponseService::successResponse("Leave Apllied Successfully");
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function support(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'child_id' => 'required',
+            'class_section_id' => 'required',
+            'subject' => 'required',
+            'message' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+        try {
+            $leave = new ParentSupport();
+            $leave->child_id = $request->child_id;
+            $leave->class_section_id = $request->class_section_id;
+            $leave->subject = $request->subject;
+            $leave->message = $request->message;
+            $leave->save();
+            ResponseService::successResponse("Support Submitted Successfully");
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
