@@ -338,6 +338,27 @@ label.filter-menu {
 }
 
 
+.btn-alertbox {
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+
+.btn-alertbox:hover {
+    opacity: 0.9 !important;
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    color: #ffffff !important;
+}
+
+.btn-alertbox:not([disabled]):not(.disabled):active,
+.btn-alertbox:not([disabled]):not(.disabled).active,
+.show>.btn-alertbox.dropdown-toggle {
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    color: #ffffff !important;
+}
+
+
 .btn-active-inactive {
     background: linear-gradient(to right, #B092FF, #6F47F5) !important;
     border: 0 !important;
@@ -404,9 +425,33 @@ label.filter-menu {
     color: #ffffff !important;
 }
 
+
+.btn-eye {
+    background: linear-gradient(to right, #1FC285, #00BE78) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+
+.btn-eye:hover {
+    opacity: 0.9 !important;
+    background: linear-gradient(to right, #1FC285, #00BE78) !important;
+    color: #ffffff !important;
+}
+
+.btn-eye:not([disabled]):not(.disabled):active,
+.btn-eye:not([disabled]):not(.disabled).active,
+.show>.btn-eye.dropdown-toggle {
+    background: linear-gradient(to right, #1FC285, #00BE78) !important;
+    color: #ffffff !important;
+}
+
 /* Ensure Material Design Icons display properly in action buttons */
 .btn-gradient-primary i.mdi,
-.btn-gradient-dark i.mdi {
+.btn-gradient-dark i.mdi,
+.btn-download i.mdi,
+.btn-gradient-danger i.mdi,
+.btn-active-inactive i.mdi,.btn-eye i.mdi {
     color: #ffffff !important;
     font-size: 16px !important;
     display: inline-block;
@@ -414,19 +459,27 @@ label.filter-menu {
 
 /* Ensure SVG icons display properly in action buttons */
 .btn-gradient-primary svg,
-.btn-gradient-dark svg {
-    width: 25px !important;
-    height: 25px !important;
+.btn-gradient-dark svg,
+.btn-gradient-danger svg,
+.btn-download svg,
+.btn-eye svg,
+.btn-active-inactive svg {
+    width: 20px !important;
+    height: 20px !important;
     display: inline-block;
     vertical-align: middle;
 }
 
 /* Ensure buttons have rounded square appearance */
 .btn-gradient-primary.btn-rounded,
-.btn-gradient-dark.btn-rounded {
+.btn-gradient-dark.btn-rounded,
+.btn-download.btn-rounded,
+.btn-active-inactive.btn-rounded,
+.btn-eye.btn-rounded,
+.btn-gradient-danger.btn-rounded {
     border-radius: 8px !important;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
