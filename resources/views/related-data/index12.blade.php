@@ -34,7 +34,9 @@
                                             <div class="col-12 col-sm-4 col-md-3 pl-0 mb-3">
                                                 <div class="border border-dark p-2 rounded-lg">
                                                     <div class="text-right">
-                                                        <a href="{{route('related-data.index',[$tableName,$data->id])}}" target="_blank" class="btn btn-primary btn-sm btn-rounded" title="{{__("View Related Data")}}"><span class="fa fa-eye"></span></a>
+                                                        <a href="{{route('related-data.index',[$tableName,$data->id])}}" target="_blank" class="btn btn-primary btn-sm btn-rounded" title="{{__("View Related Data")}}">
+                                                            
+                                                        </span></a>
                                                         <a href="#" class="btn btn-danger btn-sm btn-rounded delete-related-data" data-table="{{$table}}" data-id="{{$data->id}}" title="{{__("Delete")}}"><span class="fa fa-trash"></span></a>
                                                     </div>
                                                     @foreach($data as $columnName=>$columnData)
