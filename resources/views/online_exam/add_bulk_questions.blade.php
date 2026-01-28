@@ -80,7 +80,7 @@
                         </form>
                         <hr>
                         <div class="row form-group col-sm-12 col-md-4 mt-5">
-                            <a class="btn btn-theme form-control"
+                            <a class="btn btn-theme"
                                 href="{{ route('online-exam-question.download-smaple-data-file') }}" download>
                                 <strong>{{ __('download_dummy_file') }}</strong>
                             </a>

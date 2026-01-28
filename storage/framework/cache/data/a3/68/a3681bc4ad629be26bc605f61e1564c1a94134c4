@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 1769598145s:83800:"{
+=======
+1769581290s:83800:"{
+>>>>>>> 87b20fe2a1cf7fa730109683d0f89abe824bb445
     "The :attribute must contain at least one letter.": "The :attribute must contain at least one letter.",
     "The :attribute must contain at least one number.": "The :attribute must contain at least one number.",
     "The :attribute must contain at least one symbol.": "The :attribute must contain at least one symbol.",
