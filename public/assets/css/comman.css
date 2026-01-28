@@ -329,8 +329,15 @@ label {
     background: transparent !important;
 }
 
+/* Ensure consistent font sizes across all sidebar menu items */
+/* This prevents font size inconsistency when there are many sub-routes */
+.sidebar .nav .nav-item .nav-link .menu-title {
+    font-size: 0.875rem !important;
+}
 
-
+.sidebar .nav .sub-menu .nav-item .nav-link {
+    font-size: 0.8125rem !important;
+}
 
 .form-control {
     border-radius: 4px !important;
@@ -471,12 +478,15 @@ label {
 .icon-card-active {
     width: 80px;
     height: 80px;
-    background-color: #eafff3; /* light green background */
-    border-radius: 12px; /* rounded corners */
+    background-color: #eafff3;
+    /* light green background */
+    border-radius: 12px;
+    /* rounded corners */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto; /* pushes icon to right */
+    margin-left: auto;
+    /* pushes icon to right */
 }
 
 .icon-card-active img {
@@ -489,12 +499,15 @@ label {
 .icon-card-inactive {
     width: 80px;
     height: 80px;
-    background-color: #FFF7F5; /* light red background */
-    border-radius: 12px; /* rounded corners */
+    background-color: #FFF7F5;
+    /* light red background */
+    border-radius: 12px;
+    /* rounded corners */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto; /* pushes icon to right */
+    margin-left: auto;
+    /* pushes icon to right */
 }
 
 .icon-card-inactive img {
@@ -507,12 +520,15 @@ label {
 .icon-card-school {
     width: 80px;
     height: 80px;
-    background-color: #F6F4FF; /* light purple background */
-    border-radius: 12px; /* rounded corners */
+    background-color: #F6F4FF;
+    /* light purple background */
+    border-radius: 12px;
+    /* rounded corners */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto; /* pushes icon to right */
+    margin-left: auto;
+    /* pushes icon to right */
 }
 
 .icon-card-school img {
@@ -524,12 +540,15 @@ label {
 .icon-card-package {
     width: 80px;
     height: 80px;
-    background-color: #EDF3FF; /* light blue background */
-    border-radius: 12px; /* rounded corners */
+    background-color: #EDF3FF;
+    /* light blue background */
+    border-radius: 12px;
+    /* rounded corners */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto; /* pushes icon to right */
+    margin-left: auto;
+    /* pushes icon to right */
 }
 
 .icon-card-package img {
@@ -541,12 +560,15 @@ label {
 .icon-card-screams {
     width: 80px;
     height: 80px;
-    background-color: #FFEFD7; /* light yallow background */
-    border-radius: 12px; /* rounded corners */
+    background-color: #FFEFD7;
+    /* light yallow background */
+    border-radius: 12px;
+    /* rounded corners */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto; /* pushes icon to right */
+    margin-left: auto;
+    /* pushes icon to right */
 }
 
 .icon-card-screams img {
@@ -560,16 +582,23 @@ label {
 .icon-card-teacher {
     width: 80px;
     height: 80px;
-    background-color: #F6F4FF; /* light yallow background */
-    border-radius: 12px; /* rounded corners */
+    background-color: #F6F4FF;
+    /* light yallow background */
+    border-radius: 12px;
+    /* rounded corners */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto; /* pushes icon to right */
+    margin-left: auto;
+    /* pushes icon to right */
 }
 
 .icon-card-teacher img {
     width: 40px;
     height: 40px;
     object-fit: contain;
+}
+
+.search-input {
+    margin-right: 10px;
 }
