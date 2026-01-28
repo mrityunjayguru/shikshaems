@@ -166,7 +166,7 @@
         let map;
         const routes = @json($routes);
 
-        function initMap() {
+        function initMaps() {
 
             const defaultPosition = {
                 lat: 20.5937,

@@ -157,6 +157,7 @@ Route::group(['prefix' => 'parent'], static function () {
 
             //
             Route::post('apply-leave', [ParentApiController::class, 'applyLeave']);
+            Route::post('submit-support', [ParentApiController::class, 'support']);
         });
     });
     // });
