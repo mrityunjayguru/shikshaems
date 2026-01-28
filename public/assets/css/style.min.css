@@ -18281,7 +18281,7 @@ code {
 
 .badge-secondary {
     border: 1px solid #c3bdbd;
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 .badge-success,
