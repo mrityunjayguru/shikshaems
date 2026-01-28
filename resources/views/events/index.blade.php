@@ -96,7 +96,7 @@
                                     data-fixed-number="2" data-fixed-right-number="1" data-trim-on-search="false"
                                     data-mobile-responsive="true" data-sort-name="id" data-sort-order="desc"
                                     data-maintain-selected="true" data-export-data-type='all' data-show-export="true"
-                                    data-export-options='{ "fileName": "holiday-list-<?= date('d-m-y') ?>","ignoreColumn":
+                                    data-export-options='{ "fileName": "event-list-<?= date('d-m-y') ?>","ignoreColumn":
                                     ["operate"]}'
                                     data-query-params="holidayQueryParams">
                                     <thead>
@@ -110,10 +110,10 @@
                                             <th scope="col" data-events="tableDescriptionEvents"
                                                 data-formatter="descriptionFormatter" data-field="desc">
                                                 {{ __('description') }}</th>
-                                            @if (Auth::user()->can('holiday-edit') || Auth::user()->can('holiday-delete'))
+                                            {{-- @if (Auth::user()->can('holiday-edit') || Auth::user()->can('holiday-delete')) --}}
                                                 <th data-events="eventEvents" data-width="150" scope="col"
                                                     data-field="operate">{{ __('action') }}</th>
-                                            @endif
+                                            {{-- @endif --}}
                                         </tr>
                                     </thead>
                                 </table>

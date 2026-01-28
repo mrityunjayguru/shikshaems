@@ -91,7 +91,7 @@
                                     <div class="card-body">
                                         <h6 class="text-warning mb-3">Location</h6>
 
-                                        <p class="mb-1">
+                                        <p class="mb-2" id="student_address">
                                             Address :- {{ $student->user->current_address ?? 'N/A' }}
                                         </p>
 
@@ -113,7 +113,7 @@
                                     <div class="card-body">
                                         <h6 class="text-warning mb-3">Pickup Point</h6>
 
-                                        <p class="mb-1">
+                                        <p class="mb-2" id="pickuppoint_address">
                                             Address :- {{ $pickupPoint->name ?? 'N/A' }}
                                         </p>
 
@@ -343,6 +343,8 @@
 
             document.getElementById("lat").innerText = lat;
             document.getElementById("lng").innerText = lng;
+
+            fetchAddress(lat, lng, 'student_address');
         }
 
 
@@ -352,6 +354,36 @@
 
             document.getElementById("pickup_lat").innerText = lat;
             document.getElementById("pickup_lng").innerText = lng;
+
+            fetchAddress(lat, lng, 'pickuppoint_address');
+        }
+
+        function fetchAddress(lat, lng, targetId) {
+            fetch("https://app.trackroutepro.com/common/jioCode", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        latitude: lat,
+                        longitude: lng
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    let address = data?.address || data?.result?.address || '';
+
+                    const el = document.getElementById(targetId);
+                    if (!el) return;
+
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.value = address;
+                    }
+                    else {
+                        el.innerText = 'Address :- ' + address;
+                    }
+                })
+                .catch(err => console.error("Jio API error:", err));
         }
     </script>
 @endsection

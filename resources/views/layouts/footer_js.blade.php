@@ -16,7 +16,7 @@
 
 
 
-{{--<script src="{{ asset('/assets/bootstrap-table/bootstrap-table.min.js') }}"></script>--}}
+{{-- <script src="{{ asset('/assets/bootstrap-table/bootstrap-table.min.js') }}"></script> --}}
 
 <script src="https://unpkg.com/bootstrap-table@1.22.1/dist/bootstrap-table.min.js"></script>
 <script src="{{ asset('/assets/bootstrap-table/bootstrap-table-mobile.js') }}"></script>
@@ -41,7 +41,7 @@
 <script src="{{ asset('/assets/color-picker/color.min.js') }}"></script>
 
 <script src="{{ asset('/assets/js/custom/validate.js') }}"></script>
-<script src="{{ asset('/assets/js/jquery-additional-methods.min.js')}}"></script>
+<script src="{{ asset('/assets/js/jquery-additional-methods.min.js') }}"></script>
 <script src="{{ asset('/assets/js/custom/function.js') }}?v={{ time() }}"></script>
 <script src="{{ asset('/assets/js/custom/common.js') }}"></script>
 <script src="{{ asset('/assets/js/custom/custom.js') }}"></script>
@@ -53,53 +53,60 @@
 <script src="{{ asset('/assets/ckeditor-4/adapters/jquery.js') }}" async></script>
 <script src="{{ asset('/assets/js/dragula.min.js') }}"></script>
 
- {{-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOdT7uQebSHbnuZcqpWSYFtM8mryin4o&callback=initMap&libraries=places" async
+{{-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOdT7uQebSHbnuZcqpWSYFtM8mryin4o&callback=initMaps&libraries=places" async
         defer></script> --}}
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOdT7uQebSHbnuZcqpWSYFtM8mryin4o&libraries=places"></script>
+<script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOdT7uQebSHbnuZcqpWSYFtM8mryin4o&libraries=places&callback=initMaps"
+    async defer></script>
 
 <script type='text/javascript'>
     @if ($errors->any())
-    @foreach ($errors->all() as $error)
-    $.toast({
-        text: '{{ $error }}',
-        showHideTransition: 'slide',
-        icon: 'error',
-        loaderBg: '#f2a654',
-        position: 'top-right'
-    });
-    @endforeach
+        @foreach ($errors->all() as $error)
+            $.toast({
+                text: '{{ $error }}',
+                showHideTransition: 'slide',
+                icon: 'error',
+                loaderBg: '#f2a654',
+                position: 'top-right'
+            });
+        @endforeach
     @endif
 
     @if (Session::has('success'))
-    $.toast({
-        text: '{{ Session::get('success') }}',
-        showHideTransition: 'slide',
-        icon: 'success',
-        loaderBg: '#f96868',
-        position: 'top-right'
-    });
+        $.toast({
+            text: '{{ Session::get('success') }}',
+            showHideTransition: 'slide',
+            icon: 'success',
+            loaderBg: '#f96868',
+            position: 'top-right'
+        });
     @endif
 
     @if (Session::has('error'))
-    $.toast({
-        text: '{{ Session::get('error') }}',
-        showHideTransition: 'slide',
-        icon: 'error',
-        loaderBg: '#f2a654',
-        position: 'top-right'
-    });
+        $.toast({
+            text: '{{ Session::get('error') }}',
+            showHideTransition: 'slide',
+            icon: 'error',
+            loaderBg: '#f2a654',
+            position: 'top-right'
+        });
     @endif
 </script>
 <script>
-    const please_wait = "{{__('Please wait')}}"
-    const processing_your_request = "{{__('Processing your request')}}"
-    let date_format = '{{ $schoolSettings['date_format'] ?? $systemSettings['date_format'] ?? "d-m-Y" }}'.replace('Y', 'YYYY').replace('m', 'MM').replace('d', 'DD');
+    const please_wait = "{{ __('Please wait') }}"
+    const processing_your_request = "{{ __('Processing your request') }}"
+    let date_format = '{{ $schoolSettings['date_format'] ?? ($systemSettings['date_format'] ?? 'd-m-Y') }}'.replace('Y',
+        'YYYY').replace('m', 'MM').replace('d', 'DD');
 
-    let date_time_format = '{{ $schoolSettings['date_format'] ?? $systemSettings['date_format'] ?? "d-m-Y" }} {{ $schoolSettings['time_format'] ?? $systemSettings['time_format'] ?? "h:i A" }}'.replace('Y', 'YYYY').replace('m', 'MM').replace('d', 'DD').replace('h', 'hh').replace('H', 'HH').replace('i', 'mm').replace('a', 'a').replace('A', 'A');
+    let date_time_format =
+        '{{ $schoolSettings['date_format'] ?? ($systemSettings['date_format'] ?? 'd-m-Y') }} {{ $schoolSettings['time_format'] ?? ($systemSettings['time_format'] ?? 'h:i A') }}'
+        .replace('Y', 'YYYY').replace('m', 'MM').replace('d', 'DD').replace('h', 'hh').replace('H', 'HH').replace('i',
+            'mm').replace('a', 'a').replace('A', 'A');
 
-    let time_format = '{{ $schoolSettings['time_format'] ?? $systemSettings['time_format'] ?? "h:i A" }}'.replace('h', 'hh').replace('H', 'HH').replace('i', 'mm').replace('a', 'a').replace('A', 'A');
-    
-     
+    let time_format = '{{ $schoolSettings['time_format'] ?? ($systemSettings['time_format'] ?? 'h:i A') }}'.replace('h',
+        'hh').replace('H', 'HH').replace('i', 'mm').replace('a', 'a').replace('A', 'A');
+
+
     // Scroll to active item in sidebar
     $(document).ready(function() {
         const sidebar = document.querySelector('.sidebar .nav');
@@ -117,7 +124,7 @@
     });
 
     setTimeout(() => {
-        
+
         $(document).ready(function() {
             var targetNode = document.querySelector('thead');
 
@@ -135,11 +142,14 @@
             });
 
             // Start observing the target node for configured mutations
-            observer.observe(targetNode, { childList: true, subtree: true });
+            observer.observe(targetNode, {
+                childList: true,
+                subtree: true
+            });
         });
 
     }, 500);
-    
+
 
     // razorpay-payment-button
     setTimeout(() => {
@@ -168,9 +178,9 @@
     document.addEventListener("DOMContentLoaded", function() {
         // Add the event listener for the button to initiate the payment
         setTimeout(() => {
-            
-            $('#razorpay-button').click(function (e) {
-                e.preventDefault(); 
+
+            $('#razorpay-button').click(function(e) {
+                e.preventDefault();
                 let baseUrl = window.location.origin;
                 var order_id = '';
                 var paymentTransactionId = '';
@@ -179,58 +189,68 @@
                     type: "post",
                     url: baseUrl + '/subscriptions/create/razorpay/order-id',
                     data: {
-                        amount: $('.bill_amount').val(), // Amount is in currency subunits. Default currency is INR. Hence, 100 refers to 1 INR
-                        currency : "{{ $system_settings['currency_code'] ?? 'INR' }}",
+                        amount: $('.bill_amount')
+                    .val(), // Amount is in currency subunits. Default currency is INR. Hence, 100 refers to 1 INR
+                        currency: "{{ $system_settings['currency_code'] ?? 'INR' }}",
 
-                        type : $('.type').val(),
-                        package_type : $('.package_type').val(),
-                        package_id : $('.package_id').val(),
-                        upcoming_plan_type : $('.upcoming_plan_type').val(),
-                        subscription_id : $('.subscription_id').val(),
-                        feature_id : $('.feature_id').val(),
-                        end_date : $('.end_date').val(),
-                        
+                        type: $('.type').val(),
+                        package_type: $('.package_type').val(),
+                        package_id: $('.package_id').val(),
+                        upcoming_plan_type: $('.upcoming_plan_type').val(),
+                        subscription_id: $('.subscription_id').val(),
+                        feature_id: $('.feature_id').val(),
+                        end_date: $('.end_date').val(),
+
                     },
-                    success: function (response) {
+                    success: function(response) {
                         if (response.data) {
                             order_id = response.data.order.id;
-                            paymentTransactionId = response.data.paymentTransaction.id;
-                           
+                            paymentTransactionId = response.data.paymentTransaction
+                                .id;
+
                             var options = {
                                 "key": "{{ $paymentConfiguration->api_key ?? '' }}", // Enter the Key ID generated from the Dashboard
-                                "amount": $('.bill_amount').val() * 100, // Amount is in currency subunits. Default currency is INR. Hence, 100 refers to 1 INR
+                                "amount": $('.bill_amount').val() *
+                                100, // Amount is in currency subunits. Default currency is INR. Hence, 100 refers to 1 INR
                                 "currency": "{{ $system_settings['currency_code'] ?? 'INR' }}",
                                 "name": "{{ $system_settings['system_name'] ?? 'eSchool-Saas' }}",
                                 "description": "Razorpay",
                                 "order_id": order_id,
                                 "handler": function(response) {
                                     // Set the response data in the form
-                                    $('.razorpay_payment_id').val(response.razorpay_payment_id);
-                                    $('.razorpay_signature').val(response.razorpay_signature);
-                                    $('.razorpay_order_id').val(response.razorpay_order_id);
-                                    $('.paymentTransactionId').val(paymentTransactionId);
+                                    $('.razorpay_payment_id').val(response
+                                        .razorpay_payment_id);
+                                    $('.razorpay_signature').val(response
+                                        .razorpay_signature);
+                                    $('.razorpay_order_id').val(response
+                                        .razorpay_order_id);
+                                    $('.paymentTransactionId').val(
+                                        paymentTransactionId);
 
                                     // Submit the form
-                                    document.querySelector('.razorpay-form').submit();
+                                    document.querySelector('.razorpay-form')
+                                        .submit();
                                 }
                             };
 
                             var rzp1 = new Razorpay(options);
                             rzp1.open();
                         } else {
-                            Swal.fire({icon: 'error', text: response.message});
+                            Swal.fire({
+                                icon: 'error',
+                                text: response.message
+                            });
                         }
                     }
-                    
+
                 });
-                
-                
+
+
             });
 
         }, 100);
 
     });
-
 </script>
 
 {{-- Search sidebar menu --}}
@@ -271,7 +291,7 @@
 
     });
 
-    $('.navbar-toggler').click(function (e) { 
+    $('.navbar-toggler').click(function(e) {
         e.preventDefault();
 
         var updatedClasses = $('body').hasClass('sidebar-icon-only');
@@ -288,17 +308,17 @@
     //     try {
     //         const sidebar = document.querySelector('.sidebar .nav'); // correct selector for the sidebar navigation
     //         if (!sidebar) return; // Exit if sidebar not found
-            
+
     //         // First check for active nav-item
     //         let activeItem = sidebar.querySelector('.nav-item.active'); 
-            
+
     //         // If no active nav-item is found, check for active links in sub-menus
     //         if (!activeItem) {
     //             const activeLink = sidebar.querySelector('.nav-link.active');
     //             if (activeLink) {
     //                 // If active link is in sub-menu, get its parent collapse and nav-item
     //                 activeItem = activeLink.closest('.nav-item');
-                    
+
     //                 // Also expand the parent menu if it's in a collapse
     //                 const parentCollapse = activeLink.closest('.collapse');
     //                 if (parentCollapse) {
@@ -306,9 +326,9 @@
     //                 }
     //             }
     //         }
-            
+
     //         if (!activeItem) return; // Exit if no active item found
-            
+
     //         // Calculate offset so the active item is centered
     //         const offset = activeItem.offsetTop - sidebar.offsetHeight / 2 + activeItem.offsetHeight / 2;
     //         if (offset > 0) {
@@ -318,7 +338,4 @@
     //         console.error("Error in sidebar scroll:", err);
     //     }
     // });
-
-    
-
 </script>
