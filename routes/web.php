@@ -76,6 +76,7 @@ use App\Http\Controllers\WebSettingsController;
 use App\Http\Controllers\WizardSettingsController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProximityController;
+use App\Http\Controllers\ParentSupportController;
 use App\Http\Controllers\ContactInquiryController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\AssignElectiveSubjectController;
@@ -889,6 +890,9 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             // Route::put('status/update', [LeaveStudentController::class, 'updateStatus'])->name('student-leave.status.update');
         });
 
+        //parents-support
+        Route::get('parent-support',[ParentSupportController::class, 'index'])->name('parent-support.index');
+        Route::get('parent-support/show',[ParentSupportController::class, 'show'])->name('parent-support.show');
         // Semester
         Route::group(['prefix' => 'semester'], static function () {
             Route::put('restore/{id}', [SemesterController::class, 'restore'])->name('semester.restore');
