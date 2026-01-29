@@ -44,6 +44,7 @@ class AddSuperAdminSeeder extends Seeder {
             ["name" => "date_format", "data" => "d-m-Y", "type" => "date"],
             ["name" => "time_format", "data" => "h:i A", "type" => "time"],
             ["name" => "theme_color", "data" => "#22577A", "type" => "string"],
+            ["name" => "text_feild_color", "data" => "#22577A", "type" => "string"],
             ["name" => "session_year", "data" => 1, "type" => "string"],
             ["name" => "system_version", "data" => "1.8.0", "type" => "string"],
             ["name" => "email_verified", "data" => 0, "type" => "boolean"],
