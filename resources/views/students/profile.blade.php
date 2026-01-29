@@ -9,6 +9,12 @@
             /* REQUIRED */
             margin-bottom: 20px;
         }
+        .text-warning{
+            color : var(--theme-color) !important;
+        }
+        .details {
+            padding-left : 10px !important;
+        }
     </style>
 @endsection
 @section('title')
@@ -142,7 +148,7 @@
                                         <div class="d-flex align-items-center mb-2">
                                             <img src="{{ asset('assets/dummy_logo.jpg') }}" class="rounded-circle"
                                                 width="35" height="35">
-                                            <div class="ms-2">
+                                            <div class="ms-2 details">
                                                 <div class="fw-semibold">{{ $student->guardian->full_name }}</div>
                                                 <small class="text-muted">{{ $student->guardian->mobile }}</small>
                                             </div>
@@ -162,7 +168,7 @@
                                             <div class="d-flex align-items-center mb-2">
                                                 <img src="{{ asset('assets/dummy_logo.jpg') }}" class="rounded-circle"
                                                     width="35" height="35">
-                                                <div class="ms-2">
+                                                <div class="ms-2 details">
                                                     <div class="fw-semibold">
                                                         {{ $classTeacher->teacher->full_name }}
                                                     </div>

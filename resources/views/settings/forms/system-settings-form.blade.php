@@ -126,6 +126,11 @@
             <input name="theme_color" id="theme_color" value="{{ $settings['theme_color'] ?? '' }}" type="text" required placeholder="{{ __('color') }}" class="color-picker"/>
         </div>
 
+        <div class="form-group col-md-6 col-lg-6 col-xl-4 col-sm-12">
+            <label for="text_feild_color">{{ __('Text Feild Color') }}</label>
+            <input name="text_feild_color" id="text_feild_color" value="{{ $settings['text_feild_color'] ?? '' }}" type="text" required placeholder="{{ __('color') }}" class="color-picker"/>
+        </div>
+
         <div class="form-group col-md-4 col-sm-12">
             <label for="School Code Prefix">{{ __('School Code Prefix') }} <span class="text-danger">*</span></label>
             <input name="school_code_prefix" id="school_code_prefix" value="{{ $settings['school_code_prefix'] ?? 'SCH' }}" type="text" required placeholder="{{ __('School Code Prefix') }}" class="form-control"/>

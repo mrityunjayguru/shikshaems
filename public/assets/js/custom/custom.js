@@ -103,6 +103,10 @@ $(function () {
     if ($(".theme_color").length) {
         $('.theme_color').asColorPicker();
     }
+
+    if ($(".text_feild_color").length) {
+        $('.text_feild_color').asColorPicker();
+    }
     if ($(".primary_color").length) {
         $('.primary_color').asColorPicker();
     }
