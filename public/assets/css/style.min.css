@@ -4943,7 +4943,7 @@ pre code {
     font-weight: 400;
     line-height: 1;
     color: #495057;
-    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    background-color: var(--text-field-color);
     background-clip: padding-box;
     border: 1px solid #ced4da;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
@@ -20991,10 +20991,11 @@ code {
 .typeahead:focus,
 .tt-query:focus,
 .tt-hint:focus {
-    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    /* background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important; */
+    background-color: var(--text-field-color) !important;
     color: #000;
     outline: none;
-    border: 1px solid var(--theme-color) !important;
+    border: 1px solid color-mix(in srgb, var(--text-field-color) 70%, black) !important;
     box-shadow: 0 1px 6px 0 rgba(90, 116, 148, 0.4);
 }
 
@@ -31807,7 +31808,7 @@ footer h4 a {
 }
 
 .content-wrapper {
-    background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    background: color-mix(in srgb, var(--theme-color) 8%, white) !important;
     padding: 1.75rem 1.25rem;
     width: 100%;
     -webkit-box-flex: 1;
@@ -32424,7 +32425,7 @@ input:checked+.feature-list,
     cursor: grab;
 }
 
-.btn-class{
+.btn-class {
     display: flex;
     align-items: center;
     justify-content: center;

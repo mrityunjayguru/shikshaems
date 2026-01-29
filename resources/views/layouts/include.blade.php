@@ -45,6 +45,8 @@
 <style>
     :root {
         --theme-color: <?=$systemSettings['theme_color']??"#22577A" ?>;
+        --text-field-color: <?=$systemSettings['text_feild_color']??"#FFFFFF" ?>;
+        --text-field-border-color: color-mix(in srgb, var(--text-field-color) 70%, black);
     }
     /* Custom styles for sidebar sub-categories */
     .sub-category {
