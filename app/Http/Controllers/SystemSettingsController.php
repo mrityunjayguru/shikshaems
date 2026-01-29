@@ -59,7 +59,7 @@ class SystemSettingsController extends Controller {
 
     public function store(Request $request) {
         ResponseService::noPermissionThenRedirect('system-setting-manage');
-
+        // dd($request->all());
         $request->validate([
             'favicon'         => 'nullable|mimes:jpg,png,jpeg,svg,icon',
             'horizontal_logo' => 'nullable|mimes:jpg,png,jpeg,svg',
@@ -67,7 +67,7 @@ class SystemSettingsController extends Controller {
         ]);
 
         $settings = array(
-            'time_zone', 'date_format', 'time_format', 'theme_color', 'horizontal_logo', 'vertical_logo', 'favicon',
+            'time_zone', 'date_format', 'time_format', 'theme_color', 'text_feild_color', 'horizontal_logo', 'vertical_logo', 'favicon',
             'system_name', 'address', 'tag_line', 'mobile', 'login_page_logo', 'hero_description','school_code_prefix', 'school_inquiry', 'web_maintenance', 'file_upload_size_limit',
             //            'currency_code','currency_symbol'
         );
