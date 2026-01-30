@@ -48,7 +48,7 @@
                                     @if (!Auth::user()->hasRole('Super Admin'))
                                         <th scope="col" data-field="subject">{{ __('Subject') }}</th>
                                     @endif
-                                    <th scope="col" data-field="message">{{ __('Message') }}</th>
+                                    <th scope="col" data-field="message" style="white-space: wrap;">{{ __('Message') }}</th>
                                     <th scope="col" data-field="created_at">
                                         {{ __('Date') }}
                                     </th>

@@ -358,7 +358,7 @@ window.guardianEvents = {
                             </div>
 
                             <div class="form-group col-md-12">
-                                <label><strong>Roll Number :</strong> ${child.roll_number}</label>
+                                <label><strong>Roll No :</strong> ${child.roll_number}</label>
                             </div>
 
                             <div class="form-group col-md-12">

@@ -322,11 +322,13 @@ function StudentNameFormatter(value, row) {
 
     return `
         <a href="${url}" class="text-decoration-none text-dark">
-            <div class="d-flex align-items-center">
+            <div class="d-flex flex-column  align-items-center">
                 ${imageFormatter(row.user.image)}
-                <div class="ms-3">
-                    <h6 class="mb-0 text-primary">${row.user.full_name}</h6>
-                    <small class="text-muted">${row.user.email}</small>
+                <div class="ms-3 mt-2 flex-grow-1">
+                    <h6 class="mb-0 text-primary flex-grow-1 text-nowrap">${row.user.full_name}</h6>
+                    <p class="text-center" style="max-width:140px; color:#202020; font-size:10px;">
+                        ${row.user.email}
+                    </p>
                 </div>
             </div>
         </a>

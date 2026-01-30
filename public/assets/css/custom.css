@@ -240,7 +240,7 @@ label.filter-menu {
 }
 
 .sidebar .nav .nav-item {
-    padding: 0 1.25rem !important;
+    padding: 1px 1rem !important;
 }
 
 @media (min-width: 992px) {
@@ -492,4 +492,118 @@ label.filter-menu {
     justify-content: center;
     align-items: center;
     /* margin-top: 8px; */
+}
+
+/* Full Width Table Responsive Styles */
+.full-table-width {
+    width: 100% !important;
+    min-width: 100% !important;
+    border-collapse: collapse;
+}
+
+.full-table-width thead {
+    background-color: #f8f9fa;
+}
+
+.full-table-width th,
+.full-table-width td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #dee2e6;
+    font-size: 14px !important;
+    white-space: nowrap;
+    min-width: auto;
+}
+
+.full-table-width th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Ensure text doesn't shrink */
+.full-table-width tbody td {
+    font-size: 14px !important;
+}
+
+/* Bootstrap Table Responsive Styles */
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    width: 100% !important;
+    min-width: 100% !important;
+}
+
+.table th,
+.table td {
+    font-size: 14px !important;
+    white-space: nowrap;
+    padding: 12px;
+}
+
+/* Mobile Responsive - Horizontal Scroll for tables */
+@media (max-width: 768px) {
+    .full-table-width,
+    .table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .full-table-width thead,
+    .table thead {
+        display: block;
+    }
+
+    .full-table-width tbody,
+    .table tbody {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .full-table-width tr,
+    .table tr {
+        display: block;
+        width: auto;
+        min-width: 100%;
+    }
+
+    .full-table-width th,
+    .full-table-width td,
+    .table th,
+    .table td {
+        font-size: 13px !important;
+        padding: 10px 8px;
+        display: inline-block;
+        width: auto;
+        min-width: fit-content;
+        white-space: nowrap;
+    }
+
+    /* Prevent text shrinking */
+    .full-table-width td,
+    .table td {
+        font-size: 13px !important;
+        overflow-wrap: normal;
+        word-wrap: normal;
+    }
+}
+
+@media (max-width: 576px) {
+    .full-table-width th,
+    .full-table-width td,
+    .table th,
+    .table td {
+        font-size: 12px !important;
+        padding: 8px 6px;
+    }
 }

@@ -180,12 +180,12 @@
                                 </div>
                             </div>
                             <div class="border border-secondary rounded-lg my-4 mx-1">
-                                <div class="col-md-12 mt-3"><h4>{{__("Roll Number Settings")}}</h4></div>
+                                <div class="col-md-12 mt-3"><h4>{{__("Roll No Settings")}}</h4></div>
                                 <div class="col-12 mb-3">
                                     <hr class="mt-0">
                                 </div>
                                 <div class="form-group col-md-12 col-sm-12">
-                                    <label for="roll-number-order">{{__("Roll Number Sorting")}}</label>
+                                    <label for="roll-number-order">{{__("Roll No Sorting")}}</label>
                                     <input type="hidden" id="roll-number-sort-column" name="roll_number_sort_column" value="{{ $settings['roll_number_sort_column'] ?? "" }}">
                                     <input type="hidden" id="roll-number-sort-order" name="roll_number_sort_order" value="{{ $settings['roll_number_sort_order'] ?? "" }}">
                                     <select name="" id="roll-number-order" class="form-control" required>
@@ -197,7 +197,7 @@
                                     </select>
 
                                     <div class="form-check">
-                                        <label class="form-check-label"> <input type="checkbox" class="form-check-input" name="change_roll_number" id="change-roll-ckh-settings" value="1"> {{ __('Change Roll Number for All Classes') }} <i class="input-helper"></i></label>
+                                        <label class="form-check-label"> <input type="checkbox" class="form-check-input" name="change_roll_number" id="change-roll-ckh-settings" value="1"> {{ __('Change Roll No for All Classes') }} <i class="input-helper"></i></label>
                                     </div>
                                 </div>
                             </div>

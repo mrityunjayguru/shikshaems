@@ -25,7 +25,7 @@
                                 </div>
                                 <div class="form-group col-sm-2 col-md-2 mt-4">
                                     <button type="button" class="btn btn-secondary">
-                                        <a href="{{ url('reset-purchase-code') }}" style="color: white; text-decoration: none;">{{ __('Reset Purchase Code') }}</a>
+                                        <a href="{{ url('reset-purchase-code') }}" style="color: #202020; text-decoration: none;">{{ __('Reset Purchase Code') }}</a>
                                     </button>
                                 </div> 
                                 <div class="form-group col-sm-12 col-md-12">
