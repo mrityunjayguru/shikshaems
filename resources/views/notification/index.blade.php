@@ -12,8 +12,8 @@
             </h3>
         </div>
 
-        <div class="row">
-            <div class="col-md-6 col-sm-12 grid-margin">
+        <div class="col">
+            <div class="col-md-12 col-sm-12 grid-margin">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
@@ -42,21 +42,21 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group col-sm-12 col-md-12 roles">
+                                <div class="form-group col-sm-12 col-md-6 roles">
                                     <label for="">{{ __('roles') }} <span class="text-danger">*</span></label>
                                     {!! Form::select('roles[]', $roles, null, ['class' => 'form-control select2-dropdown select2-hidden-accessible','multiple', 'id' => 'roles']) !!}
                                 </div>
 
-                                <div class="form-group col-sm-12 col-md-12 over_due_fees_roles" style="display: none;">
+                                <div class="form-group col-sm-12 col-md-6 over_due_fees_roles" style="display: none;">
                                     <label for="">{{ __('roles') }} <span class="text-danger">*</span></label>
                                     {!! Form::select('roles[]', $over_due_fees_roles, null, ['class' => 'form-control select2-dropdown select2-hidden-accessible','multiple', 'id' => 'over_due_fees_roles']) !!}
                                 </div>
 
-                                <div class="form-group col-sm-12 col-md-12">
+                                <div class="form-group col-sm-12 col-md-6">
                                     <label for="">{{ __('title') }} <span class="text-danger">*</span></label>
                                     {!! Form::text('title', null, ['required','class' => 'form-control','placeholder' => __('title')]) !!}
                                 </div>
-                                <div class="form-group col-sm-12 col-md-12">
+                                <div class="form-group col-sm-12 col-md-6">
                                     <label for="">{{ __('message') }} <span class="text-danger">*</span></label>
                                     {!! Form::textarea('message', null, ['required','class' => 'form-control','placeholder' => __('message'), 'rows' => 3]) !!}
                                 </div>
@@ -65,7 +65,7 @@
 
                                 {{-- <textarea name="all_users" id="" cols="30" rows="10" hidden>{{ $all_users }}</textarea> --}}
 
-                                <div class="form-group col-sm-6 col-md-12">
+                                <div class="form-group col-sm-6 col-md-6">
                                     <label>{{ __('image') }} </label>
                                     <input type="file" name="image" accept="image/*" class="file-upload-default"/>
                                     <div class="input-group col-xs-12">
@@ -89,7 +89,7 @@
                 </div>
             </div>
 
-            <div class="col-md-6 col-sm-12 grid-margin stretch-card">
+            <div class="col-md-12 col-sm-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
                         

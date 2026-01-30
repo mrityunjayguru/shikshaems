@@ -20,7 +20,7 @@
 
         @if ($schoolSettings['school_name'] ?? '')
         <div class="align-items-stretch d-none d-md-block d-sm-block mt-4">
-            <span class="text-dark ml-4">{{ $schoolSettings['school_name'] ?? '' }}</span>
+            <span class="ml-4" style='color : #202020;'>{{ $schoolSettings['school_name'] ?? '' }}</span>
         </div>
         @endif
         @if (isset($systemSettings['email_verified']) && !$systemSettings['email_verified'])
@@ -45,7 +45,7 @@
 
     @if (isset($sessionYear) && !Auth::user()->hasRole('Super Admin'))
     <li class="d-none d-md-block d-sm-block nav-item">
-        <div class="text-dark">{{ __('session_years') . ' : '}} <span id="sessionYearNameHeader">{{$sessionYear->name}}</span><span id="semesterNameHeader">{{ (isset($semester) ? ', '.$semester->name : null)}}</span></div>
+        <div class="" style='color : #202020;'> {{ __('session_years') . ' : '}} <span id="sessionYearNameHeader">{{$sessionYear->name}}</span><span id="semesterNameHeader">{{ (isset($semester) ? ', '.$semester->name : null)}}</span></div>
     </li>
     @endif
 

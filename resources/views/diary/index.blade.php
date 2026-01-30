@@ -12,8 +12,8 @@
             </h3>
         </div>
 
-        <div class="row">
-            <div class="col-lg-5 grid-margin stretch-card">
+        <div class="col">
+            <div class="col-lg-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
@@ -24,12 +24,12 @@
                             novalidate="novalidate">
                             @csrf
                             <div class="row">
-                                <div class="form-group col-sm-12 col-md-12">
+                                <div class="form-group col-sm-6 col-md-6">
                                     <label>{{ __('title') }} <span class="text-danger">*</span></label>
                                     <input type="text" name="title" id="title" class="form-control" placeholder="{{ __('title') }}" required>
                                 </div>
 
-                                <div class="form-group col-sm-12 col-md-12">
+                                <div class="form-group col-sm-6 col-md-6">
                                     <label>{{ __('diary_category') }} <span class="text-danger">*</span></label>
                                     <select name="diary_category_id" id="diary_category_id" class="form-control" required>
                                         <option value="" disabled selected>{{ __('select_category') }}</option>
@@ -40,7 +40,7 @@
                                 </div>
 
                                 {!! Form::hidden('user_id', Auth::user()->id, ['id' => 'user_id']) !!}
-                                <div class="form-group col-sm-12 col-md-12">
+                                <div class="form-group col-sm-6 col-md-6">
                                     <label>{{ __('class_section') }} <span class="text-danger">*</span></label>
                                     <select name="filter_class_section_id" id="filter_class_section_id"
                                         class="form-control" required>
@@ -52,19 +52,19 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group col-sm-12 col-md-12">
+                                <div class="form-group col-sm-6 col-md-6">
                                     <label>{{ __('subject') }} </label>
                                     <select name="subject_id" id="subject_id" class="form-control" disabled>
                                         <option value="">-- {{ __('select_subject') }} --</option>
                                     </select>
                                 </div>
 
-                                <div class="form-group col-sm-12 col-md-12">
+                                <div class="form-group col-sm-6 col-md-6">
                                     <label>{{ __('date') }}</label>
                                     <input type="text" name="date" id="date"
                                         class="datepicker-popup-no-future form-control">
                                 </div>
-                                <div class="form-group col-sm-12 col-md-12">
+                                <div class="form-group col-sm-6 col-md-6">
                                     <label>{{ __('description') }}<span class="text-danger">*</span></label>
                                     <textarea name="description" id="description" class="form-control" placeholder="{{ __('Write Something...') }}" required></textarea>
                                 </div>
@@ -83,7 +83,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-7 grid-margin stretch-card">
+            <div class="col-lg-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
