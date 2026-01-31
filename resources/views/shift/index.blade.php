@@ -11,8 +11,8 @@
                 {{ __('manage').' '.__('Shift') }}
             </h3>
         </div>
-        <div class="row">
-            <div class="col-12 col-sm-12 col-md-6 grid-margin">
+        <div class="col">
+            <div class="col-12 col-sm-12 col-md-12 grid-margin">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
@@ -46,7 +46,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-sm-12 col-md-6 grid-margin">
+            <div class="col-12 col-sm-12 col-md-12 grid-margin">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">

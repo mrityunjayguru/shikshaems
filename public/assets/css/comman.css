@@ -31,7 +31,7 @@ code {
 }
 
 label {
-    color: #808080 !important;
+    color: #202020 !important;
 }
 
 
@@ -292,6 +292,7 @@ label {
     background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
     border-radius: 4px !important;
     padding: 10px 6px;
+    margin-top: 12px;
 }
 
 .sidebar .nav>.nav-item.active>.nav-link .menu-title {
@@ -341,11 +342,12 @@ label {
 
 .form-control {
     border-radius: 4px !important;
-    background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    color: #202020 !important;
+    background: var(--text-field-color) !important;
 }
 
 .form-control:focus {
-    border: 1px solid var(--theme-color) !important;
+    border: 1px solid color-mix(in srgb, var(--text-field-color) 70%, black) !important;
 }
 
 .svg-theme-color svg,

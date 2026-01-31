@@ -109,7 +109,7 @@
     clear:both;
     background-image:url(images/saturation.png);
     *display:inline;
-    *zoom:1
+    *zoom:1;
 }
 .asColorPicker-saturation i{
     position:absolute
@@ -184,7 +184,7 @@
     max-width:auto
 }
 .asColorPicker-trigger{
-    border:1px solid #bbb
+    border:1px solid #DADADA !important;
 }
 .asColorPicker-saturation{
     -webkit-box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);

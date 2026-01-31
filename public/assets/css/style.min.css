@@ -4943,7 +4943,7 @@ pre code {
     font-weight: 400;
     line-height: 1;
     color: #495057;
-    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    background-color: var(--text-field-color);
     background-clip: padding-box;
     border: 1px solid #ced4da;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
@@ -19367,20 +19367,23 @@ code {
 }
 
 .btn-secondary:not(.btn-light) {
-    color: #ffffff;
+    color: #0f172a;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
 }
 
 .btn-secondary:not(.btn-light):hover,
-.btn-secondary:not(.btn-light):focus,
-.btn-secondary:not(.btn-light):active {
-    color: #ffffff;
+.btn-secondary:not(.btn-light):focus {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
 }
 
-.btn-secondary:not(.btn-light):focus,
 .btn-secondary:not(.btn-light):active {
-    background: #c3bdbd;
-    border-color: #c3bdbd;
+    background-color: #cbd5e1;
 }
+
+
+
 
 .btn-outline-secondary:hover,
 .editable-container.editable-inline .editableform .control-group .editable-buttons .editable-cancel:hover,
@@ -19394,19 +19397,26 @@ code {
 }
 
 .btn-inverse-success {
-    background-color: rgba(27, 207, 180, 0.2);
-    background-image: none;
-    border-color: rgba(27, 207, 180, 0);
+      background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    font-weight: 200 !important;
 }
 
 .btn-inverse-success:not(.btn-inverse-light) {
-    color: #1bcfb4;
+    background: linear-gradient(to right, #00D9C0, #00C9B1) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+
 }
 
 .btn-inverse-success:hover {
-    color: #ffffff;
-    background-color: #1bcfb4;
-    border-color: #1bcfb4;
+    background: linear-gradient(to right, #00C9B1 ,#00D9C0) !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
 }
 
 .btn-inverse-success.focus,
@@ -20991,10 +21001,11 @@ code {
 .typeahead:focus,
 .tt-query:focus,
 .tt-hint:focus {
-    background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    /* background-color: color-mix(in srgb, var(--theme-color) 12%, white) !important; */
+    background-color: var(--text-field-color) !important;
     color: #000;
     outline: none;
-    border: 1px solid var(--theme-color) !important;
+    border: 1px solid color-mix(in srgb, var(--text-field-color) 70%, black) !important;
     box-shadow: 0 1px 6px 0 rgba(90, 116, 148, 0.4);
 }
 
@@ -31040,7 +31051,7 @@ footer h4 a {
     -webkit-box-direction: normal;
     -ms-flex-direction: column;
     flex-direction: column;
-    margin-bottom: 60px;
+    /* padding-bottom: 26px; */
 }
 
 .sidebar .nav .nav-item {
@@ -31063,7 +31074,7 @@ footer h4 a {
     -ms-flex-align: center;
     align-items: center;
     white-space: nowrap;
-    padding: 1.125rem 0 1.125rem 0;
+    padding: 15px 0px 0px 5px;
     color: #343A40;
     font-weight: 500;
     -webkit-transition-duration: 0.45s;
@@ -31220,8 +31231,8 @@ footer h4 a {
 }
 
 .sidebar .nav.sub-menu {
-    margin-bottom: 20px;
-    margin-top: 0;
+    /* margin-bottom: 20px; */
+    margin-top: 10px;
     list-style: none;
 }
 
@@ -31231,12 +31242,13 @@ footer h4 a {
 
 .sidebar .nav.sub-menu .nav-item .nav-link {
     color: #000;
-    padding: 0.75rem 2rem 0.75rem 2rem;
+    padding: 0.25rem 0rem 0.85rem 1rem;
     position: relative;
     font-size: 0.8125rem;
     line-height: 1;
     height: auto;
     border-top: 0;
+    margin-top: 2px;
 }
 
 .clearChach {
@@ -31807,7 +31819,7 @@ footer h4 a {
 }
 
 .content-wrapper {
-    background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+    background: color-mix(in srgb, var(--theme-color) 8%, white) !important;
     padding: 1.75rem 1.25rem;
     width: 100%;
     -webkit-box-flex: 1;
@@ -32424,7 +32436,7 @@ input:checked+.feature-list,
     cursor: grab;
 }
 
-.btn-class{
+.btn-class {
     display: flex;
     align-items: center;
     justify-content: center;
