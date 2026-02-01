@@ -172,6 +172,7 @@
                                     <th scope="col" data-field="fees_status" data-sortable="false" data-formatter="feesPaidStatusFormatter" data-align="center"> {{ __('Fees Status') }}</th>
                                     <th scope="col" data-field="fees_paid.date"  data-sortable="false" data-align="center">{{ __('Date') }}</th>
                                     <th scope="col" data-field="paid_amount" data-sortable="false">{{ __('paid_amount') }}</th>
+                                    <th scope="col" data-field="advance_amount" data-sortable="false">{{ __('Advance Amount') }}</th>
                                     <th scope="col" data-field="operate" data-sortable="false" data-events="feesPaidEvents" data-align="center" data-escape="false"> {{ __('Action') }}</th>
                                 </tr>
                             </thead>

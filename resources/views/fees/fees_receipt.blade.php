@@ -250,8 +250,8 @@
                             <span class="small-text">Payment Mode : ({{ $compulsoryFee->mode }})</span>
                         </td>
                         <td class="amount">
-                            {{ number_format($compulsoryFee->amount) }}
                             {{ $school['currency_symbol'] ?? '' }}
+                            {{ number_format($compulsoryFee->amount) }}
                         </td>
                     </tr>
 
@@ -263,8 +263,8 @@
                         <tr>
                             <td colspan="2">Due Charges</td>
                             <td class="amount">
-                                {{ number_format($compulsoryFee->due_charges) }}
                                 {{ $school['currency_symbol'] ?? '' }}
+                                {{ number_format($compulsoryFee->due_charges) }}
                             </td>
                         </tr>
                         @php
@@ -282,8 +282,8 @@
                             <span class="small-text">Mode : ({{ $optionalFee->mode }})</span>
                         </td>
                         <td class="amount">
-                            {{ number_format($optionalFee->amount) }}
                             {{ $school['currency_symbol'] ?? '' }}
+                            {{ number_format($optionalFee->amount) }}
                         </td>
                     </tr>
 
@@ -296,8 +296,15 @@
                 <tr class="total-row">
                     <td colspan="2">Total Amount</td>
                     <td class="amount">
-                        {{ number_format($total_fees + $due_charges) }}
                         {{ $school['currency_symbol'] ?? '' }}
+                        {{ number_format($total_fees + $due_charges) }}
+                    </td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="2">Advance Amount</td>
+                    <td class="amount">
+                        {{ $school['currency_symbol'] ?? '' }}
+                        {{ number_format($advanceAmount) }}
                     </td>
                 </tr>
             </tbody>
@@ -327,11 +334,10 @@
         </table>
         {{-- FOOTER --}}
         <p class="mt-2">
-            Received with thanks <strong>{{ $total_fees + $due_charges }}
-                {{ $school['currency_symbol'] ?? '' }}</strong>
-            </strong>
+            Received with thanks <strong>{{ $school['currency_symbol'] ?? '' }}{{ $total_fees + $due_charges }}</strong>
+           
         </p>
-
+     
         <div class="signature">
             ( Cashier / Accountant )
         </div>
@@ -342,8 +348,6 @@
         </div>
 
     </div>
-
-
 </body>
 
 </html>

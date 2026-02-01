@@ -19,14 +19,19 @@
                         <a href="{{ route('fees.paid.index') }}" class="btn btn-theme float-right">Back</a>
                     </div>
                     <div class="card-body d-flex justify-content-center">
-                        <form class="pt-3 create-form form-validation col-sm-12 col-md-5" method="post" action="{{ route('fees.optional.store') }}" novalidate="novalidate" data-success-function="formSuccessFunction">
-                            <input type="hidden" name="fees_id" id="optional-fees-id" value="{{$fees->id}}"/>
-                            <input type="hidden" name="student_id" id="student-id" value="{{$student->id}}"/>
-                            <input type="hidden" name="class_id" id="class-id" value="{{$student->student->class_section->class_id}}"/>
-                            <h4>{{$student->full_name.' :- '.$student->student->class_section->full_name}}</h4><br>
+                        <form class="pt-3 create-form form-validation col-sm-12 col-md-5" method="post"
+                            action="{{ route('fees.optional.store') }}" novalidate="novalidate"
+                            data-success-function="formSuccessFunction">
+                            <input type="hidden" name="fees_id" id="optional-fees-id" value="{{ $fees->id }}" />
+                            <input type="hidden" name="student_id" id="student-id" value="{{ $student->id }}" />
+                            <input type="hidden" name="class_id" id="class-id"
+                                value="{{ $student->student->class_section->class_id }}" />
+                            <h4>{{ $student->full_name . ' :- ' . $student->student->class_section->full_name }}</h4><br>
                             <div class="form-group">
                                 <label for="payment-date">{{ __('date') }} <span class="text-danger">*</span></label>
-                                <input id="payment-date" type="text" name="date" class="datepicker-popup paid-date form-control" placeholder="{{ __('date') }}" autocomplete="off" required>
+                                <input id="payment-date" type="text" name="date"
+                                    class="datepicker-popup paid-date form-control" placeholder="{{ __('date') }}"
+                                    autocomplete="off" required>
                             </div>
 
                             <hr>
@@ -34,31 +39,53 @@
                                 <div class="optional-fees-content">
                                     <table class="table">
                                         <tbody>
-                                        @foreach($optionalFeesData as $key =>$optionalFee)
-                                            <tr>
-                                                <td class="text-left">
-                                                    @if(count($optionalFee->optional_fees_paid))
-                                                        <span data-id="{{ $optionalFee->optional_fees_paid[0]['id']}}" class="text-danger remove-paid-optional-fees" style="cursor: pointer;"><i class="fa fa-times"></i></span>
-                                                    @else
-                                                        <input style="cursor: pointer;" type="checkbox" class="optional-fee-payment" id="optional-{{ $optionalFee->id }}" data-amount="{{ $optionalFee->amount }}" name="fees_class_type[{{ $key }}][id]" value="{{ $optionalFee->id }}">
-                                                    @endif
-                                                </td>
-                                                <td colspan="2" class="text-left">
-                                                    <label style="cursor: pointer;" for="optional-{{ $optionalFee->id }}">{{$optionalFee->fees_type_name}}</label>
-                                                </td>
-                                                <td style="cursor: default;" class="text-right">
-                                                    {{$optionalFee->amount}}
-                                                    {!! Form::hidden('fees_class_type['.$key.'][amount]', $optionalFee->amount) !!}
-                                                </td>
-                                            </tr>
-                                        @endforeach
+                                            @foreach ($optionalFeesData as $key => $optionalFee)
+                                                <tr>
+                                                    <td class="text-left">
+                                                        @if (count($optionalFee->optional_fees_paid))
+                                                            <span data-id="{{ $optionalFee->optional_fees_paid[0]['id'] }}"
+                                                                class="text-danger remove-paid-optional-fees"
+                                                                style="cursor: pointer;"><i class="fa fa-times"></i></span>
+                                                        @else
+                                                            <input style="cursor: pointer;" type="checkbox"
+                                                                class="optional-fee-payment"
+                                                                id="optional-{{ $optionalFee->id }}"
+                                                                data-amount="{{ $optionalFee->amount }}"
+                                                                name="fees_class_type[{{ $key }}][id]"
+                                                                value="{{ $optionalFee->id }}">
+                                                        @endif
+                                                    </td>
+                                                    <td colspan="2" class="text-left">
+                                                        <label style="cursor: pointer;"
+                                                            for="optional-{{ $optionalFee->id }}">{{ $optionalFee->fees_type_name }}</label>
+                                                    </td>
+                                                    <td style="cursor: default;" class="text-right">
+                                                        {{ $currencySymbol . ' ' . $optionalFee->amount }}
+                                                        {!! Form::hidden('fees_class_type[' . $key . '][amount]', $optionalFee->amount) !!}
+                                                    </td>
+                                                </tr>
+                                            @endforeach
 
-                                        <tr id="optional-total-amount-to-pay" style="display: none">
-                                            <td class="text-left"></td>
-                                            <td colspan="2" class="text-left"><label>{{__("Total Amount")}}</label></td>
-                                            <td class="text-right" id="optional-total-amount"></td>
-                                            {!! Form::hidden('total_amount',null, ["id" => "form-total-optional-amount"]) !!}
-                                        </tr>
+                                            <tr id="optional-total-amount-to-pay" style="display: none">
+                                                <td class="text-left"></td>
+                                                <td colspan="2" class="text-left">
+                                                    <label>{{ __('Total Amount') }}</label>
+                                                </td>
+                                                <td class="text-right" id="optional-total-amount"></td>
+                                                {!! Form::hidden('total_amount', null, ['id' => 'form-total-optional-amount']) !!}
+                                            </tr>
+                                            @php
+                                                $fees_advances_sum_amount = $student->fees_advances_sum_amount;
+                                            @endphp
+                                            <tr>
+                                                <td class="text-left"></td>
+                                                <th colspan="2" class="text-left">
+                                                    <label>{{ __('Advance Amount') }}</label>
+                                                </th>
+                                                <th class="text-right">{{ ' ' . $currencySymbol }}<span
+                                                        id="total_amount_text">{{ $fees_advances_sum_amount ?? '0' }}</span>
+                                                </th>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -70,13 +97,15 @@
                                     <div class="d-flex">
                                         <div class="form-check form-check-inline">
                                             <label class="form-check-label">
-                                                <input type="radio" name="mode" class="cash-compulsory-mode  mode" value="1" checked>
+                                                <input type="radio" name="mode" class="cash-compulsory-mode  mode"
+                                                    value="1" checked>
                                                 {{ __('cash') }}
                                             </label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <label class="form-check-label">
-                                                <input type="radio" name="mode" class="cheque-compulsory-mode mode" value="2">
+                                                <input type="radio" name="mode" class="cheque-compulsory-mode mode"
+                                                    value="2">
                                                 {{ __('cheque') }}
                                             </label>
                                         </div>
@@ -85,16 +114,17 @@
                             </div>
                             <div class="form-group cheque-no-container" style="display: none">
                                 <label for="cheque_no">{{ __('cheque_no') }} <span class="text-danger">*</span></label>
-                                <input type="number" id="cheque_no" name="cheque_no" placeholder="{{ __('cheque_no') }}" class="form-control cheque-no" required/>
+                                <input type="number" id="cheque_no" name="cheque_no" placeholder="{{ __('cheque_no') }}"
+                                    class="form-control cheque-no" required />
                             </div>
-                            <input class="btn btn-theme float-right" type="submit" id="pay-button" disabled value={{ __('pay') }} />
+                            <input class="btn btn-theme float-right" type="submit" id="pay-button" disabled
+                                value={{ __('pay') }} />
                         </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
 @endsection
 @section('js')
     <script>
@@ -104,7 +134,7 @@
         }).datepicker("setDate", 'now');
 
         let totalAmount = 0;
-        $('.optional-fee-payment').on('click', function () {
+        $('.optional-fee-payment').on('click', function() {
             totalAmount += $(this).is(':checked') ? $(this).data("amount") : -$(this).data("amount");
             if (totalAmount > 0) {
                 $('#pay-button').removeAttr('disabled')
@@ -118,7 +148,7 @@
         })
 
         function formSuccessFunction() {
-            setTimeout(function () {
+            setTimeout(function() {
                 window.location.reload();
             }, 1000)
         }
