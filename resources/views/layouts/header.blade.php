@@ -20,7 +20,7 @@
 
         @if ($schoolSettings['school_name'] ?? '')
         <div class="align-items-stretch d-none d-md-block d-sm-block mt-4">
-            <span class="ml-4" style='color : #202020;'>{{ $schoolSettings['school_name'] ?? '' }}</span>
+            <span class="ml-4 school-name-header" style='color: #202020; font-size:20px; font-weight: 700;'>{{ $schoolSettings['school_name'] ?? '' }}</span>
         </div>
         @endif
         @if (isset($systemSettings['email_verified']) && !$systemSettings['email_verified'])
@@ -38,7 +38,7 @@
             <li class="nav-item">
                 {{-- TODO :: CLASS TEACHER CLASS NAME --}}
                 {{-- @php $class_section = Auth::user()->teacher->class_section @endphp
-                    <div class="text-dark">{{__('Class').' : '.$class_section->class->name.' '.$class_section->section->name.' - '.$class_section->class->medium->name}}
+                    <div class="" style='color : #202020;'>{{__('Class').' : '.$class_section->class->name.' '.$class_section->section->name.' - '.$class_section->class->medium->name}}
     </div> --}}
     </li>
     @endcan
