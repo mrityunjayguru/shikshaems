@@ -4,6 +4,146 @@
     {{ __('student_profile') }} - {{ $student->user->first_name }} {{ $student->user->last_name }}
 @endsection
 
+@section('css')
+<style>
+
+    .card {
+        border-radius: 14px;
+        border: 1px solid #eee;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.04);
+        margin-bottom: 18px;
+    }
+
+    .card-body {
+        padding: 22px !important;
+    }
+
+
+    .student-profile-header {
+        background: #f5f3f7;
+        border-radius: 12px;
+        padding: 18px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .student-profile-header img {
+        width: 90px;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 50%;
+        /* border: 3px solid #fff; */
+        /* box-shadow: 0 3px 6px rgba(0,0,0,0.12); */
+    }
+
+    .student-profile-header h4 {
+        font-size: 20px;
+        font-weight: 800;
+        margin: 0;
+        color: #202020;
+    }
+
+    .student-profile-header p {
+        margin: 0;
+        font-size: 14px;
+        color: #666;
+    }
+
+
+    .list-group-item {
+        border: none !important;
+        padding: 10px 0;
+        font-size: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .list-group-item span:first-child {
+        font-weight: 600;
+        color: #444;
+        font-size: 14px;
+    }
+
+    .list-group-item span:last-child {
+        font-weight: 700;
+        color: #202020;
+    }
+
+
+    .nav-tabs .nav-link {
+        font-weight: 600;
+        color: #555;
+        border: none;
+        padding: 12px 18px;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--theme-color);
+        border-bottom: 3px solid var(--theme-color);
+        background: transparent;
+    }
+
+    .card-header {
+        background: #fafafa !important;
+        border-bottom: 1px solid #eee;
+        font-weight: 700;
+        color: var(--theme-color);
+    }
+
+
+    .profile-header-box {
+        background: #f6f4f8;
+        border-radius: 14px;
+        padding: 22px 28px;
+        display: flex;
+        align-items: center;
+        gap: 25px;
+    }
+
+
+    .profile-header-box .profile-img {
+        width: 85px;
+        height: 85px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .profile-header-box h3 {
+        font-size: 22px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        color: #111;
+    }
+
+  
+    .profile-info-row {
+        display: flex;
+        gap: 55px;
+        flex-wrap: wrap;
+    }
+
+    .profile-info-item span {
+        font-size: 13px;
+        font-weight: 600;
+        color: #666;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .profile-info-item p {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0;
+        color: #111;
+    }
+</style>
+@endsection
+
+
 @section('content')
 <div class="content-wrapper">
     <div class="page-header">
@@ -17,55 +157,63 @@
             </ol>
         </nav>
     </div>
-    <div class="row">
-        <!-- Left Profile Card -->
-        <div class="col-md-4 grid-margin">
-            <div class="card">
-                <div class="card-body text-center">
-                    <img src="{{ $student->user->image ?? asset('images/default-user.png') }}" 
-                         class="rounded-circle mb-3 shadow" 
-                         style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #eaeaea;"
-                         alt="{{ $student->user->first_name }}'s Photo">
-                    <h4 class="mb-1">{{ $student->user->first_name }} {{ $student->user->last_name }}</h4>
-                    <p class="text-muted mb-2">{{ __('student') }}</p>
-                    <div class="badge text-primary mb-3 font-weight-bold">
-                        <span class="text-dark">{{ __('admission_no') }} : </span><span class="text-dark">{{ $student->admission_no }}</span>
+    <div class="col">
+     <div class="card">
+    <div class="card-body">
+
+        <div class="profile-header-box">
+
+            <img src="{{ $student->user->image ?? asset('images/default-user.png') }}"
+                 class="profile-img"
+                 alt="student">
+
+            <div>
+
+                <h3>
+                    {{ $student->user->first_name }}
+                    {{ $student->user->last_name }}
+                </h3>
+
+                <div class="profile-info-row">
+
+                    <div class="profile-info-item">
+                        <span>{{ __('admission_no') }}</span>
+                        <p>{{ $student->admission_no ?? '-' }}</p>
                     </div>
-                    <hr>
-                    <ul class="list-group list-group-flush text-left">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span><b>{{ __('medium') }}:</b></span>
-                            <span class="text-capitalize font-weight-medium">{{ $student->class_section->medium->name ?? '-' }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span><b>{{ __('class_section') }}:</b></span>
-                            <span class="font-weight-medium">{{ $student->class_section->class->name ?? '-' }} <?= $student->class_section?->section?->name ?  "(" . $student->class_section->section->name . ")" : '' ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span></i> <b>{{ __('Stream') }}:</b></span>
-                            <span class="text-capitalize font-weight-medium">{{ $student->class_section->class->stream->name ?? '-' }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span><b>{{ __('Shift') }}:</b></span>
-                            <span class="text-capitalize font-weight-medium">{{ $student->class_section->class->shift->name ?? '-' }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span><b>{{ __('session_year') }}:</b></span>
-                            <span class="text-capitalize font-weight-medium">{{ $student->session_year->name ?? '-' }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span><b>{{ __('gender') }}:</b></span>
-                            <span class="text-capitalize font-weight-medium">{{ ucfirst($student->user->gender) }}</span>
-                        </li>
-                    </ul>
+
+                    <div class="profile-info-item">
+                        <span>{{ __('class') }}</span>
+                        <p>{{ $student->class_section->class->name ?? '-' }}</p>
+                    </div>
+
+                    <div class="profile-info-item">
+                        <span>{{ __('section') }}</span>
+                        <p>{{ $student->class_section->section->name ?? '-' }}</p>
+                    </div>
+
+                    <div class="profile-info-item">
+                        <span>{{ __('dob') }}</span>
+                        <p>{{ $student->user->dob ?? '-' }}</p>
+                    </div>
+
+                    <div class="profile-info-item">
+                        <span>{{ __('gender') }}</span>
+                        <p>{{ ucfirst($student->user->gender ?? '-') }}</p>
+                    </div>
+
                 </div>
             </div>
         </div>
-        <!-- Right Details Tabs -->
-        <div class="col-md-8 grid-margin">
+
+    </div>
+</div>
+
+
+    
+        <div class="col-md-12 grid-margin">
             <div class="card">
                 <div class="card-body">
-                    <!-- Tabs -->
+        
                     <ul class="nav nav-tabs nav-tabs-line" id="studentTab" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" id="profile-tab" data-toggle="tab" href="#profile" role="tab">
@@ -149,7 +297,7 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Other tab panes can be filled as needed -->
+                    
                         <div class="tab-pane fade py-3" id="attendance" role="tabpanel">
                             @include('reports.student.attendance-report-tab', ['sessionYears' => $sessionYears])
                         </div>

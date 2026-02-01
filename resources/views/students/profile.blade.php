@@ -1,221 +1,310 @@
 @extends('layouts.master')
 
 @section('css')
-    <style>
-        #map,
-        #pickup_map {
-            width: 100%;
-            height: 400px;
-            /* REQUIRED */
-            margin-bottom: 20px;
-        }
-        .text-warning{
-            color : var(--theme-color) !important;
-        }
-        .details {
-            padding-left : 10px !important;
-        }
-    </style>
+<style>
+    /* Map Container Fixes */
+    #map,
+    #pickup_map {
+        width: 100% !important;
+        height: 200px !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+
+    .map-wrapper {
+        width: 100%;
+        height: 200px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #eee;
+        margin-top: 12px;
+    }
+
+    .text-warning {
+        color: var(--theme-color) !important;
+    }
+
+    .details {
+        padding-left: 14px !important;
+    }
+
+    /* ============================= */
+    /* ✅ PROFILE INFO (Table Removed) */
+    /* ============================= */
+
+    .student-info h5 {
+        font-size: 20px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        color: #202020;
+    }
+
+    .info-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+    }
+
+    .info-item {
+        min-width: 140px;
+    }
+
+    .info-item span {
+        font-size: 13px;
+        font-weight: 600;
+        display: block;
+        color: #474747ff;
+        margin-bottom: 4px;
+    }
+
+    .info-item p {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .card-body {
+        padding: 22px !important;
+    }
+
+    p {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #202020;
+    }
+
+    small {
+        font-size: 13px;
+    }
+</style>
 @endsection
+
 @section('title')
-    {{ __('students') }}
+{{ __('students') }}
 @endsection
 
 @section('content')
-    @php
-        $student = $student[0] ?? null;
-        $route_details = $route_details[0] ?? null;
-        $pickup_point = $pickup_point[0] ?? null;
 
-        $pickupPoint = $route_details ? $route_details->pickupPoint : null;
+@php
+    $student = $student[0] ?? null;
+    $route_details = $route_details[0] ?? null;
+    $pickup_point = $pickup_point[0] ?? null;
 
-        if (isset($student->class_section) && isset($student->class_section->class_teachers)) {
-            $classTeacher = $student->class_section->class_teachers[0] ?? null;
-        } else {
-            $classTeacher = null;
-        }
-    @endphp
-    <div class="content-wrapper">
+    $pickupPoint = $route_details ? $route_details->pickupPoint : null;
 
-        {{-- Page Header --}}
-        <div class="page-header mb-3">
-            <h3 class="page-title">{{ __('Student Details') }}</h3>
-        </div>
+    if (isset($student->class_section) && isset($student->class_section->class_teachers)) {
+        $classTeacher = $student->class_section->class_teachers[0] ?? null;
+    } else {
+        $classTeacher = null;
+    }
+@endphp
 
-        <div class="row">
-            <div class="col-lg-12">
+<div class="content-wrapper">
 
-                {{-- PROFILE CARD --}}
-                <div class="card mb-3">
-                    <div class="card-body">
+    {{-- Page Header --}}
+    <div class="page-header mb-3">
+        <h3 class="page-title">{{ __('Student Details') }}</h3>
+    </div>
 
-                        {{-- Top Profile Section --}}
-                        <div class="p-3 rounded" style="background:#f5f3f7;">
-                            <div class="row align-items-center">
+    <div class="row">
+        <div class="col-lg-12">
 
-                                {{-- Profile Image --}}
-                                <div class="col-md-2 text-center">
-                                    <img src="{{ $student->user->image ?? asset('assets/dummy_logo.jpg') }}"
-                                        class="rounded-circle mb-2" width="90" height="90"
-                                        onerror="this.src='{{ asset('assets/dummy_logo.jpg') }}'">
+            {{-- PROFILE CARD --}}
+            <div class="card mb-3">
+                <div class="card-body">
+
+                    {{-- Top Profile Section --}}
+                    <div class="p-3 rounded" style="background:#f5f3f7;">
+                        <div class="row align-items-center">
+
+                            {{-- Profile Image --}}
+                            <div class="col-md-2 text-center">
+                                <img src="{{ $student->user->image ?? asset('assets/dummy_logo.jpg') }}"
+                                    class="rounded-circle mb-2"
+                                    width="90" height="90"
+                                    onerror="this.src='{{ asset('assets/dummy_logo.jpg') }}'">
+                            </div>
+
+                            {{-- Student Info (Table Removed) --}}
+                            <div class="col-md-10">
+
+                                <div class="student-info">
+
+                                    <h5>{{ $student->full_name }}</h5>
+
+                                    <div class="info-grid">
+
+                                        <div class="info-item">
+                                            <span>Admission No</span>
+                                            <p>{{ $student->admission_no }}</p>
+                                        </div>
+
+                                        <div class="info-item">
+                                            <span>Class</span>
+                                            <p>{{ $student->class_section->class->name ?? '-' }}</p>
+                                        </div>
+
+                                        <div class="info-item">
+                                            <span>Section</span>
+                                            <p>{{ $student->class_section->section->name ?? '-' }}</p>
+                                        </div>
+
+                                        <div class="info-item">
+                                            <span>DOB</span>
+                                            <p>{{ $student->user->dob }}</p>
+                                        </div>
+
+                                        <div class="info-item">
+                                            <span>Gender</span>
+                                            <p>{{ ucfirst($student->user->gender) }}</p>
+                                        </div>
+
+                                    </div>
                                 </div>
 
-                                {{-- Student Info --}}
-                                <div class="col-md-10">
-                                    <table class="table table-borderless mb-0">
-                                        <thead class="text-muted">
-                                            <tr>
-                                                <th>Student Name</th>
-                                                <th>Admission No</th>
-                                                <th>Class</th>
-                                                <th>Section</th>
-                                                <th>DOB</th>
-                                                <th>Gender</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td class="fw-semibold">{{ $student->full_name }}</td>
-                                                <td>{{ $student->admission_no }}</td>
-                                                <td>{{ $student->class_section->class->name ?? '-' }}</td>
-                                                <td>{{ $student->class_section->section->name ?? '-' }}</td>
-                                                <td>{{ $student->user->dob }}</td>
-                                                <td>{{ ucfirst($student->user->gender) }}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- DETAILS SECTION --}}
+                    <div class="row mt-3">
+
+                        {{-- LOCATION --}}
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="text-warning mb-3">Location</h6>
+
+                                    <p id="student_address">
+                                        Address :- {{ $student->user->current_address ?? 'N/A' }}
+                                    </p>
+
+                                    <div class="row mt-2" style="font-size:13px;">
+                                        <div class="col-6">
+                                            Latitude: <span id="lat"></span>
+                                        </div>
+                                        <div class="col-6">
+                                            Longitude: <span id="lng"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 rounded overflow-hidden" style="background:#eee;">
+                                        <div id="map" style="height: 200px; width: 100%;"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {{-- DETAILS SECTION --}}
-                        <div class="row mt-3">
+                        {{-- PICKUP POINT --}}
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="text-warning mb-3">Pickup Point</h6>
 
-                            {{-- LOCATION --}}
-                            <div class="col-md-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h6 class="text-warning mb-3">Location</h6>
+                                    <p id="pickuppoint_address">
+                                        Address :- {{ $pickupPoint->name ?? 'N/A' }}
+                                    </p>
 
-                                        <p class="mb-2" id="student_address">
-                                            Address :- {{ $student->user->current_address ?? 'N/A' }}
-                                        </p>
-
-                                        <div class="row small text-muted">
-                                            <div class="col-6">Latitude: <span id="lat"></span><br></div>
-                                            <div class="col-6">Longitude: <span id="lng"></span></div>
+                                    <div class="row mt-2" style="font-size:13px;">
+                                        <div class="col-6">
+                                            Latitude: <span id="pickup_lat">{{ $pickupPoint->latitude ?? '-' }}</span>
                                         </div>
+                                        <div class="col-6">
+                                            Longitude: <span id="pickup_lng">{{ $pickupPoint->longitude ?? '-' }}</span>
+                                        </div>
+                                    </div>
 
-                                        {{-- Map Placeholder --}}
-                                        <div class="mt-3 rounded overflow-hidden" style="height:150px;background:#eee;">
-                                            <div id="map" style="height: 200px; width: 100%;"></div>
+                                    <div class="mt-3 rounded overflow-hidden" style="background:#eee;">
+                                        <div id="pickup_map" style="height: 200px; width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- GUARDIAN DETAILS --}}
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="text-warning mb-3">Guardian Details</h6>
+
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ asset('assets/dummy_logo.jpg') }}"
+                                            class="rounded-circle"
+                                            width="40" height="40">
+
+                                        <div class="ms-2 details">
+                                            <div class="fw-semibold" style="font-size:16px;">
+                                                {{ $student->guardian->full_name }}
+                                            </div>
+                                            <small>{{ $student->guardian->mobile }}</small>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            {{-- PICKUP POINT --}}
-                            <div class="col-md-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h6 class="text-warning mb-3">Pickup Point</h6>
+                        </div>
 
-                                        <p class="mb-2" id="pickuppoint_address">
-                                            Address :- {{ $pickupPoint->name ?? 'N/A' }}
-                                        </p>
+                        {{-- CLASS STAFF --}}
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="text-warning mb-3">Class Staff</h6>
 
-                                        <div class="row small text-muted">
-                                            <div class="col-6">Latitude: <span
-                                                    id="pickup_lat">{{ $pickupPoint->latitude ?? '-' }}</span><br>
-                                            </div>
-                                            <div class="col-6">Longitude: <span
-                                                    id="pickup_lng">{{ $pickupPoint->longitude ?? '-' }}</span>
-                                            </div>
-                                        </div>
+                                    @if ($classTeacher && isset($classTeacher->teacher))
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ asset('assets/dummy_logo.jpg') }}"
+                                                class="rounded-circle"
+                                                width="40" height="40">
 
-                                        {{-- Map Placeholder --}}
-                                        <div class="mt-3 rounded overflow-hidden" style="height:150px;background:#eee;">
-                                            <div id="pickup_map" style="height: 200px; width: 100%;"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {{-- GUARDIAN DETAILS --}}
-                            <div class="col-md-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h6 class="text-warning mb-3">Guardian Details</h6>
-
-                                        <div class="d-flex align-items-center mb-2">
-                                            <img src="{{ asset('assets/dummy_logo.jpg') }}" class="rounded-circle"
-                                                width="35" height="35">
                                             <div class="ms-2 details">
-                                                <div class="fw-semibold">{{ $student->guardian->full_name }}</div>
-                                                <small class="text-muted">{{ $student->guardian->mobile }}</small>
+                                                <div class="fw-semibold" style="font-size:16px;">
+                                                    {{ $classTeacher->teacher->full_name }}
+                                                </div>
+                                                <small>Class Teacher</small>
                                             </div>
                                         </div>
-                                    </div>
+                                    @endif
+
                                 </div>
                             </div>
-
-                            {{-- CLASS STAFF --}}
-                            <div class="col-md-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h6 class="text-warning mb-3">Class Staff</h6>
-
-                                        {{-- @foreach ($classStaff as $staff) --}}
-                                        @if ($classTeacher && isset($classTeacher->teacher))
-                                            <div class="d-flex align-items-center mb-2">
-                                                <img src="{{ asset('assets/dummy_logo.jpg') }}" class="rounded-circle"
-                                                    width="35" height="35">
-                                                <div class="ms-2 details">
-                                                    <div class="fw-semibold">
-                                                        {{ $classTeacher->teacher->full_name }}
-                                                    </div>
-                                                    <small class="text-muted">Class Teacher</small>
-                                                </div>
-                                            </div>
-                                        @endif
-                                        {{-- @endforeach --}}
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
 
-                        <div class="row mt-3">
-                            {{-- ROUTE --}}
-                            <div class="col-md-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h6 class="text-warning mb-3">Route Plan</h6>
+                    </div>
 
-                                        <p class="mb-1">
-                                            Route :- {{ $route_details->routeVehicle->route->name ?? 'N/A' }}
-                                        </p>
+                    {{-- ROUTE --}}
+                    <div class="row mt-3">
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="text-warning mb-3">Route Plan</h6>
 
-                                        <div class="row small text-muted">
-                                            <div class="col-6">Stop: <span id="stop">
-                                                    {{ $pickupPoint->name ?? 'N/A' }}</span><br></div>
-                                            <div class="col-6">pickup time:
-                                                <span>{{ $pickupPoint->pickup_time ?? 'N/A' }}</span><br>
-                                            </div>
-                                            <div class="col-6 mt-2">drop time:
-                                                <span>{{ $pickupPoint->dropoff_time ?? 'N/A' }}</span>
-                                            </div>
+                                    <p style="font-size:16px;">
+                                        Route :- {{ $route_details->routeVehicle->route->name ?? 'N/A' }}
+                                    </p>
+
+                                    <div class="row mt-2" style="font-size:16px;">
+                                        <div class="col-6">
+                                            Stop: {{ $pickupPoint->name ?? 'N/A' }}
+                                        </div>
+                                        <div class="col-6" >
+                                            Pickup: {{ $pickupPoint->pickup_time ?? 'N/A' }}
+                                        </div>
+                                        <div class="col-6 mt-2">
+                                            Drop: {{ $pickupPoint->dropoff_time ?? 'N/A' }}
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
+                </div>
             </div>
+
         </div>
     </div>
+</div>
 @endsection
-
 @section('script')
     <script>
         window.onload = function() {

@@ -326,7 +326,7 @@ function StudentNameFormatter(value, row) {
                 ${imageFormatter(row.user.image)}
                 <div class="ms-3 mt-2 flex-grow-1">
                     <h6 class="mb-0 text-primary flex-grow-1 text-nowrap">${row.user.full_name}</h6>
-                    <p class="text-center" style="max-width:140px; color:#202020; font-size:10px;">
+                    <p class="text-center" style="max-width:140px; color:#202020; font-size:13px;">
                         ${row.user.email}
                     </p>
                 </div>
@@ -337,13 +337,13 @@ function StudentNameFormatter(value, row) {
 
 function TeacherNameFormatter(value, row) {
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <small class="text-muted"> ' + row.email + ' </small> </div> </div>';
+    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + row.email + ' </p> </div> </div>';
     return html;
 }
 
 function GuardianNameFormatter(value, row) {
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <small class="text-muted"> ' + row.email + ' </small> </div> </div>';
+    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + row.email + ' </p> </div> </div>';
     return html;
 }
 
