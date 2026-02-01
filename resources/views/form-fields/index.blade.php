@@ -98,7 +98,7 @@
                         <h4 class="card-title">
                             {{ __('list') . ' ' . __('form-fields') }}
                         </h4>
-                        <div class="row mt-3" id="toolbar">
+                        <div class="row" id="toolbar">
                             <div class="form-group col-sm-12 col-md-4">
                                 <label class="filter-menu">{{ __('user_type') }} <span class="text-danger">*</span></label>
                                 <select required name="filter_all_user_type" class="form-control" id="filter_all_user_type">

@@ -12,7 +12,7 @@
             </h3>
         </div>
 
-        <div class="col">
+        <div class="row">
             <div class="col-md-12 col-sm-12 grid-margin">
                 <div class="card">
                     <div class="card-body">
@@ -89,7 +89,7 @@
                 </div>
             </div>
 
-            <div class="col-md-12 col-sm-12 grid-margin stretch-card">
+            <div class="col-md-6 col-sm-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
                         
@@ -127,7 +127,7 @@
                 </div>
             </div>
             
-            <div class="col-md-12 grid-margin stretch-card">
+            <div class="col-md-6 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
