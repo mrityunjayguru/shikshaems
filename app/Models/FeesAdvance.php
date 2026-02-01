@@ -14,7 +14,8 @@ class FeesAdvance extends Model
         'compulsory_fee_id',
         'student_id',
         'parent_id',
-        'amount'
+        'amount',
+        'used_at'
     ];
 
     /**
@@ -27,6 +28,11 @@ class FeesAdvance extends Model
         return $this->belongsTo(User::class, 'student_id');
     }
 
+    public function compulsory_fee()
+    {
+        return $this->belongsTo(CompulsoryFee::class);
+    }
+
     public function getCreatedAtAttribute()
     {
         return $this->formatDateValue($this->getRawOriginal('created_at'));
@@ -36,5 +42,4 @@ class FeesAdvance extends Model
     {
         return $this->formatDateValue($this->getRawOriginal('updated_at'));
     }
-    
 }

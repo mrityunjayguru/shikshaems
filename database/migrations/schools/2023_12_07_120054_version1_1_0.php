@@ -278,6 +278,7 @@ return new class extends Migration {
             $table->foreignId('student_id')->comment('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreignId('parent_id')->comment('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->float('amount');
+            $table->date('used_at')->nullable(true);
             $table->timestamps();
         });
     }

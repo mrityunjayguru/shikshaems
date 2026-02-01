@@ -86,6 +86,10 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Students::class, 'user_id', 'id')->withTrashed();
     }
 
+    public function fees_advances()
+    {
+        return $this->hasMany(FeesAdvance::class, 'student_id', 'id');
+    }
     // public function parent() {
     //     return $this->hasOne(Parents::class, 'user_id', 'id');
     // }
@@ -100,7 +104,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(ClassSection::class, 'class_teacher_id')->withTrashed();
     }
 
-     public function transportationPayment()
+    public function transportationPayment()
     {
         return $this->hasOne(TransportationPayment::class, 'user_id')->withTrashed();
     }
@@ -141,8 +145,8 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     //    public function guardianRelationChild() {
-//        return $this->hasMany(Students::class, 'guardian_id');
-//    }
+    //        return $this->hasMany(Students::class, 'guardian_id');
+    //    }
 
     public function scopeOwner($query)
     {

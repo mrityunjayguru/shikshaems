@@ -308,6 +308,7 @@
                                         <th scope="col" data-field="fees_type" data-align="left" data-formatter="feesTypeFormatter">{{ __('Fees') }} {{__('type')}}</th>
                                         <th scope="col" data-field="compulsory_fees" data-align="center">{{ __('Compulsory Amount')}}</th>
                                         <th scope="col" data-field="total_fees" data-align="center">{{ __('Total Amount')}}</th>
+                                        {{-- <th scope="col" data-field="advance_amount" data-align="center">{{ __('Advance Amount')}}</th> --}}
                                         <th scope="col" data-events="feesEvents" data-field="operate" data-escape="false">{{__('action')}}</th>
                                     </tr>
                                     </thead>
