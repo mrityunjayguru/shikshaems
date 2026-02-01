@@ -451,7 +451,8 @@ label.filter-menu {
 .btn-gradient-dark i.mdi,
 .btn-download i.mdi,
 .btn-gradient-danger i.mdi,
-.btn-active-inactive i.mdi,.btn-eye i.mdi {
+.btn-active-inactive i.mdi,
+.btn-eye i.mdi {
     color: #ffffff !important;
     font-size: 16px !important;
     display: inline-block;
@@ -549,6 +550,7 @@ label.filter-menu {
 
 /* Mobile Responsive - Horizontal Scroll for tables */
 @media (max-width: 768px) {
+
     .full-table-width,
     .table {
         display: block;
@@ -599,6 +601,7 @@ label.filter-menu {
 }
 
 @media (max-width: 576px) {
+
     .full-table-width th,
     .full-table-width td,
     .table th,

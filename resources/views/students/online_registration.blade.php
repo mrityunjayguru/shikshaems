@@ -24,7 +24,7 @@
                                 <span class="text-danger">{{ __('Note Upon approving the students application please be aware that the student will remain in inactive status by default You will need to manually activate the student through the Student Details menu in order to complete the enrollment process') }}</span>
                             </div>
                         </div>
-                        <div class="row mt-3" id="toolbar">
+                        <div class="row" id="toolbar">
                             <div class="form-group col-sm-12 col-md-4">
                                 <label class="filter-menu">{{ __('Class') }} <span class="text-danger">*</span></label>
                                 <select name="filter_class_id" id="filter_class_id" class="form-control">

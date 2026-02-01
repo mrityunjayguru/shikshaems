@@ -17,7 +17,7 @@
                     <div class="card-body">
                         <div id="toolbar" class="row">
                             <div class="form-group col-md-4">
-                                <label class="filter-menu" for="filter_payment_status" style="font-size: 0.86rem;width: 110px">
+                                <label class="filter-menu" for="filter_payment_status" style="font-size: 0.86rem;width: 120px;">
                                     {{ __('Payment Status') }}
                                 </label>
                                 <select name="filter_payment_status" id="filter_payment_status" class="form-control">
