@@ -10235,7 +10235,7 @@ a.badge-info.focus,
 .badge-warning,
 .preview-list .preview-item .preview-thumbnail .badge.badge-busy {
     color: #212529;
-    background-color: #fed713;
+    background-color: #FF5635;
 }
 
 a.badge-warning:hover,
@@ -10243,7 +10243,7 @@ a.badge-warning:hover,
 a.badge-warning:focus,
 .preview-list .preview-item .preview-thumbnail a.badge.badge-busy:focus {
     color: #212529;
-    background-color: #ddb901;
+    background-color: #FF5635;
 }
 
 a.badge-warning:focus,
@@ -18298,7 +18298,7 @@ code {
 
 .badge-warning,
 .preview-list .preview-item .preview-thumbnail .badge.badge-busy {
-    border: 1px solid #fed713;
+    border: 1px solid #FF5635;
     color: #ffffff;
 }
 
@@ -26579,6 +26579,7 @@ body.avgrund-active {
     border: 0;
     color: #ffffff;
     padding: .5rem;
+    font-size : 13px;
 }
 
 .fc .fc-event.fc-start {
@@ -31051,7 +31052,7 @@ footer h4 a {
     -webkit-box-direction: normal;
     -ms-flex-direction: column;
     flex-direction: column;
-    /* padding-bottom: 26px; */
+    padding-bottom: 26px;
 }
 
 .sidebar .nav .nav-item {

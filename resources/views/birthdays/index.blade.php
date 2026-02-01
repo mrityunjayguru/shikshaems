@@ -20,7 +20,7 @@
                         <h4 class="card-title">
                             {{ __('list') . ' ' . __('birthdays') }}
                         </h4>
-                        <div class="row mt-3" id="toolbar">
+                        <div class="row" id="toolbar">
                             <div class="form-group col-sm-12 col-md-4">
                                 <label class="filter-menu">{{ __('Class') }} <span class="text-danger">*</span></label>
                                 <select name="class_id" id="filter_class_id" class="form-control">

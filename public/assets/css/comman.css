@@ -169,6 +169,33 @@ label {
     cursor: pointer;
     border-radius: 4px;
     padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.cache-clear:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Cache Clear Responsive Styles */
+@media (max-width: 991px) and (min-width: 768px) {
+
+    /* Tablet */
+    .cache-clear {
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+}
+
+@media (max-width: 767px) {
+
+    /* Mobile - Hide cache clear on small screens */
+    .cache-clear {
+        display: none !important;
+    }
 }
 
 .fa-table-layout:before {
