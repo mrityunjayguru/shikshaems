@@ -327,8 +327,7 @@ window.announcementEvents = {
 
 window.guardianEvents = {
     'click .edit-data': function (e, value, row) {
-        console.log(row.child);
-        
+        // console.log(row.child);
         $('#edit_id').val(row.id);
         $('#first_name').val(row.first_name);
         $('#last_name').val(row.last_name);
@@ -378,6 +377,58 @@ window.guardianEvents = {
         }
 
         $('#childDetails').html(html);
+    },
+
+     'click .btn_wards_info': function (e, value, row) {
+
+        let html = '';
+        $('#wardsDetails').html('');
+
+        if (row.child && row.child.length > 0) {
+
+            row.child.forEach(function (child) {
+                console.log(child);
+                
+               html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 ward-card"
+                            style="cursor: pointer; background-color:#ebe9ff;"
+                            data-url="/students/profile/${child.id}">
+                            
+                            <p><strong>Name:</strong> ${child.full_name}</p>
+                            <p><strong>Class:</strong>
+                                ${child.class_section.class.name}
+                                (${child.class_section.section.name})
+                            </p>
+                            <p><strong>Roll No:</strong> ${child.roll_number}</p>
+                            <p><strong>Admission No:</strong> ${child.admission_no}</p>
+                        </div>
+                    </div>
+                `;
+
+            });
+
+        } else {
+            html = `
+                <div class="col-md-12 text-center">
+                    <p>No wards found</p>
+                </div>
+            `;
+        }
+
+        $('#wardsDetails').html(html);
+        $('#wardsModal').modal('show'); // 🔥 OPEN MODAL
+
+        $(document).on('click', '.ward-card', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            let url = $(this).data('url');
+            if (url) {
+                window.location.assign(url);
+            }
+        });
+
     }
 };
 

@@ -28,7 +28,7 @@ class StudentHouseController extends Controller
             DB::beginTransaction();
             $data = new StudentHouse();
             $data->name = $request->name;
-            $data->description = $request->description;
+            $data->description = $request->description ?? null;
             $data->save();
 
             DB::commit();

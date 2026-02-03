@@ -168,7 +168,7 @@
 
         $('.datepicker-popup').datepicker({
             format: 'dd-mm-yyyy',
-            startDate: sessionStart,
+            startDate: new Date(),
             endDate: sessionEnd,
             autoclose: true,
             todayHighlight: true

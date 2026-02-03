@@ -43,9 +43,11 @@
                                     class="btn btn-theme btn-block">{{ __('back') }}</a>
                             </div>
                             <div class="text-center col-md-10 col-sm-12 col-12">
-                                <h3>{{$classSection->full_name}}</h3>
-                                <input type="hidden" id="class_section_id" value="{{$classSection->id}}" />
-                                {!! Form::hidden('semester_id', $classSection->class->include_semesters ? $currentSemester->id : null, ['id' => 'semester_id']) !!}
+                                <h3>{{ $classSection->full_name }}</h3>
+                                <input type="hidden" id="class_section_id" value="{{ $classSection->id }}" />
+                                {!! Form::hidden('semester_id', $classSection->class->include_semesters ? $currentSemester->id : null, [
+                                    'id' => 'semester_id',
+                                ]) !!}
 
                             </div>
                         </div>
@@ -70,19 +72,25 @@
                                         </div>
                                     </div>
                                 @endforeach
-
                                 @foreach ($subjectWithoutTeacherAssigned as $subject)
-                                    {{-- @dd($subject->toArray()) --}}
                                     @php
                                         $filtered = collect($subject->class_subjects)->first();
+                                        $type =
+                                            $subject->type && strtolower($subject->type) !== 'none'
+                                                ? ' ( ' . $subject->type . ' )'
+                                                : '';
                                     @endphp
-                                    <div class='fc-event fc-h-event fc-div-color fc-daygrid-event fc-daygrid-block-event'
-                                        style="background-color: {{ $subject->bg_color }}" data-color="{{ $subject->bg_color }}"
-                                        data-duration='{{ $timetableSettingsData['timetable_duration'] ?? '01:00:00' }}'
+
+                                    <div class="fc-event fc-h-event fc-div-color fc-daygrid-event fc-daygrid-block-event"
+                                        style="background-color: {{ $subject->bg_color }}"
+                                        data-color="{{ $subject->bg_color }}"
+                                        data-duration="{{ $timetableSettingsData['timetable_duration'] ?? '01:00:00' }}"
                                         data-subject_id="{{ $subject->id }}" data-note=""
                                         data-subject-type="{{ $filtered['type'] ?? '' }}">
-                                        <div class='fc-event-main' data-subject-type="{{ $filtered['type'] ?? '' }}">
-                                            {{  Str::limit($subject->name . ' ( ' . $subject->type . ' )', 25, ' ...') }}</div>
+
+                                        <div class="fc-event-main" data-subject-type="{{ $filtered['type'] ?? '' }}">
+                                            {{ Str::limit($subject->name . $type, 25, ' ...') }}
+                                        </div>
                                     </div>
                                 @endforeach
 
@@ -125,7 +133,7 @@
             });
         @endforeach
 
-        $(document).ready(function () {
+        $(document).ready(function() {
             createTimetable.setOption("slotMinTime",
                 "{{ $timetableSettingsData['timetable_start_time'] ?? '00:00:00' }}");
             createTimetable.setOption("slotMaxTime",
@@ -133,6 +141,5 @@
             createTimetable.setOption("slotDuration",
                 "{{ $timetableSettingsData['timetable_duration'] ?? '00:00:00' }}");
         })
-
     </script>
 @endsection

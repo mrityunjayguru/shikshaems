@@ -111,11 +111,10 @@ class ParentApiController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'mobile' => 'required',
             'password' => 'required',
         ], [
-            'email.required' => 'The email field cannot be empty.',
-            'email.email' => 'Please provide a valid email address.',
+            'mobile.required' => 'The mobile field cannot be empty.',
             'password.required' => 'The password field cannot be empty.',
         ]);
 
@@ -137,7 +136,7 @@ class ParentApiController extends Controller
 
         if (
             Auth::attempt([
-                'email' => $request->email,
+                'mobile' => $request->mobile,
                 'password' => $request->password
             ])
         ) {

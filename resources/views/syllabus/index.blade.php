@@ -36,7 +36,7 @@
                                         <label>{{ __('subject') }} <span class="text-danger">*</span></label>
                                         <select name="subject_id" id="subject_id" class="form-control">
                                             @foreach ($subjects as $subject)
-                                                <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                                                <option value="{{ $subject->id }}">{{ $subject->name }}{{ $subject->type !== 'None' ? '-' . $subject->type : '' }}</option>
                                             @endforeach
                                         </select>
                                     </div>

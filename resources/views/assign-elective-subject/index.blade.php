@@ -179,7 +179,7 @@
                             // Populate subjects dropdown
                             selectedGroup.subjects.forEach(function(subject) {
                                 var subjectName = subject.name;
-                                if (subject.type) {
+                                if (subject.type !== 'None') {
                                     subjectName += ' (' + subject.type + ')';
                                 }
                                 

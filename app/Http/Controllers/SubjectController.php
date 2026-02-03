@@ -103,7 +103,7 @@ class SubjectController extends Controller
         $file_upload_size_limit = $this->cache->getSystemSettings('file_upload_size_limit');
         $validator = Validator::make($request->all(), [
             'medium_id' => 'required|numeric',
-            'type' => 'required|in:Practical,Theory',
+            'type' => 'required|in:Practical,Theory,one',
             'name' => [
                 'required',
                 new uniqueForSchool('subjects', ['name' => $request->name, 'medium_id' => $request->medium_id, 'type' => $request->type])
@@ -142,7 +142,7 @@ class SubjectController extends Controller
                 'nullable',
                 new uniqueForSchool('subjects', ['code' => $request->code, 'medium_id' => $request->medium_id, 'type' => $request->type], $id)
             ],
-            'type' => 'required|in:Practical,Theory',
+            'type' => 'required|in:Practical,Theory,None',
             'bg_color' => 'required|not_in:transparent',
             'image' => 'mimes:jpg,jpeg,png,svg|max:2048|nullable',
         ])->setAttributeNames(['bg_color' => 'Background Color']);

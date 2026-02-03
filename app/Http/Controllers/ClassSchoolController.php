@@ -511,7 +511,7 @@ class ClassSchoolController extends Controller {
         }
         $sql->orderBy($sort, $order)->skip($offset)->take($limit);
         $res = $sql->get();
-
+        // dd($res);
         $bulkData = array();
         $bulkData['total'] = $total;
         $rows = array();

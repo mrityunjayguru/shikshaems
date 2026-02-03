@@ -135,12 +135,11 @@ class TeacherApiController extends Controller
 
         $validator = Validator::make($request->all(), [
             'school_code' => 'required',
-            'email' => 'required|email',
+            'mobile' => 'required',
             'password' => 'required',
         ], [
             'school_code.required' => 'The school code is mandatory.',
-            'email.required' => 'The email field cannot be empty.',
-            'email.email' => 'Please provide a valid email address.',
+            'mobile.required' => 'The mobile number cannot be empty.',
             'password.required' => 'The password field cannot be empty.',
         ]);
 
@@ -162,7 +161,7 @@ class TeacherApiController extends Controller
         }
 
         $user = User::withTrashed()
-            ->where('email', $request->email)
+            ->where('mobile', $request->mobile)
             ->first();
 
         // Check if the user has the 'Teacher' role or 'Staff' role
@@ -180,7 +179,7 @@ class TeacherApiController extends Controller
         }
 
         if (Auth::attempt([
-            'email'    => $request->email,
+            'mobile'    => $request->mobile,
             'password' => $request->password
         ])) {
 

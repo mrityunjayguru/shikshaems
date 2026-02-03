@@ -58,11 +58,13 @@
                                             </th>
                                             <th scope="col" data-field="user.full_name"
                                                 data-formatter="GuardianNameFormatter"> {{ __('name') }} </th>
+                                            <th scope="col" data-align="center" data-events="guardianEvents" data-escape="false" data-field="wardsOperate"> {{ __('Wards') }}
+                                            </th>
                                             <th scope="col" data-align="center" data-field="gender"> {{ __('gender') }}
                                             </th>
                                             <th scope="col" data-align="center" data-field="mobile"> {{ __('mobile') }}
                                             </th>
-                                            <th data-events="guardianEvents" scope="col" data-field="operate"
+                                            <th data-events="guardianEvents" data-align="center" scope="col" data-field="operate"
                                                 data-escape="false"> {{ __('action') }} </th>
                                         </tr>
                                     </thead>
@@ -187,4 +189,24 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="wardsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Wards Details</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row" id="wardsDetails"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @endsection

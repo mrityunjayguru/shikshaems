@@ -253,8 +253,11 @@
             // Populate select options
             if (filteredSubjects.length > 0) {
                 filteredSubjects.forEach(item => {
+                    
+                    var subjectType = item.type !== 'None' ? ' - ' + item.type : '';
+                    // console.log(item);
                     subjectSelect.append(
-                        `<option value="${item.id}">${item.name_with_type}</option>`
+                        `<option value="${item.id}">${item.name + subjectType}</option>`
                     );
                 });
                 subjectSelect.prop('disabled', false);
