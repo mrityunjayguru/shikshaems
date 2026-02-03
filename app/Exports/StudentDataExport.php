@@ -41,6 +41,8 @@ class StudentDataExport implements FromCollection, WithTitle, WithHeadings, Shou
             'guardian_last_name',
             'guardian_gender',
             'guardian_mobile',
+            'category',
+            'roll_number'
         ];
         foreach ($this->formFields as $data) {
             if($data->user_type == 1) {
@@ -79,6 +81,8 @@ class StudentDataExport implements FromCollection, WithTitle, WithHeadings, Shou
             '',
             'male / female',
             '123456789',
+            'GENERAL',
+            '1'
         ];
         foreach ($this->formFields as $value) {
             if($value->user_type == 1) {

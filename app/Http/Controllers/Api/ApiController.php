@@ -907,7 +907,7 @@ class ApiController extends Controller
             'first_name' => 'required',
             'last_name' => 'required',
             'mobile' => 'required',
-            'email' => 'required',
+            'email' => 'nullable',
             'dob' => 'required',
             'current_address' => 'required',
             'permanent_address' => 'required',

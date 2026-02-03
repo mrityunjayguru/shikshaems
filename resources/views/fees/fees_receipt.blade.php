@@ -216,7 +216,7 @@
 
                 <td width="50%" valign="top">
                     <strong>Contact:</strong> {{ $student->user->mobile ?? $student->guardian->mobile }}<br>
-                    <strong>Gaurdian Name:</strong>
+                    <strong>Guardian Name:</strong>
                     {{ $student->guardian->first_name . ' ' . $student->guardian->last_name ?? 'N/A' }}<br>
                     <strong>Address:</strong> {{ $student->user->current_address ?? 'N/A' }}<br>
                     {{-- <strong>Payment Mode:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br>
@@ -300,13 +300,15 @@
                         {{ number_format($total_fees + $due_charges) }}
                     </td>
                 </tr>
-                <tr class="total-row">
-                    <td colspan="2">Advance Amount</td>
-                    <td class="amount">
-                        {{ $school['currency_symbol'] ?? '' }}
-                        {{ number_format($advanceAmount) }}
-                    </td>
-                </tr>
+                @if ($advanceAmount != 0)
+                    <tr class="total-row">
+                        <td colspan="2">Advance Amount</td>
+                        <td class="amount">
+                            {{ $school['currency_symbol'] ?? '' }}
+                            {{ number_format($advanceAmount) }}
+                        </td>
+                    </tr>
+                @endif
             </tbody>
         </table>
 
@@ -334,10 +336,11 @@
         </table>
         {{-- FOOTER --}}
         <p class="mt-2">
-            Received with thanks <strong>{{ $school['currency_symbol'] ?? '' }}{{ $total_fees + $due_charges }}</strong>
-           
+            Received with thanks
+            <strong>{{ $school['currency_symbol'] ?? '' }}{{ $total_fees + $due_charges }}</strong>
+
         </p>
-     
+
         <div class="signature">
             ( Cashier / Accountant )
         </div>

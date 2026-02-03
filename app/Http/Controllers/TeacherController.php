@@ -84,7 +84,7 @@ class TeacherController extends Controller
             'first_name'        => 'required',
             'last_name'         => 'required',
             'gender'            => 'required',
-            'email'             => 'required|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email',
+            'email'             => 'nullable|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email',
             'mobile'            => 'required|numeric|digits_between:6,15|unique:users,mobile',
             'dob'               => 'required',
             'qualification'     => 'required',
@@ -161,10 +161,14 @@ class TeacherController extends Controller
 
             $teacherCode = $shortCode . $formattedId;
 
+            $namePart = strtolower(substr(trim($request->first_name), 0, 2));
+            $mobilePart = substr(preg_replace('/\D/', '', $request->mobile), 0, 4);
+            $generatedPassword = $namePart . $mobilePart;
+
             $user_data = array(
                 ...$request->all(),
                 'unique_id'       => $teacherCode,
-                'password'          => Hash::make($request->mobile),
+                'password'          => Hash::make($generatedPassword),
                 'image'             => $request->file('image'),
                 'status'            => $request->status ?? 0,
                 'dob'               => date('Y-m-d', strtotime($request->dob)),
@@ -348,7 +352,7 @@ class TeacherController extends Controller
             'first_name'        => 'required',
             'last_name'         => 'required',
             'gender'            => 'required',
-            'email'             => 'required|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email,' . $id,
+            'email'             => 'nullable|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email,' . $id,
             'mobile'            => 'required|numeric|digits_between:6,15|unique:users,mobile,' . $id,
             'dob'               => 'required|date',
             'qualification'     => 'required',

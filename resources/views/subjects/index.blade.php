@@ -52,6 +52,11 @@
                                             <input type="radio" class="form-check-input" name="type" id="practical" value="Practical">{{__("Practical")}}
                                         </label>
                                     </div>
+                                    <div class="form-check form-check-inline">
+                                        <label class="form-check-label">
+                                            <input type="radio" class="form-check-input" name="type" id="practical" value="None">{{__("None")}}
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
@@ -181,6 +186,12 @@
                                             <label class="form-check-label">
                                                 <input type="radio" class="form-check-input edit" name="type" id="edit_practical" value="Practical">
                                                 {{ __('Practical') }}
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <label class="form-check-label">
+                                                <input type="radio" class="form-check-input edit" name="type" id="edit_practical" value="None">
+                                                {{ __('None') }}
                                             </label>
                                         </div>
                                     </div>

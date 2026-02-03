@@ -117,7 +117,7 @@ class StaffController extends Controller
                 'first_name' => 'required',
                 'last_name' => 'required',
                 'mobile' => 'required|digits_between:6,15',
-                'email' => 'required||email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email',
+                'email' => 'nullable||email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email',
                 'role_id' => 'required|numeric',
                 'status' => 'nullable|in:0,1',
                 'dob' => 'required',
@@ -176,12 +176,16 @@ class StaffController extends Controller
 
             $formattedId = str_pad($userId, 2, '0', STR_PAD_LEFT);
 
+            $namePart = strtolower(substr(trim($request->first_name), 0, 2));
+            $mobilePart = substr(preg_replace('/\D/', '', $request->mobile), 0, 4);
+            $generatedPassword = $namePart . $mobilePart;
+
             $userUniqueId = $shortCode . $formattedId;
             /*If Super admin creates the staff then make it active by default*/
             if (!empty(Auth::user()->school_id)) {
                 $data = array(
                     ...$request->except('school_id'),
-                    'password' => Hash::make($request->mobile),
+                    'password' => Hash::make($generatedPassword),
                     'image' => $request->file('image'),
                     'status' => $request->status ?? 0,
                     'deleted_at' => $request->status == 1 ? null : '1970-01-01 01:00:00',
@@ -194,7 +198,7 @@ class StaffController extends Controller
                 $data = array(
                     ...$request->except('school_id'),
                     'unique_id'       => $userUniqueId,
-                    'password' => Hash::make($request->mobile),
+                    'password' => Hash::make($generatedPassword),
                     'image' => $request->file('image'),
                     'status' => 1,
                     'two_factor_enabled' => 0,
@@ -396,18 +400,18 @@ class StaffController extends Controller
                 $operate = BootstrapTableService::editButton(route('staff.update', $row->id));
                 if (app(FeaturesService::class)->hasFeature('Expense Management')) {
                     $operate .= BootstrapTableService::button('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M15.5799 11.9999C15.5799 13.9799 13.9799 15.5799 11.9999 15.5799C10.0199 15.5799 8.41992 13.9799 8.41992 11.9999C8.41992 10.0199 10.0199 8.41992 11.9999 8.41992C13.9799 8.41992 15.5799 10.0199 15.5799 11.9999Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M12.0001 20.27C15.5301 20.27 18.8201 18.19 21.1101 14.59C22.0101 13.18 22.0101 10.81 21.1101 9.39997C18.8201 5.79997 15.5301 3.71997 12.0001 3.71997C8.47009 3.71997 5.18009 5.79997 2.89009 9.39997C1.99009 10.81 1.99009 13.18 2.89009 14.59C5.18009 18.19 8.47009 20.27 12.0001 20.27Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-', route('staff.payroll-structure', $row->id), ['btn-eye'], ['title' => __('salary_structure')]);
+                    <path d="M15.5799 11.9999C15.5799 13.9799 13.9799 15.5799 11.9999 15.5799C10.0199 15.5799 8.41992 13.9799 8.41992 11.9999C8.41992 10.0199 10.0199 8.41992 11.9999 8.41992C13.9799 8.41992 15.5799 10.0199 15.5799 11.9999Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12.0001 20.27C15.5301 20.27 18.8201 18.19 21.1101 14.59C22.0101 13.18 22.0101 10.81 21.1101 9.39997C18.8201 5.79997 15.5301 3.71997 12.0001 3.71997C8.47009 3.71997 5.18009 5.79997 2.89009 9.39997C1.99009 10.81 1.99009 13.18 2.89009 14.59C5.18009 18.19 8.47009 20.27 12.0001 20.27Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    ', route('staff.payroll-structure', $row->id), ['btn-eye'], ['title' => __('salary_structure')]);
                 }
                 $operate .= BootstrapTableService::button('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10.7499 2.45007C11.4499 1.86007 12.5799 1.86007 13.2599 2.45007L14.8399 3.80007C15.1399 4.05007 15.7099 4.26007 16.1099 4.26007H17.8099C18.8699 4.26007 19.7399 5.13007 19.7399 6.19007V7.89007C19.7399 8.29007 19.9499 8.85007 20.1999 9.15007L21.5499 10.7301C22.1399 11.4301 22.1399 12.5601 21.5499 13.2401L20.1999 14.8201C19.9499 15.1201 19.7399 15.6801 19.7399 16.0801V17.7801C19.7399 18.8401 18.8699 19.7101 17.8099 19.7101H16.1099C15.7099 19.7101 15.1499 19.9201 14.8499 20.1701L13.2699 21.5201C12.5699 22.1101 11.4399 22.1101 10.7599 21.5201L9.17988 20.1701C8.87988 19.9201 8.30988 19.7101 7.91988 19.7101H6.16988C5.10988 19.7101 4.23988 18.8401 4.23988 17.7801V16.0701C4.23988 15.6801 4.03988 15.1101 3.78988 14.8201L2.43988 13.2301C1.85988 12.5401 1.85988 11.4201 2.43988 10.7301L3.78988 9.14007C4.03988 8.84007 4.23988 8.28007 4.23988 7.89007V6.20007C4.23988 5.14007 5.10988 4.27007 6.16988 4.27007H7.89988C8.29988 4.27007 8.85988 4.06007 9.15988 3.81007L10.7499 2.45007Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M12 8.12988V12.9599" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M11.9946 16H12.0036" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+                <path d="M10.7499 2.45007C11.4499 1.86007 12.5799 1.86007 13.2599 2.45007L14.8399 3.80007C15.1399 4.05007 15.7099 4.26007 16.1099 4.26007H17.8099C18.8699 4.26007 19.7399 5.13007 19.7399 6.19007V7.89007C19.7399 8.29007 19.9499 8.85007 20.1999 9.15007L21.5499 10.7301C22.1399 11.4301 22.1399 12.5601 21.5499 13.2401L20.1999 14.8201C19.9499 15.1201 19.7399 15.6801 19.7399 16.0801V17.7801C19.7399 18.8401 18.8699 19.7101 17.8099 19.7101H16.1099C15.7099 19.7101 15.1499 19.9201 14.8499 20.1701L13.2699 21.5201C12.5699 22.1101 11.4399 22.1101 10.7599 21.5201L9.17988 20.1701C8.87988 19.9201 8.30988 19.7101 7.91988 19.7101H6.16988C5.10988 19.7101 4.23988 18.8401 4.23988 17.7801V16.0701C4.23988 15.6801 4.03988 15.1101 3.78988 14.8201L2.43988 13.2301C1.85988 12.5401 1.85988 11.4201 2.43988 10.7301L3.78988 9.14007C4.03988 8.84007 4.23988 8.28007 4.23988 7.89007V6.20007C4.23988 5.14007 5.10988 4.27007 6.16988 4.27007H7.89988C8.29988 4.27007 8.85988 4.06007 9.15988 3.81007L10.7499 2.45007Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 8.12988V12.9599" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M11.9946 16H12.0036" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
 
-', route('staff.destroy', $row->id), ['deactivate-staff', 'btn-active-inactive'], ['title' => __('inactive')]);
+                ', route('staff.destroy', $row->id), ['deactivate-staff', 'btn-active-inactive'], ['title' => __('inactive')]);
             }
 
             $tempRow = $row->toArray();
@@ -449,7 +453,7 @@ class StaffController extends Controller
                 'first_name' => 'required',
                 'last_name' => 'required',
                 'mobile' => 'required|digits_between:6,15',
-                'email' => 'required|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email,' . $id,
+                'email' => 'nullable|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email,' . $id,
                 'role_id' => 'required|numeric',
                 'dob' => 'required'
             ]);

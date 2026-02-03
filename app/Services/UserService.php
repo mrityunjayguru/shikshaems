@@ -38,9 +38,12 @@ class UserService
      * @param $mobile
      * @return string
      */
-    public function makeParentPassword($mobile)
+    public function makeParentPassword($first_name, $mobile)
     {
-        return $mobile;
+        $namePart = strtolower(substr(trim($first_name), 0, 2));
+        $mobilePart = substr($mobile, 0, 4);
+
+        return $namePart . $mobilePart;
     }
 
     /**
@@ -63,8 +66,8 @@ class UserService
      */
     public function createOrUpdateParent($first_name, $last_name, $email, $mobile, $gender, $image = null, $reset_password = null)
     {
-        $password = $this->makeParentPassword($mobile);
-
+        $password = $this->makeParentPassword($first_name, $mobile);
+        // dd($password);
         $parent = array(
             'first_name' => $first_name,
             'last_name'  => $last_name,
@@ -115,7 +118,7 @@ class UserService
             $user = $this->user->create($parent);
             $user->assignRole('Guardian');
         }
-
+        // dd($user);
         return $user;
     }
 
@@ -162,6 +165,7 @@ class UserService
 
         $userUniqueId = $shortCode . $formattedId;
         $password = $this->makeStudentPassword($dob);
+        // dd($password);
         //Create Student User First
         $user = $this->user->create([
             'unique_id'       => $userUniqueId,
@@ -224,11 +228,13 @@ class UserService
         if (is_object($guardian)) {
             $guardian = (object) $guardian->toArray();
         }
+        // dd($guardian);
+        // $parentPassword = $this->makeParentPassword($guardian->first_name, $guardian->mobile);
+        // if ($is_send_notification) {
+        //     $this->sendRegistrationEmail($guardian, $user, $student->admission_no, $password);
+        // }
 
-        $parentPassword = $this->makeParentPassword($guardian->mobile);
-        if ($is_send_notification) {
-            $this->sendRegistrationEmail($guardian, $user, $student->admission_no, $password);
-        }
+        // dd($user);
         return $user;
     }
 

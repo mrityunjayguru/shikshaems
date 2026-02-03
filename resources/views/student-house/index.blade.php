@@ -27,10 +27,10 @@
                                     <label>{{ __('name') }} <span class="text-danger">*</span></label>
                                     {!! Form::text('name', null, ['required', 'placeholder' => __('name'), 'class' => 'form-control']) !!}
                                 </div>
-                                <div class="form-group col-sm-12 col-md-12">
+                                {{-- <div class="form-group col-sm-12 col-md-12">
                                     <label>{{ __('description') }} <span class="text-danger">*</span></label>
                                     {!! Form::textarea('description', null, ['required', 'placeholder' => __('description'), 'class' => 'form-control']) !!}
-                                </div>
+                                </div> --}}
                             </div>
                             {{-- <input class="btn btn-theme" type="submit" value={{ __('submit') }}> --}}
                            <div class="mt-3">
@@ -69,7 +69,7 @@
                                                 {{ __('id') }}</th>
                                             <th scope="col" data-field="no">{{ __('no.') }}</th>
                                             <th scope="col" data-field="name">{{ __('name') }}</th>
-                                            <th scope="col" data-field="description">{{ __('description') }}</th>
+                                            {{-- <th scope="col" data-field="description">{{ __('description') }}</th> --}}
                                             <th  class="text-center" data-events="studentCategoryEvents" scope="col"
                                                 data-formatter="actionColumnFormatter" data-field="operate"
                                                 data-escape="false">{{ __('action') }}</th>
@@ -87,7 +87,7 @@
 
     <div class="modal fade" id="editModal" data-backdrop="static" tabindex="-1" role="dialog"
         aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="exampleModalLabel">{{ __('edit_student_house') }}</h5>
@@ -99,7 +99,7 @@
                     @csrf
                     <div class="modal-body">
                         <div class="row">
-                            <div class="form-group col-sm-12 col-md-12 col-lg-4">
+                            <div class="form-group col-sm-12 col-md-12 col-lg-12">
                                 <label>{{ __('name') }} <span class="text-danger">*</span></label>
                                 {!! Form::text('name', null, [
                                     'required',
@@ -108,7 +108,7 @@
                                     'id' => 'edit-name',
                                 ]) !!}
                             </div>
-                            <div class="form-group col-sm-12 col-md-12 col-lg-12">
+                            {{-- <div class="form-group col-sm-12 col-md-12 col-lg-12">
                                 <label>{{ __('description') }} <span class="text-danger">*</span></label>
                                 {!! Form::textarea('description', null, [
                                     'required',
@@ -116,7 +116,7 @@
                                     'class' => 'form-control',
                                     'id' => 'edit-description',
                                 ]) !!}
-                            </div>
+                            </div> --}}
                         </div>
                     </div>
                     <div class="modal-footer">
