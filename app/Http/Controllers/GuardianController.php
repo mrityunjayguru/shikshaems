@@ -49,7 +49,7 @@ class GuardianController extends Controller {
         ResponseService::noPermissionThenRedirect('guardian-create');
         $request->validate([
             'first_name' => 'required',
-            'email'      => 'required|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email',
+            'email'      => 'nullable|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email',
             'last_name'  => 'required',
             'gender'     => 'required',
             'mobile'     => 'required|digits_between:6,15',
@@ -128,9 +128,11 @@ class GuardianController extends Controller {
         $no = 1;
         foreach ($res as $row) {
             $operate = BootstrapTableService::editButton(route('guardian.update', $row->id));
+            $wardsOperate = '<a class="btn btn-sm btn-rounded btn-info text-center btn_wards_info" title="Wards Info"><i class="fa fa-info"></i></a> ';
             $tempRow = $row->toArray();
             $tempRow['no'] = $no++;
             $tempRow['operate'] = $operate;
+            $tempRow['wardsOperate'] = $wardsOperate;
             $rows[] = $tempRow;
         }
 
@@ -143,7 +145,7 @@ class GuardianController extends Controller {
         $request->validate([
             'edit_id'    => 'required',
             'first_name' => 'required',
-            'email'      => 'required|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email,' . $request->edit_id,
+            'email'      => 'nullable|email|max:255|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/|unique:users,email,' . $request->edit_id,
             'last_name'  => 'required',
             'gender'     => 'required',
             'mobile'     => 'required|digits_between:6,15',

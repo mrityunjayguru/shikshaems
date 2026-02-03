@@ -23,8 +23,8 @@
                             @csrf
                             <div class="row">
                                 <div class="form-group col-sm-12 col-md-4">
-                                    <label>{{ __('email') }} <span class="text-danger">*</span></label>
-                                    {!! Form::text('email', null, ['required', 'placeholder' => __('email'), 'class' => 'form-control']) !!}
+                                    <label>{{ __('email') }} </label>
+                                    {!! Form::text('email', null, ['placeholder' => __('email'), 'class' => 'form-control']) !!}
                                 </div>
                                 <div class="form-group col-sm-12 col-md-4">
                                     <label>{{ __('first_name') }} <span class="text-danger">*</span></label>
@@ -380,7 +380,7 @@
                         <div class="row">
                             <div class="form-group col-sm-12 col-md-12 col-lg-4">
                                 <label>{{ __('email') }} <span class="text-danger">*</span></label>
-                                {!! Form::text('email', null, ['required', 'placeholder' => __('email'), 'class' => 'form-control', 'id' => 'email']) !!}
+                                {!! Form::text('email', null, ['placeholder' => __('email'), 'class' => 'form-control', 'id' => 'email']) !!}
                             </div>
                             <div class="form-group col-sm-12 col-md-12 col-lg-4">
                                 <label>{{ __('first_name') }} <span class="text-danger">*</span></label>

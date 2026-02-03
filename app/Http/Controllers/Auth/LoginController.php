@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use App\Models\Role;
 
+use function PHPUnit\Framework\isNull;
+
 class LoginController extends Controller
 {
     /*
@@ -55,7 +57,11 @@ class LoginController extends Controller
 
     public function username()
     {
-        $loginValue = request('email');
+        if (request('mobile') == null || request('mobile') == '') {
+            $loginValue = request('email');
+        } else {
+            $loginValue = request('mobile');
+        }
         $this->username = filter_var($loginValue, FILTER_VALIDATE_EMAIL) ? 'email' : 'mobile';
         request()->merge([$this->username => $loginValue]);
         return $this->username == 'mobile' ? 'mobile' : 'email';
@@ -65,13 +71,13 @@ class LoginController extends Controller
     {
         // Validate the login request
         $request->validate([
-            'email' => 'required|string',
+            'email' => 'nullable|string',
             'password' => 'required|string',
             'code' => 'nullable|string',
         ]);
-
+        // dd($request->all());
         $loginField = $this->username();
-
+        // dd($loginField);
         // maintainence mode is roles not allowes to access the site [ school admin, teacher ] only super admin allowed
         $data = DB::connection('mysql')->table('system_settings')->get();
         foreach ($data as $row) {
@@ -87,7 +93,7 @@ class LoginController extends Controller
         if ($request->code) {
             // Retrieve the school's database connection info
             $school = School::on('mysql')->where('code', $request->code)->where('installed', 1)->first();
-          
+
             if (!$school) {
                 return back()->withErrors(['code' => 'Invalid school identifier.']);
             }
@@ -100,15 +106,16 @@ class LoginController extends Controller
 
             \Log::info('Switched to database: ' . DB::connection('school')->getDatabaseName());
             // Attempt login using the user's credentials within the school's database
+            // dd($request->all());
             if (
                 Auth::guard('web')->attempt([
-                    $loginField => $request->email,
+                    $loginField => $request->role == 'schooladmin' ? $request->email : $request->mobile,
                     'password' => $request->password,
                 ])
             ) {
                 \Log::info('User authenticated successfully.', [
                     'user_id' => Auth::guard('web')->id(),
-                    'email' => $request->email,
+                    $loginField => $request->role == 'schooladmin' ? $request->email : $request->mobile,
                 ]);
 
                 // Optionally, log in the user explicitly
@@ -138,29 +145,29 @@ class LoginController extends Controller
                     })
                     ->first();
 
-                if ($data && $school->status == 1) {
-                    if (($data->two_factor_secret == null || $data->two_factor_expires_at == null) && $data->two_factor_enabled == 1 && $request->email != 'demo@school.com' && !env('DEMO_MODE')) {
-                        $twoFACode = $this->generate2FACode();
-                        $settings = $this->cache->getSystemSettings();
-                        $user = Auth::user();
+                // if ($data && $school->status == 1) {
+                //     if (($data->two_factor_secret == null || $data->two_factor_expires_at == null) && $data->two_factor_enabled == 1 && $request->email != 'demo@school.com' && !env('DEMO_MODE')) {
+                //         $twoFACode = $this->generate2FACode();
+                //         $settings = $this->cache->getSystemSettings();
+                //         $user = Auth::user();
 
-                        DB::table('users')->where('email', $user->email)->update(['two_factor_secret' => $twoFACode, 'updated_at' => Carbon::now()]);
+                //         DB::table('users')->where('email', $user->email)->update(['two_factor_secret' => $twoFACode, 'updated_at' => Carbon::now()]);
 
-                        $schools = DB::table('users')->where('email', $user->email)->first();
-                        Session::put('2fa_user_id', $user->id);
-                        Session::put('school_database_name', $school->database_name);
-                        $status = $this->send2FAEmail($schools, $user, $settings, $twoFACode);
-                        if ($status == 0) {
-                            Auth::logout();
-                            $request->session()->flush();
-                            return back()->withErrors(['error' => 'Failed to send 2FA code email.']);
-                        }
+                //         $schools = DB::table('users')->where('email', $user->email)->first();
+                //         Session::put('2fa_user_id', $user->id);
+                //         Session::put('school_database_name', $school->database_name);
+                //         $status = $this->send2FAEmail($schools, $user, $settings, $twoFACode);
+                //         if ($status == 0) {
+                //             Auth::logout();
+                //             $request->session()->flush();
+                //             return back()->withErrors(['error' => 'Failed to send 2FA code email.']);
+                //         }
 
-                        return redirect()->route('auth.2fa');
-                    } else {
-                        return redirect()->intended('/dashboard');
-                    }
-                }
+                //         return redirect()->route('auth.2fa');
+                //     } else {
+                //         return redirect()->intended('/dashboard');
+                //     }
+                // }
 
 
                 // return redirect()->intended('/dashboard');
@@ -225,6 +232,68 @@ class LoginController extends Controller
         // Login failed, redirect back with an error message
         return back()->withErrors(['email' => 'The provided credentials do not match our records.']);
     }
+
+    // public function login(Request $request)
+    // {
+    //     $request->validate([
+    //         'role'     => 'required|string',
+    //         'password' => 'required|string',
+    //     ]);
+
+    //     $role = $request->role;
+
+    //     // 🧑‍🏫 TEACHER / STAFF → MOBILE ONLY
+    //     if (in_array($role, ['teacher', 'staff'])) {
+
+    //         // If not a valid mobile, ignore it
+    //         if (!preg_match('/^[0-9]{6,15}$/', $request->email)) {
+    //             $request->merge(['email' => null]); // ✅ FIX
+    //         }
+
+    //         $user = \App\Models\User::where('mobile', $request->email)
+    //             ->whereHas('roles', function ($q) use ($role) {
+    //                 $q->where('name', $role);
+    //             })
+    //             ->first();
+    //     }
+    //     // 🧑‍💼 SUPERADMIN / SCHOOLADMIN → EMAIL ONLY
+    //     else {
+
+    //         if (!filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
+    //             return back()->withErrors([
+    //                 'email' => 'Invalid credentials'
+    //             ]);
+    //         }
+
+    //         $user = \App\Models\User::where('email', $request->email)
+    //             ->whereHas('roles', function ($q) use ($role) {
+    //                 $q->where('name', $role);
+    //             })
+    //             ->first();
+    //     }
+
+    //     // ❌ USER NOT FOUND
+    //     if (!$user) {
+    //         return back()->withErrors([
+    //             'email' => 'Invalid credentials'
+    //         ]);
+    //     }
+
+    //     // ❌ PASSWORD WRONG
+    //     if (!\Hash::check($request->password, $user->password)) {
+    //         return back()->withErrors([
+    //             'email' => 'Invalid credentials'
+    //         ]);
+    //     }
+
+    //     // ✅ LOGIN SUCCESS
+    //     \Auth::login($user, $request->filled('remember'));
+
+    //     return redirect()->intended('/dashboard');
+    // }
+
+
+
 
     private function generate2FACode($length = 6)
     {
@@ -303,5 +372,4 @@ class LoginController extends Controller
 
         return $templateContent;
     }
-
 }

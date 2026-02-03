@@ -336,20 +336,23 @@ function StudentNameFormatter(value, row) {
 }
 
 function TeacherNameFormatter(value, row) {
+    var email = row.email != null ? row.email : '';
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + row.email + ' </p> </div> </div>';
+    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + email + ' </p> </div> </div>';
     return html;
 }
 
 function GuardianNameFormatter(value, row) {
+    var email = row.email != null ? row.email : '';
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + row.email + ' </p> </div> </div>';
+    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + email + ' </p> </div> </div>';
     return html;
 }
 
 function StaffNameFormatter(value, row) {
+    var email = row.email != null ? row.email : '';
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <small class="text-muted"> ' + row.email + ' </small> </div> </div>';
+    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <small class="text-muted"> ' + email + ' </small> </div> </div>';
     return html;
 }
 function CreatedByNameFormatter(value, row) {
@@ -360,18 +363,20 @@ function CreatedByNameFormatter(value, row) {
     }
 }
 function DriverNameFormatter(value, row) {
+    var email = row.driver.email != null ? row.driver.email : '';
     let html = '';
     if (row.driver) {
-        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.driver.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.driver.full_name + '</h6> <small class="text-muted"> ' + row.driver.email + ' </small> </div> </div>';
+        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.driver.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.driver.full_name + '</h6> <small class="text-muted"> ' + email + ' </small> </div> </div>';
     } else {
         html = '-';
     }
     return html;
 }
 function HelperNameFormatter(value, row) {
+    var email = row.helper.email != null ? row.helper.email : '';
     let html = '';
     if (row.helper) {
-        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.helper.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.helper.full_name + '</h6> <small class="text-muted"> ' + row.helper.email + ' </small> </div> </div>';
+        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.helper.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.helper.full_name + '</h6> <small class="text-muted"> ' + email + ' </small> </div> </div>';
     } else {
         html = '-';
     }
@@ -513,18 +518,28 @@ function teacherReviewFormatter(value, row) {
 }
 
 function coreSubjectFormatter(value, row) {
-
-    let core_subject_count = 1;
     let html = "<div style='line-height: 20px;'>";
-    if (row.core_subjects.length) {
-        $.each(row.core_subjects, function (key, row) {
-            html += core_subject_count + ". " + row.name_with_type + "<br>"
-            core_subject_count++;
-        })
+    let count = 1;
+
+    if (row.core_subjects && row.core_subjects.length) {
+        $.each(row.core_subjects, function (key, subject) {
+
+            let name;
+            if (subject.type && subject.type.toLowerCase() !== 'none') {
+                name = subject.name_with_type;
+            } else {
+                name = subject.name;
+            }
+
+            html += count + ". " + name + "<br>";
+            count++;
+        });
     }
+
     html += "</div>";
     return html;
 }
+
 
 function electiveSubjectFormatter(value, row) {
     let html = "<div style='line-height: 20px;'>";

@@ -131,7 +131,7 @@ class AuthController extends Controller
             'mobile' => 'nullable|numeric|digits_between:1,16',
             'gender' => 'required',
             'dob' => 'required',
-            'email' => 'required|email|unique:users,email,' . Auth::user()->id,
+            'email' => 'nullable|email|unique:users,email,' . Auth::user()->id,
             'image' => 'nullable|image|mimes:jpeg,png,jpg,svg,gif,webp',
 
             'current_address' => 'required',
