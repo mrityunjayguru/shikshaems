@@ -257,7 +257,7 @@ class StudentController extends Controller
             ->orwhere(function ($query) {
                 $query->where('application_status', 1); // Only online applications with status 1
             })
-            ->with('user.extra_student_details.form_field', 'guardian', 'class_section.class.stream', 'class_section.section', 'class_section.class.shift', 'class_section.medium')
+            ->with('user.extra_student_details.form_field', 'user', 'guardian', 'class_section.class.stream', 'class_section.section', 'class_section.class.shift', 'class_section.medium')
             ->where(function ($query) use ($search) {
                 $query->when($search, function ($query) use ($search) {
                     $query->where(function ($query) use ($search) {
@@ -379,7 +379,7 @@ class StudentController extends Controller
             $tempRow['operate'] = $operate;
             $rows[] = $tempRow;
         }
-
+        // dd($rows);
         $bulkData['rows'] = $rows;
         return response()->json($bulkData);
     }

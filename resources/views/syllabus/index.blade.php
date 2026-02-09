@@ -241,17 +241,17 @@
                                 </div>
                             </div>
                         </div>
-
-                        <table class="table table-bordered">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th style="width: 5%">#</th>
-                                    <th style="width: 30%">Title</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;          
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width: 5%">#</th>
+                                        <th style="width: 30%">Title</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;          
 
                 if (res.contents.length > 0) {
                     res.contents.forEach((c, i) => {
@@ -275,7 +275,7 @@
 
                 html += `
                         </tbody>
-                    </table>
+                    </table></div>
                 `;
 
                 $('#syllabusModalBody').html(html);

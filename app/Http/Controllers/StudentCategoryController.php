@@ -21,14 +21,27 @@ class StudentCategoryController extends Controller
     public function store(Request $request)
     {
         // ResponseService::noPermissionThenSendJson('student-diary-create');
-        $request->validate([
-            'name' => 'required',
-        ]);
+        $request->validate(
+            [
+                'name' => 'required',
+                'certificate' => 'nullable|file|mimetypes:image/jpeg,image/png,application/pdf|max:5120',
+            ],
+            [
+                'certificate.mimetypes' => 'The certificate must be a file of type: image or pdf.'
+            ]
+        );
 
         try {
             DB::beginTransaction();
+
             $data = new StudentCategory();
             $data->name = $request->name;
+            if ($request->hasFile('certificate')) {
+                $file = $request->file('certificate');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('2/student-category/certificate', $filename, 'public'); // storage/app/public/student-category
+                $data->certificate = $path;
+            }
             $data->save();
 
             DB::commit();
@@ -84,14 +97,26 @@ class StudentCategoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required',
-        ]);
+        $request->validate(
+            [
+                'name' => 'required',
+                'certificate' => 'nullable|file|mimetypes:image/jpeg,image/png,application/pdf|max:5120',
+            ],
+            [
+                'certificate.mimetypes' => 'The certificate must be a file of type: image or pdf.'
+            ]
+        );
         try {
             DB::beginTransaction();
 
             $data = StudentCategory::where('id', $id)->first();
             $data->name = $request->name;
+            if ($request->hasFile('certificate')) {
+                $file = $request->file('certificate');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('2/student-category/certificate', $filename, 'public'); // storage/app/public/student-category
+                $data->certificate = $path;
+            }
             $data->save();
 
             DB::commit();

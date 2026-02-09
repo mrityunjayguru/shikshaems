@@ -103,7 +103,7 @@ class SubjectController extends Controller
         $file_upload_size_limit = $this->cache->getSystemSettings('file_upload_size_limit');
         $validator = Validator::make($request->all(), [
             'medium_id' => 'required|numeric',
-            'type' => 'required|in:Practical,Theory,one',
+            'type' => 'required|in:Practical,Theory,None',
             'name' => [
                 'required',
                 new uniqueForSchool('subjects', ['name' => $request->name, 'medium_id' => $request->medium_id, 'type' => $request->type])

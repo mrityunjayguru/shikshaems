@@ -33,15 +33,16 @@ class AuthController extends Controller
         $this->formFields = $formFields;
     }
 
-    public function login()
+    public function login(Request $request)
     {
         if (Auth::user()) {
             return redirect('/dashboard');
         }
         $systemSettings = $this->cache->getSystemSettings();
         $extraFields = $this->formFields->defaultModel()->orderBy('rank')->get();
+         $schoolCode = $request->query('school-code');
         // $schoolSettings = $this->cache->getSchoolSettings();
-        return view('auth.login', compact('systemSettings', 'extraFields'));
+        return view('auth.login', compact('systemSettings', 'extraFields','schoolCode'));
     }
 
 

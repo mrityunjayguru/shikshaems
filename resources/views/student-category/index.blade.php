@@ -23,17 +23,34 @@
                             method="POST" novalidate="novalidate">
                             @csrf
                             <div class="row">
-                                <div class="form-group col-sm-12 col-md-4">
+                                <div class="form-group col-sm-12 col-md-6">
                                     <label>{{ __('name') }} <span class="text-danger">*</span></label>
                                     {!! Form::text('name', null, ['required', 'placeholder' => __('name'), 'class' => 'form-control']) !!}
+                                </div>
+
+                                <div class="form-group col-sm-12 col-md-6">
+                                    <label>{{ __('certificate') }} <span class="text-danger">*</span></label>
+                                    <input type="file" name="certificate" class="file-upload-default"
+                                        accept="image/*,application/pdf" />
+                                    <div class="input-group col-xs-12">
+                                        <input type="text" class="form-control file-upload-info" disabled=""
+                                            placeholder="{{ __('certificate') }}" required />
+                                        <span class="input-group-append">
+                                            <button class="file-upload-browse btn btn-theme"
+                                                type="button">{{ __('upload') }}</button>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                             {{-- <input class="btn btn-theme" type="submit" value={{ __('submit') }}> --}}
                             <div class="mt-3">
-                            <input class="btn btn-secondary float-left px-10 py-6 ml-3" type="reset" value={{ __('reset') }} style="border-radius: 4px; min-width: 150px; background: #fff; color: var(--theme-color); border: 1px solid var(--theme-color); margin-bottom: 5px;">
+                                <input class="btn btn-secondary float-left px-10 py-6 ml-3" type="reset"
+                                    value={{ __('reset') }}
+                                    style="border-radius: 4px; min-width: 150px; background: #fff; color: var(--theme-color); border: 1px solid var(--theme-color); margin-bottom: 5px;">
 
-                            <input class="btn btn-theme float-left ml-3 px-10 py-6" id="create-btn" type="submit"
-                                value={{ __('submit') }} style="border-radius: 4px; min-width: 150px; background: var(--theme-color); color: white; border: 1px solid var(--theme-color); margin-bottom: 5px;">
+                                <input class="btn btn-theme float-left ml-3 px-10 py-6" id="create-btn" type="submit"
+                                    value={{ __('submit') }}
+                                    style="border-radius: 4px; min-width: 150px; background: var(--theme-color); color: white; border: 1px solid var(--theme-color); margin-bottom: 5px;">
                             </div>
                         </form>
                     </div>
@@ -43,7 +60,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
-                           List {{ __('student_category') }}
+                            List {{ __('student_category') }}
                         </h4>
 
                         <div class="row">
@@ -65,7 +82,7 @@
                                                 {{ __('id') }}</th>
                                             <th scope="col" data-field="no">{{ __('no.') }}</th>
                                             <th scope="col" data-field="name">{{ __('name') }}</th>
-                                            <th  class="text-center" data-events="studentCategoryEvents" scope="col"
+                                            <th class="text-center" data-events="studentCategoryEvents" scope="col"
                                                 data-formatter="actionColumnFormatter" data-field="operate"
                                                 data-escape="false">{{ __('action') }}</th>
                                         </tr>
@@ -94,7 +111,7 @@
                     @csrf
                     <div class="modal-body">
                         <div class="row">
-                            <div class="form-group col-sm-12 col-md-12 col-lg-4">
+                            <div class="form-group col-sm-12 col-md-12 col-lg-6">
                                 <label>{{ __('name') }} <span class="text-danger">*</span></label>
                                 {!! Form::text('name', null, [
                                     'required',
@@ -102,6 +119,19 @@
                                     'class' => 'form-control',
                                     'id' => 'edit-name',
                                 ]) !!}
+                            </div>
+                            <div class="form-group col-sm-12 col-md-6">
+                                <label>{{ __('certificate') }} <span class="text-danger">*</span></label>
+                                <input type="file" name="certificate" class="file-upload-default"
+                                    accept="image/*,application/pdf" />
+                                <div class="input-group col-xs-12">
+                                    <input type="text" class="form-control file-upload-info" disabled=""
+                                        placeholder="{{ __('certificate') }}" required />
+                                    <span class="input-group-append">
+                                        <button class="file-upload-browse btn btn-theme"
+                                            type="button">{{ __('upload') }}</button>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
