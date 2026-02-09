@@ -40,7 +40,7 @@
                                     </div>
                                     <div class="form-group col-md-6 col-sm-12">
                                         <label for="school_tagline">{{ __('school_tagline') }} <span class="text-danger">*</span></label>
-                                        <textarea name="school_tagline" id="school_tagline" required placeholder="{{ __('school_tagline') }}" class="form-control">{{ $settings['school_tagline'] ?? '' }}</textarea>
+                                        <input name="school_tagline" id="school_tagline" required placeholder="{{ __('school_tagline') }}" class="form-control">{{ $settings['school_tagline'] ?? '' }}</input>
                                     </div>
                                     <div class="form-group col-md-4 col-sm-12">
                                         <label for="school_address">{{ __('school_address') }} <span class="text-danger">*</span></label>

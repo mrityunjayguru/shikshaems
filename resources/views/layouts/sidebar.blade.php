@@ -1484,7 +1484,15 @@
     <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#subscription" aria-expanded="false"
             aria-controls="subscription-menu">
-            <img src="{{ asset('assets/icons/admin-icons/addons.svg') }}" alt="addons" class="w-5 h-5 svg-theme-stroke mr-2">
+            <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21.0833 16.5C21.0833 17.1875 20.8908 17.8384 20.5517 18.3884C20.3592 18.7184 20.1117 19.0117 19.8275 19.25C19.1858 19.8275 18.3425 20.1667 17.4167 20.1667C16.2983 20.1667 15.2992 19.6626 14.6392 18.8742C14.6208 18.8467 14.5933 18.8284 14.575 18.8009C14.465 18.6725 14.3642 18.535 14.2817 18.3884C13.9425 17.8384 13.75 17.1875 13.75 16.5C13.75 15.345 14.2817 14.3092 15.125 13.64C15.7575 13.1359 16.555 12.8334 17.4167 12.8334C18.3333 12.8334 19.1583 13.1633 19.8 13.7225C19.91 13.805 20.0108 13.9059 20.1025 14.0067C20.7075 14.6667 21.0833 15.5375 21.0833 16.5Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18.7825 16.4816H16.0508" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M17.4167 15.1433V17.8841" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2.90583 6.82007L11 11.5042L19.0392 6.84754" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11 19.8092V11.495" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.8092 8.40588V13.5942C19.8092 13.6401 19.8092 13.6767 19.8 13.7225C19.1583 13.1634 18.3333 12.8334 17.4167 12.8334C16.555 12.8334 15.7575 13.1359 15.125 13.6401C14.2817 14.3092 13.75 15.3451 13.75 16.5001C13.75 17.1876 13.9425 17.8384 14.2817 18.3884C14.3642 18.5351 14.465 18.6726 14.575 18.8009L12.8975 19.7267C11.8525 20.3134 10.1475 20.3134 9.10249 19.7267L4.2075 17.0134C3.09833 16.3992 2.19083 14.8592 2.19083 13.5942V8.40588C2.19083 7.14088 3.09833 5.60089 4.2075 4.98673L9.10249 2.27337C10.1475 1.68671 11.8525 1.68671 12.8975 2.27337L17.7925 4.98673C18.9017 5.60089 19.8092 7.14088 19.8092 8.40588Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
             <span class="menu-title">{{ __('subscription') }}</span>
             <i class="menu-arrow"></i>
         </a>

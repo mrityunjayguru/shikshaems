@@ -295,8 +295,8 @@ function imageFormatter(image) {
     return `
         <img src="${img}"
              class="rounded-circle"
-             width="40"
-             height="40"
+             width="35"
+             height="35"
              onerror="onErrorImage(event)">
     `;
 }
@@ -322,9 +322,9 @@ function StudentNameFormatter(value, row) {
 
     return `
         <a href="${url}" class="text-decoration-none text-dark">
-            <div class="d-flex flex-column  align-items-center">
+            <div class="d-flex flex-column justify-content-center align-items-center">
                 ${imageFormatter(row.user.image)}
-                <div class="ms-3 mt-2 flex-grow-1">
+                <div class="mt-2 flex-grow-1">
                     <h6 class="mb-0 text-primary flex-grow-1 text-nowrap">${row.user.full_name}</h6>
                     <p class="text-center" style="max-width:140px; color:#202020; font-size:13px;">
                         ${row.user.email}
@@ -338,27 +338,27 @@ function StudentNameFormatter(value, row) {
 function TeacherNameFormatter(value, row) {
     var email = row.email != null ? row.email : '';
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + email + ' </p> </div> </div>';
+    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3 mt-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + email + ' </p> </div> </div>';
     return html;
 }
 
 function GuardianNameFormatter(value, row) {
     var email = row.email != null ? row.email : '';
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + email + ' </p> </div> </div>';
+    html = '<div class="d-flex  align-items-center gap-2"> ' + imageFormatter(row.image) + ' <div class="ms-3 mt-3"> <h6 class="mb-0">' + row.full_name + '</h6> <p class="" style="font-size:13px; color:#202020;"> ' + email + ' </p> </div> </div>';
     return html;
 }
 
 function StaffNameFormatter(value, row) {
     var email = row.email != null ? row.email : '';
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.full_name + '</h6> <small class="text-muted"> ' + email + ' </small> </div> </div>';
+    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.image) + ' <div class="ms-3"><h6 class="mb-0">' + row.full_name + '</h6> <small class="text-muted"> ' + email + ' </small> </div> </div>';
     return html;
 }
 function CreatedByNameFormatter(value, row) {
     if (row.created_by != null) {
         let html = '';
-        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.created_by.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.created_by.full_name + '</h6> <small class="text-muted"> ' + row.created_by.email + ' </small> </div> </div>';
+        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.created_by.image) + ' <div class="ms-3 mt-3"> <h6 class="mb-0">' + row.created_by.full_name + '</h6> <small class="text-muted"> ' + row.created_by.email + ' </small> </div> </div>';
         return html;
     }
 }
@@ -366,7 +366,7 @@ function DriverNameFormatter(value, row) {
     var email = row.driver.email != null ? row.driver.email : '';
     let html = '';
     if (row.driver) {
-        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.driver.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.driver.full_name + '</h6> <small class="text-muted"> ' + email + ' </small> </div> </div>';
+        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.driver.image) + ' <div class="ms-3 "> <h6 class="mb-0">' + row.driver.full_name + '</h6> <small class="text-muted"> ' + email + ' </small> </div> </div>';
     } else {
         html = '-';
     }
@@ -376,7 +376,7 @@ function HelperNameFormatter(value, row) {
     var email = row.helper.email != null ? row.helper.email : '';
     let html = '';
     if (row.helper) {
-        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.helper.image) + ' <div class="ms-3"> <h6 class="mb-0">' + row.helper.full_name + '</h6> <small class="text-muted"> ' + email + ' </small> </div> </div>';
+        html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.helper.image) + ' <div class="ms-3 "> <h6 class="mb-0">' + row.helper.full_name + '</h6> <small class="text-muted"> ' + email + ' </small> </div> </div>';
     } else {
         html = '-';
     }
@@ -385,13 +385,13 @@ function HelperNameFormatter(value, row) {
 
 function SchoolNameFormatter(value, row) {
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.logo) + ' <div class="ms-3"> <h6 class="mb-0">' + row.name + '</h6> <small class="text-muted"> ' + row.support_email + ' </small> </div> </div>';
+    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.logo) + '<div class="ms-3 "> <h6 class="mb-0">' + row.name + '</h6> <small class="text-muted"> ' + row.support_email + ' </small> </div> </div>';
     return html;
 }
 
 function SchoolNameSubscriptionFormatter(value, row) {
     let html = '';
-    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.school.logo) + ' <div class="ms-3"> <h6 class="mb-0">' + row.school.name + '</h6> <small class="text-muted"> ' + row.school.support_email + ' </small> </div> </div>';
+    html = '<div class="d-flex align-items-center"> ' + imageFormatter(row.school.logo) + ' <div class="ms-3 mt-3"> <h6 class="mb-0">' + row.school.name + '</h6> <small class="text-muted"> ' + row.school.support_email + ' </small> </div> </div>';
     return html;
 }
 
