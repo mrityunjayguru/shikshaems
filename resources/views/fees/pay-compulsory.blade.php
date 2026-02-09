@@ -213,15 +213,17 @@
                                             @php
                                                 $fees_advances_sum_amount = $student->fees_advances_sum_amount;
                                             @endphp
-                                            <tr>
-                                                <td class="text-left"></td>
-                                                <th colspan="2" class="text-left">
-                                                    <label>{{ __('Advance Amount') }}</label>
-                                                </th>
-                                                <th class="text-right">{{ ' ' . $currencySymbol }}<span
-                                                        id="total_amount_text">{{ $fees_advances_sum_amount ?? '0'}}</span>
-                                                </th>
-                                            </tr>
+                                            @if ($fees_advances_sum_amount != 0)
+                                                <tr>
+                                                    <td class="text-left"></td>
+                                                    <th colspan="2" class="text-left">
+                                                        <label>{{ __('Advance Amount') }}</label>
+                                                    </th>
+                                                    <th class="text-right">{{ ' ' . $currencySymbol }}<span
+                                                            id="total_amount_text">{{ $fees_advances_sum_amount ?? '0' }}</span>
+                                                    </th>
+                                                </tr>
+                                            @endif
                                             @if ($student->fees_paid)
                                                 <tr class="without_installment_enter_amount">
                                                     <th colspan="4">{{ __('fees_paid_records') }}</th>

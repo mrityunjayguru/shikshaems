@@ -15,6 +15,7 @@ public/hot
 public_html/storage
 public_html/hot
 storage/*.json
+storage/log
 
 storage/*.key
 .env
@@ -24,6 +25,12 @@ Homestead.json
 .phpunit.result.cache
 /.idea/*
 /storage/installed
+
+# Firebase / Google credentials
+*.json
+firebase-adminsdk*.json
+shiksha-ems-firebase-adminsdk*.json
+
 
 #/.phpstorm.meta.php
 #/_ide_helper.php

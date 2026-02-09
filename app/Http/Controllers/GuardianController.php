@@ -128,7 +128,7 @@ class GuardianController extends Controller {
         $no = 1;
         foreach ($res as $row) {
             $operate = BootstrapTableService::editButton(route('guardian.update', $row->id));
-            $wardsOperate = '<a class="btn btn-sm btn-rounded btn-info text-center btn_wards_info" title="Wards Info"><i class="fa fa-info"></i></a> ';
+            $wardsOperate = '<a class="btn btn-sm btn-rounded btn-info text-center btn_wards_info" title="Wards Info"><i class="fa fa-eye" style="margin-left:-2px;"></i></a> ';
             $tempRow = $row->toArray();
             $tempRow['no'] = $no++;
             $tempRow['operate'] = $operate;

@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->string('first_name', 128);
             $table->string('last_name', 128);
             $table->string('mobile')->nullable();
-            $table->string('email')->unique();
+            $table->string('email')->unique()->nullable();
             $table->string('password');
             $table->string('gender', 16)->nullable();
             $table->string('image', 512)->nullable();
@@ -32,7 +32,7 @@ return new class extends Migration {
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
-        });
+        }); 
     }
 
     /**

@@ -380,7 +380,7 @@
     </li>
     @endcanany
     <li class="nav-item">
-        {{-- @can('holiday-list') --}}
+        @can('holiday-list')
         <a href="{{ route('event.index') }}" class="nav-link">
             <svg width="22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17.4167 7.33337C18.9354 7.33337 20.1667 6.10216 20.1667 4.58337C20.1667 3.06459 18.9354 1.83337 17.4167 1.83337C15.8979 1.83337 14.6667 3.06459 14.6667 4.58337C14.6667 6.10216 15.8979 7.33337 17.4167 7.33337Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -391,7 +391,7 @@
 
             <span class="menu-title">{{ __('event_list') }}</span>
         </a>
-        {{-- @endcan --}}
+        @endcan
     </li>
     {{-- subject lesson --}}
     @canany(['lesson-list', 'lesson-create', 'lesson-edit', 'lesson-delete', 'topic-list', 'topic-create',

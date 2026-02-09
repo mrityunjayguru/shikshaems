@@ -147,9 +147,9 @@ final class SetupSchoolDatabase implements ShouldQueue
             '{support_email}' => $settings['mail_username'] ?? '',
             '{contact}' => $settings['mobile'] ?? '',
             '{system_name}' => $settings['system_name'] ?? 'ShikshaEMS',
-            '{url}' => url('/'),
+            '{url}' => url('/login'.'?school-code='.$schoolCode),
         ];
-
+        // dd($placeholders);
         foreach ($placeholders as $placeholder => $replacement) {
             $templateContent = str_replace($placeholder, $replacement, $templateContent);
         }
