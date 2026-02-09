@@ -204,7 +204,6 @@ class SchoolController extends Controller
             // Call store function of Schools Repository
             $schoolData = $this->schoolsRepository->create($school_data);
 
-
             $school_name = str_replace('.', '_', $request->school_name);
             // remove all special characters from school_name
             $school_name = preg_replace('/[^a-zA-Z0-9]/', '', $school_name);

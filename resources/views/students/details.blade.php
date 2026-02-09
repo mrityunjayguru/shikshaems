@@ -389,7 +389,7 @@
                                 </div>
                             @endif
 
-                            <div class="row">
+                            {{-- <div class="row">
                                 <div class="form-group col-sm-12 col-md-4">
                                     <div class="d-flex">
                                         <div class="form-check w-fit-content">
@@ -400,7 +400,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
 
 
 
@@ -478,7 +478,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
+                            {{-- <div class="row">
                                 <div class="form-group col-sm-12 col-md-4">
                                     <div class="d-flex">
                                         <div class="form-check w-fit-content">
@@ -489,7 +489,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary"

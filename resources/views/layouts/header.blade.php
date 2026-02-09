@@ -45,7 +45,8 @@
 
     @if (isset($sessionYear) && !Auth::user()->hasRole('Super Admin'))
     <li class="d-none d-md-block d-sm-block nav-item">
-        <div class="" style='color : #202020;'> {{ __('session_years') . ' : '}} <span id="sessionYearNameHeader">{{$sessionYear->name}}</span><span id="semesterNameHeader">{{ (isset($semester) ? ', '.$semester->name : null)}}</span></div>
+        <div class="" style='color : #202020;'> {{ __('session_years') . ' : '}} <span id="sessionYearNameHeader">{{$sessionYear->name}}</span>
+            {{-- <span id="semesterNameHeader">{{ ($semester ? ', '.$semester->name : null)}}</span></div> --}}
     </li>
     @endif
 
@@ -55,26 +56,24 @@
                 </div>
             </li> --}}
 
-    <li class="nav-item dropdown">
+    {{-- <li class="nav-item dropdown">
         <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#" data-toggle="dropdown" aria-expanded="false">
-            <!-- <i class="fa fa-language"></i> -->
+           
             <img src="{{ asset('assets/icons/languages.svg') }}" alt="languages" class="w-5 h-5 svg-theme-stroke">
         </a>
         <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="messageDropdown">
             @foreach ($languages as $key => $language)
             <a class="dropdown-item preview-item" href="{{ url('set-language') . '/' . $language->code }}">
                 <div class="preview-thumbnail">
-                    {{-- <img src="../../../assets/images/faces/face3.jpg" alt="image" class="profile-pic"> --}}
                 </div>
                 <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
                     <h6 class="preview-subject ellipsis mb-1 font-weight-normal">{{ $language->name }}</h6>
-                    {{-- <p class="text-gray mb-0"> 18 Minutes ago </p> --}}
                 </div>
             </a>
             <div class="dropdown-divider"></div>
             @endforeach
         </div>
-    </li>
+    </li> --}}
     <li class="nav-item nav-profile dropdown">
         <a class="nav-link dropdown-toggle" id="profileDropdown" href="#" data-toggle="dropdown" aria-expanded="true">
             <div class="nav-profile-img">

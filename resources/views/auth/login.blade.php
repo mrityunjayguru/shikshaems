@@ -147,7 +147,7 @@
                             </div>
                             <form action="{{ route('login') }}" id="frmLogin" method="POST" class="pt-3">
                                 @csrf
-                                <div class="form-group">
+                                {{-- <div class="form-group">
                                     <label for="role" class="">Role</label>
                                     <select name="role" id="role" class="form-control">
                                         <option value="superadmin">Super Admin</option>
@@ -155,7 +155,43 @@
                                         <option value="teacher">Teacher</option>
                                         <option value="staff">Staff</option>
                                     </select>
+                                </div> --}}
+                                <div class="form-group" style="margin-left: 10px;">
+                                    <label>Role</label>
+                                    <div class="row" style="margin-left: 8px;">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="role"
+                                                    id="schooladmin" value="schooladmin">
+                                                <label class="form-check-label" for="schooladmin">
+                                                    School Admin
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="role"
+                                                    id="teacher" value="teacher">
+                                                <label class="form-check-label" for="teacher">
+                                                    Teacher
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="role"
+                                                    id="staff" value="staff">
+                                                <label class="form-check-label" for="staff">
+                                                    Staff
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                <input type="hidden" name="code" value="{{$schoolCode ?? ''}}">
                                 {{-- <div class="form-group">
                                     <label for="email" class="text  -[#808080]">Registred Email ID</label>
                                     <input id="email" type="text"
@@ -180,7 +216,8 @@
                                     <label for="password" class="text-[#808080]">Password</label>
                                     <div class="input-group">
                                         <input id="password" type="password"
-                                            class="form-control rounded-[4px] form-control-lg" name="password" required
+                                            class="form-control rounded-[4px] form-control-lg" name="password"
+                                            required
                                             value="{{ isset($school) && !empty($school) && $school->type == 'demo' ? $school->user->mobile : '' }}"
                                             autocomplete="current-password" placeholder="Enter Password">
                                         <div class="input-group-append" cursor="pointer" id="togglePasswordShowHide">
@@ -191,7 +228,7 @@
                                     </div>
                                 </div>
 
-                                @if ($school ?? '')
+                                {{-- @if ($school ?? '')
                                     <div class="form-group d-none">
                                         <label for="school_code" class="text-[#808080]">School Code</label>
                                         <input id="school_code" type="text"
@@ -207,7 +244,7 @@
                                             value="{{ old('school_code') }}" autocomplete="school_code" autofocus
                                             placeholder="Enter School Code">
                                     </div>
-                                @endif
+                                @endif --}}
 
 
                                 @if (Route::has('password.request'))
@@ -393,7 +430,7 @@
 
             function toggleFields(role) {
 
-                if (role === 'superadmin' || role === 'schooladmin') {
+                if (role === 'schooladmin') {
                     $('#emailField').removeClass('d-none');
                     $('#mobileField').addClass('d-none');
 
@@ -406,19 +443,16 @@
 
                     $('#mobile').prop('required', true);
                     $('#email').prop('required', false);
-
-                } else {
-                    $('#emailField, #mobileField').addClass('d-none');
                 }
             }
 
-            // On role change
-            $('#role').on('change', function() {
-                toggleFields($(this).val());
+            // On radio change
+            $('input[name="role"]').on('change', function() {
+                toggleFields(this.value);
             });
 
-            // On page load (edit case)
-            toggleFields($('#role').val());
+            // On page load → School Admin already checked
+            toggleFields($('input[name="role"]:checked').val());
         });
     </script>
 </body>
@@ -427,7 +461,7 @@
     <script type='text/javascript'>
         $.toast({
             text: '{{ Session::get('
-                                            error ') }}',
+                                                                                                        error ') }}',
             showHideTransition: 'slide',
             icon: 'error',
             loaderBg: '#f2a654',

@@ -25,7 +25,7 @@
                             @csrf
                             <div class="row">
                                 <div class="form-group col-sm-12 col-md-12 col-lg-6 col-xl-3">
-                                    <label>{{ __('Gr Number') }} <span class="text-danger">*</span></label>
+                                    <label>{{ __('Admission Number') }} <span class="text-danger">*</span></label>
                                     {!! Form::text('admission_no', $admission_no, [
                                         'readonly',
                                         'placeholder' => __('Gr Number'),
@@ -310,7 +310,7 @@
                             <div class="row mt-5">
                                 <div class="form-group col-sm-12 col-md-12">
                                     <label for="guardian_email">{{ __('guardian') . ' ' . __('email') }} <span
-                                            class="text-danger">*</span></label>
+                                            class="text-danger"></span></label>
                                     <select class="guardian-search form-control guardian_email"
                                         id="guardian_email"></select>
                                     <input type="hidden" id="guardian_email" class="guardian_email"
