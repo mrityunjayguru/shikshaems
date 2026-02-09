@@ -26,6 +26,12 @@ Homestead.json
 /.idea/*
 /storage/installed
 
+# Firebase / Google credentials
+*.json
+firebase-adminsdk*.json
+shiksha-ems-firebase-adminsdk*.json
+
+
 #/.phpstorm.meta.php
 #/_ide_helper.php
 #/_ide_helper_models.php
