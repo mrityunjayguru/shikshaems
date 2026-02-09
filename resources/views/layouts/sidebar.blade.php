@@ -1898,7 +1898,7 @@
                 <path d="M11.8208 6.64583H11.829" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
 
-            <span class="menu-title">{{ __('Chat History') }}</span>
+            <span class="menu-title" style="margin-left: 9px">{{ __('Chat History') }}</span>
         </a>
     </li>
     @endif

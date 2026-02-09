@@ -221,6 +221,9 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
         Route::get('/chat-history/messages', [ChatHistoryController::class, 'chatMessages'])->name('chat-history.messages');
         Route::get('chat-history/users', [ChatHistoryController::class, 'chatUsers'])->name('chat-history.users');
         Route::get('/get-users-by-role', [ChatHistoryController::class, 'getUsersByRole']);
+        Route::get('get-class-sections', [ChatHistoryController::class, 'getClassSections']);
+        Route::get('get-users-by-role-and-class', [ChatHistoryController::class, 'getUsersByRoleAndClass']);
+
 
         //school bus tracking code
         Route::get('code', [CodeController::class, 'index'])->name('code.index');
@@ -452,16 +455,16 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::delete("/{id}/deleted", [SubjectController::class, 'trash'])->name('subjects.trash');
         });
         Route::resource('subjects', SubjectController::class);
-        
+
         // Syllabus
         Route::group(['prefix' => 'syllabus'], static function () {
-            Route::get('/',[SyllabusController::class, 'index'])->name('syllabus.index');
-            Route::post('/store',[SyllabusController::class, 'store'])->name('syllabus.store');
-            Route::get('/show/{id}',[SyllabusController::class, 'show'])->name('syllabus.show');
-            Route::get('/details/{id}',[SyllabusController::class, 'details'])->name('syllabus.details');
-            Route::get('/edit/{id}',[SyllabusController::class, 'edit'])->name('syllabus.edit');
-            Route::put('/update/{id}',[SyllabusController::class, 'update'])->name('syllabus.update');
-            Route::delete('/destroy/{id}',[SyllabusController::class, 'destroy'])->name('syllabus.destroy');
+            Route::get('/', [SyllabusController::class, 'index'])->name('syllabus.index');
+            Route::post('/store', [SyllabusController::class, 'store'])->name('syllabus.store');
+            Route::get('/show/{id}', [SyllabusController::class, 'show'])->name('syllabus.show');
+            Route::get('/details/{id}', [SyllabusController::class, 'details'])->name('syllabus.details');
+            Route::get('/edit/{id}', [SyllabusController::class, 'edit'])->name('syllabus.edit');
+            Route::put('/update/{id}', [SyllabusController::class, 'update'])->name('syllabus.update');
+            Route::delete('/destroy/{id}', [SyllabusController::class, 'destroy'])->name('syllabus.destroy');
         });
 
         /*** Class ***/
@@ -891,8 +894,8 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
         });
 
         //parents-support
-        Route::get('parent-support',[ParentSupportController::class, 'index'])->name('parent-support.index');
-        Route::get('parent-support/show',[ParentSupportController::class, 'show'])->name('parent-support.show');
+        Route::get('parent-support', [ParentSupportController::class, 'index'])->name('parent-support.index');
+        Route::get('parent-support/show', [ParentSupportController::class, 'show'])->name('parent-support.show');
         // Semester
         Route::group(['prefix' => 'semester'], static function () {
             Route::put('restore/{id}', [SemesterController::class, 'restore'])->name('semester.restore');
