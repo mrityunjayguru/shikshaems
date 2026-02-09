@@ -191,7 +191,7 @@
                                     </div>
                                 </div>
 
-                                <input type="hidden" name="code" value="{{$schoolCode ?? ''}}">
+                                <input type="hidden" name="code" value="{{ $schoolCode ?? '' }}">
                                 {{-- <div class="form-group">
                                     <label for="email" class="text  -[#808080]">Registred Email ID</label>
                                     <input id="email" type="text"
@@ -460,8 +460,7 @@
 @if (Session::has('error'))
     <script type='text/javascript'>
         $.toast({
-            text: '{{ Session::get('
-                                                                                                        error ') }}',
+            text: '{{ Session::get('error') }}',
             showHideTransition: 'slide',
             icon: 'error',
             loaderBg: '#f2a654',
