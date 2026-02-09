@@ -295,8 +295,8 @@ function imageFormatter(image) {
     return `
         <img src="${img}"
              class="rounded-circle"
-             width="40"
-             height="40"
+             width="50"
+             height="50"
              onerror="onErrorImage(event)">
     `;
 }
@@ -322,9 +322,9 @@ function StudentNameFormatter(value, row) {
 
     return `
         <a href="${url}" class="text-decoration-none text-dark">
-            <div class="d-flex flex-column  align-items-center">
+            <div class="d-flex flex-column justify-content-center align-items-center">
                 ${imageFormatter(row.user.image)}
-                <div class="ms-3 mt-2 flex-grow-1">
+                <div class="mt-2 flex-grow-1">
                     <h6 class="mb-0 text-primary flex-grow-1 text-nowrap">${row.user.full_name}</h6>
                     <p class="text-center" style="max-width:140px; color:#202020; font-size:13px;">
                         ${row.user.email}
