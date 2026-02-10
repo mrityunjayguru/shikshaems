@@ -16147,7 +16147,7 @@ a.text-warning:focus {
 }
 
 .text-danger {
-    color: #fe7c96 !important;
+    color: #ff3232 !important;
 }
 
 a.text-danger:hover,
@@ -23726,8 +23726,8 @@ dl li {
 .jsgrid .jsgrid-table th img,
 .table td img,
 .jsgrid .jsgrid-table td img {
-    width: 36px;
-    height: 36px;
+    width: 50px !important;
+    height: 50px !important;
     border-radius: 100%;
 }
 
@@ -31232,7 +31232,7 @@ footer h4 a {
 }
 
 .sidebar .nav.sub-menu {
-    /* margin-bottom: 20px; */
+    margin-bottom: -20px !important;
     margin-top: 10px;
     list-style: none;
 }

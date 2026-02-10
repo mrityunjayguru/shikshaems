@@ -13,7 +13,7 @@
         </div>
 
         <div class="row">
-            <div class="col-lg-12 grid-margin stretch-card">
+            <div class="col-lg-7 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
@@ -83,7 +83,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 grid-margin stretch-card">
+            <div class="col-lg-5 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">
@@ -117,8 +117,9 @@
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-6 grid-margin stretch-card">
+        </div>
+        <div class="row">
+            <div class="col-lg-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">

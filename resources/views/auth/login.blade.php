@@ -84,6 +84,15 @@
         a {
             color: var(--theme-color) !important;
         }
+        .radio-buttons{
+            display: flex ;
+            align-items : center;
+            gap : 2rem !important;
+        }
+        .radio-button{
+            margin-left : 0.5rem !important;
+            cursor: pointer;
+        }
     </style>
     <script async src="https://www.google.com/recaptcha/api.js"></script>
 </head>
@@ -156,34 +165,28 @@
                                         <option value="staff">Staff</option>
                                     </select>
                                 </div> --}}
-                                <div class="form-group" style="margin-left: 10px;">
+                                <div class="mb-3" style="">
                                     <label>Role</label>
-                                    <div class="row" style="margin-left: 8px;">
-                                        <div class="col-md-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="role"
+                                    <div class="row" style="mb-1">
+                                        <div class="radio-buttons">
+                                            <div class="radio-button">
+                                                <input class="" type="radio" name="role"
                                                     id="schooladmin" value="schooladmin">
-                                                <label class="form-check-label" for="schooladmin">
+                                                <label class="" for="schooladmin">
                                                     School Admin
                                                 </label>
                                             </div>
-                                        </div>
-
-                                        <div class="col-md-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="role"
+                                            <div class="radio-button">
+                                                <input class="" type="radio" name="role"
                                                     id="teacher" value="teacher">
-                                                <label class="form-check-label" for="teacher">
+                                                <label class="" for="teacher">
                                                     Teacher
                                                 </label>
                                             </div>
-                                        </div>
-
-                                        <div class="col-md-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="role"
+                                            <div class="radio-button">
+                                                <input class="" type="radio" name="role"
                                                     id="staff" value="staff">
-                                                <label class="form-check-label" for="staff">
+                                                <label class="" for="staff">
                                                     Staff
                                                 </label>
                                             </div>

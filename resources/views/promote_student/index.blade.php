@@ -20,58 +20,63 @@
                             <h4 class="card-title">
                                 {{ __('Transfer Student In Next Section')}}
                             </h4>
-                            <form action="{{ route('transfer-student.store') }}" data-success-function="formSuccessFunction" class="create-form mt-6 pt-3" id="formdata">
+                            <form action="{{ route('transfer-student.store') }}" data-success-function="formSuccessFunction" class="create-form mt-6 pt-3" id="transfer-formdata">
                                 @csrf
-                                <div class="row" id="toolbar1">
-                                    <div class="form-group col-sm-12 col-md-4">
-                                        <label>{{ __('Current Class Section') }} <span class="text-danger">*</span></label>
-                                        <select required name="current_class_section_id" id="transfer_class_section" class="form-control select2" style="width:100%;" tabindex="-1" aria-hidden="true">
-                                            <option value="">{{ __('Select Class') }}</option>
-                                            @foreach ($classSections as $classSection)
-                                                <option value="{{ $classSection->id }}" data-class="{{ $classSection->class_id }}" data-section="{{ $classSection->section_id }}">
-                                                    {{ $classSection->full_name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="row" id="toolbar1">
+                                            <div class="form-group col-sm-12">
+                                                <label>{{ __('Current Class Section') }} <span class="text-danger">*</span></label>
+                                                <select required name="current_class_section_id" id="transfer_class_section" class="form-control select2" style="width:100%;" tabindex="-1" aria-hidden="true">
+                                                    <option value="">{{ __('Select Class') }}</option>
+                                                    @foreach ($classSections as $classSection)
+                                                        <option value="{{ $classSection->id }}" data-class="{{ $classSection->class_id }}" data-section="{{ $classSection->section_id }}">
+                                                            {{ $classSection->full_name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-sm-12">
+                                                <label>{{ __('Transfer Class Section') }} <span class="text-danger">*</span></label>
+                                                <select required name="new_class_section_id" id="new_transfer_class_section" class="form-control select2" style="width:100%;" tabindex="-1" aria-hidden="true">
+                                                    <option value="">{{ __('Select Class') }}</option>
+                                                    <option value="data-not-found">-- {{ __('no_data_found') }} --</option>
+                                                    @foreach ($classSections as $classSection)
+                                                        <option value="{{ $classSection->id }}" data-class="{{ $classSection->class_id }}" data-section="{{ $classSection->section_id }}">
+                                                            {{ $classSection->full_name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <textarea id="student_ids" name="student_ids" style="display: none"></textarea>
+                                        <input type="hidden" name="student_id" id="transfer-student-id">
+                                        <input class="btn btn-theme btn-transfer float-right mt-3" id="create-btn" type="submit" value={{ __('submit') }}>
                                     </div>
-                                    <div class="form-group col-sm-12 col-md-4">
-                                        <label>{{ __('Transfer Class Section') }} <span class="text-danger">*</span></label>
-                                        <select required name="new_class_section_id" id="new_transfer_class_section" class="form-control select2" style="width:100%;" tabindex="-1" aria-hidden="true">
-                                            <option value="">{{ __('Select Class') }}</option>
-                                            <option value="data-not-found">-- {{ __('no_data_found') }} --</option>
-                                            @foreach ($classSections as $classSection)
-                                                <option value="{{ $classSection->id }}" data-class="{{ $classSection->class_id }}" data-section="{{ $classSection->section_id }}">
-                                                    {{ $classSection->full_name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+
+                                    <div class="col-md-8">
+                                        <table aria-describedby="mydesc" class='table1 transfer_student_table' id='transfer-student-table-list'
+                                               data-toggle="table" data-url="{{ route('transfer-student.show',[1]) }}"
+                                               data-side-pagination="server" data-pagination="true"
+                                               data-page-list="[5, 10, 20, 50, 100, 200]" data-search="true" data-toolbar="#toolbar"
+                                               data-show-columns="true" data-show-refresh="true" data-fixed-columns="false"
+                                               data-fixed-number="2" data-fixed-right-number="1" data-trim-on-search="false"
+                                               data-mobile-responsive="true" data-sort-name="id" data-sort-order="desc" data-response-handler="responseHandler"
+                                               data-maintain-selected="true" data-export-data-type='all' data-click-to-select="true"
+                                               data-export-options='{ "fileName": "transfer-student-list-<?= date('d-m-y') ?>" ,"ignoreColumn": ["operate"]}'
+                                               data-query-params="transferStudentQueryParams" data-escape="true">
+                                            <thead>
+                                            <tr>
+                                                <th data-field="transfer" data-checkbox="true"></th>
+                                                <th scope="col" data-field="student_id" data-sortable="true" data-visible="false">{{ __('id') }}</th>
+                                                <th scope="col" data-field="user_id" data-sortable="true" data-visible="false">{{ __('User Id') }}</th>
+                                                <th scope="col" data-field="no">{{ __('no.') }}</th>
+                                                <th scope="col" data-field="name">{{ __('name') }}</th>
+                                            </tr>
+                                            </thead>
+                                        </table>
                                     </div>
                                 </div>
-
-
-                                <table aria-describedby="mydesc" class='table1 transfer_student_table' id='transfer-student-table-list'
-                                       data-toggle="table" data-url="{{ route('transfer-student.show',[1]) }}"
-                                       data-side-pagination="server" data-pagination="true"
-                                       data-page-list="[5, 10, 20, 50, 100, 200]" data-search="true" data-toolbar="#toolbar"
-                                       data-show-columns="true" data-show-refresh="true" data-fixed-columns="false"
-                                       data-fixed-number="2" data-fixed-right-number="1" data-trim-on-search="false"
-                                       data-mobile-responsive="true" data-sort-name="id" data-sort-order="desc" data-response-handler="responseHandler"
-                                       data-maintain-selected="true" data-export-data-type='all' data-click-to-select="true"
-                                       data-export-options='{ "fileName": "transfer-student-list-<?= date('d-m-y') ?>" ,"ignoreColumn": ["operate"]}'
-                                       data-query-params="transferStudentQueryParams" data-escape="true">
-                                    <thead>
-                                    <tr>
-                                        <th data-field="transfer" data-checkbox="true"></th>
-                                        <th scope="col" data-field="student_id" data-sortable="true" data-visible="false">{{ __('id') }}</th>
-                                        <th scope="col" data-field="user_id" data-sortable="true" data-visible="false">{{ __('User Id') }}</th>
-                                        <th scope="col" data-field="no">{{ __('no.') }}</th>
-                                        <th scope="col" data-field="name">{{ __('name') }}</th>
-                                    </tr>
-                                    </thead>
-                                </table>
-                                <textarea id="student_ids" name="student_ids" style="display: none"></textarea>
-                                <input type="hidden" name="student_id" id="transfer-student-id">
-                                <input class="btn btn-theme btn-transfer float-right" id="create-btn" type="submit" value={{ __('submit') }}>
                             </form>
                         </div>
                     </div>
@@ -87,7 +92,7 @@
                             <h4 class="card-title">
                                 {{ __('Promote Student In Next Session')}}
                             </h4>
-                            <form action="{{ route('promote-student.store') }}" data-success-function="formSuccessFunction" class="create-form mt-6 pt-3" id="formdata">
+                            <form action="{{ route('promote-student.store') }}" data-success-function="formSuccessFunction" class="create-form mt-6 pt-3" id="promote-formdata">
                                 @csrf
                                 <div class="row" id="toolbar2">
                                     <div class="form-group col-sm-12 col-md-4">

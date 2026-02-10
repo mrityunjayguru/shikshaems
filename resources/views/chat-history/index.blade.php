@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-    {{ __('event') }}
+    {{ __('Chat History') }}
 @endsection
 @section('css')
     <style>
@@ -18,7 +18,9 @@
         .chat-header {
             background: linear-gradient(to right, #1FC285, #00BE78) !important;
             color: white;
-            padding: 12px;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            flex-shrink: 0;
         }
 
         .chat-users {
@@ -54,13 +56,18 @@
             display: flex;
             flex-direction: column;
             padding: 0;
+            height: 80vh;
+            border-left: 1px solid #eee;
         }
 
         .chat-messages {
             flex: 1;
-            padding: 15px;
             background: #ECE5DD;
             overflow-y: auto;
+            /* 👈 SCROLL ENABLED */
+            padding: 15px;
+            /* background: #f8f9fa; */
+            scroll-behavior: smooth;
         }
 
         .message {
@@ -92,6 +99,15 @@
             flex: 1;
             margin-right: 10px;
         }
+
+        .chat-user.active {
+            background: #f1f5ff;
+            border-left: 3px solid #4e73df;
+        }
+
+        .chat-header button {
+            min-width: 32px;
+        }
     </style>
 @endsection
 @section('content')
@@ -110,6 +126,7 @@
                             Chat History
 
                             <div class="row mb-3 mt-3">
+
                                 <div class="col-md-4">
                                     <label class="filter-menu">{{ __('Select Role') }}</label>
                                     <select class="form-control" id="role">
@@ -120,7 +137,13 @@
                                         <option value="Student">Student</option>
                                     </select>
                                 </div>
+                                <div class="col-md-4" id="classSectionWrapper" style="display:none;">
+                                    <label class="filter-menu">{{ __('Select Class Section') }}</label>
+                                    <select class="form-control" id="class_section_id">
+                                        <option value="">{{ __('All') }}</option>
 
+                                    </select>
+                                </div>
                                 <div class="col-md-4">
                                     <label class="filter-menu">{{ __('Select User') }}</label>
                                     <select class="form-control" id="user_id">
@@ -130,30 +153,7 @@
                             </div>
                         </h4>
                         <div class="row">
-                            {{-- <div class="col-12">
-                                <table class="table" id="table_list" data-toggle="table"
-                                    data-url="{{ route('chat-history.list') }}" data-side-pagination="server"
-                                    data-pagination="true" data-search="true" data-query-params="chatQueryParams">
 
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" data-field="id" data-sortable="true" data-visible="false">
-                                                {{ __('id') }} </th>
-                                            <th scope="col" data-field="no"> {{ __('no.') }} </th>
-                                            <th scope="col" data-field="date" data-width="150"> {{ __('date') }}
-                                            </th>
-                                            <th scope="col" data-field="title">{{ __('title') }} </th>
-                                            <th scope="col" data-events="tableDescriptionEvents"
-                                                data-formatter="descriptionFormatter" data-field="desc">
-                                                {{ __('description') }}</th>
-                                            @if (Auth::user()->can('holiday-edit') || Auth::user()->can('holiday-delete'))
-                                                <th data-events="eventEvents" data-width="150" scope="col"
-                                                    data-field="operate">{{ __('action') }}</th>
-                                            @endif
-                                        </tr>
-                                    </thead>
-                                </table>
-                            </div> --}}
                             <div class="container-fluid">
                                 <div class="row chat-wrapper">
 
@@ -164,42 +164,40 @@
                                         </div>
 
                                         <div class="chat-users">
-                                            {{-- @foreach ($staff as $user)
-                                                <div class="chat-user" data-id="{{ $user->id }}">
-                                                    <div class="avatar">
-                                                        {{ strtoupper(substr($user->first_name, 0, 1)) }}
-                                                    </div>
-                                                    <div class="chat-user-info">
-                                                        <h6>{{ $user->full_name }}</h6>
-                                                        <small>{{ ucfirst($user->role) }}</small>
-                                                    </div>
-                                                </div>
-                                            @endforeach --}}
-                                            {{-- <p class="text-center mt-3 text-muted">Select Teacher/Staff First</p> --}}
+
                                         </div>
                                     </div>
 
                                     <!-- RIGHT : CHAT WINDOW -->
-                                    <div class="col-md-8 chat-main">
-                                        <div class="chat-header">
-                                            <h6 id="chatUserName">Select a chat</h6>
+                                    <div class="col-md-8 chat-main d-flex flex-column">
+                                        <div class="chat-header d-flex align-items-center justify-content-between">
+
+
+                                            <!-- Left : User Name -->
+                                            <h6 id="chatUserName" class="mb-0 text-center flex-grow-1">
+                                                Select a chat
+                                            </h6>
+
+                                            <!-- center : spacer -->
+                                            <div style="width:32px"></div>
+
+                                            <!-- Rigt : Reload Button -->
+                                            <button id="reloadChat" class="btn btn-sm btn-outline-secondary"
+                                                title="Reload chat">
+                                                <i class="fa fa-refresh"></i>
+                                            </button>
+
+
+
                                         </div>
 
-                                        <div class="chat-messages" id="chatMessages">
+                                        <div class="chat-messages flex-grow-1" id="chatMessages">
                                             <div class="text-center text-muted mt-5">
                                                 Select a teacher or staff to view chat
                                             </div>
                                         </div>
-
-                                        <!-- MESSAGE INPUT -->
-                                        {{-- <div class="chat-input">
-                                            <input type="text" id="messageInput" class="form-control"
-                                                placeholder="Type a message..." disabled>
-                                            <button class="btn btn-success" id="sendBtn" disabled>
-                                                <i class="fa fa-paper-plane"></i>
-                                            </button>
-                                        </div> --}}
                                     </div>
+
 
                                 </div>
                             </div>
@@ -215,31 +213,99 @@
 
 @section('js')
     <script>
+        $('#reloadChat').on('click', function() {
+
+            const selectedUserId = $('#user_id').val();
+            const activeChatUser = $('.chat-user.active').data('id');
+
+            if (!selectedUserId || !activeChatUser) {
+                toastr.info('Select a chat first');
+                return;
+            }
+
+            $('#chatMessages').html('<p class="text-center mt-3">Reloading...</p>');
+
+            renderChatMessages(selectedUserId, activeChatUser);
+        });
+
+        // highlight selected user
+        $(document).on('click', '.chat-user', function() {
+            $('.chat-user').removeClass('active');
+            $(this).addClass('active');
+        });
+
         $(document).ready(function() {
             $('#role').change(function() {
+
                 let role = $(this).val();
+                console.log(role);
+
+                $('#user_id').html('<option value="">All</option>');
+                $('#class_section_id').html('<option value="">Select Class Section</option>');
+                $('#classSectionWrapper').hide();
+
+                if (['Teacher', 'Student', 'Guardian'].includes(role)) {
+
+                    $('#classSectionWrapper').show();
+
+                    $.get("{{ url('get-class-sections') }}", function(sections) {
+                        sections.forEach(section => {
+                            $('#class_section_id').append(`
+                                <option value="${section.id}">
+                                    ${section.class.name} - ${section.section.name}
+                                </option>
+                            `);
+                        });
+                    });
+
+                } else if (role) {
+                    // Direct users for other roles (staff/admin)
+                    loadUsersByRole(role);
+                }
+            });
+
+            $('#class_section_id').change(function() {
+
+                let classSectionId = $(this).val();
+                let role = $('#role').val();
 
                 $('#user_id').html('<option value="">All</option>');
 
-                if (role !== '') {
-                    $.ajax({
-                        url: "{{ url('get-users-by-role') }}",
-                        type: "GET",
-                        data: {
-                            role: role
-                        },
-                        success: function(response) {
-                            $.each(response, function(key, user) {
-                                $('#user_id').append(
-                                    `<option value="${user.id}">
-                                        ${user.name}
-                                    </option>`
-                                );
-                            });
-                        }
+                if (!classSectionId) return;
+
+                $.get("{{ url('get-users-by-role-and-class') }}", {
+                    role: role,
+                    class_section_id: classSectionId
+                }, function(users) {
+
+                    users.forEach(user => {
+                        $('#user_id').append(`
+                            <option value="${user.id}">
+                                ${user.name}
+                            </option>
+                        `);
                     });
-                }
+                });
             });
+
+
+            function loadUsersByRole(role) {
+
+                $.get("{{ url('get-users-by-role') }}", {
+                    role
+                }, function(users) {
+
+                    users.forEach(user => {
+                        $('#user_id').append(`
+                <option value="${user.id}">
+                    ${user.name}
+                </option>
+            `);
+                    });
+                });
+            }
+
+
 
             $('#user_id').on('change', function() {
                 let userId = $(this).val();
@@ -279,7 +345,7 @@
             });
         });
 
-        $(document).on('click', '.chat-user', function () {
+        $(document).on('click', '.chat-user', function() {
 
             let chatUserId = $(this).data('id');
             let selectedUserId = $('#user_id').val();
@@ -288,10 +354,14 @@
             $('#chatUserName').text(userName);
             $('#chatMessages').html('<p class="text-center mt-3">Loading...</p>');
 
+            renderChatMessages(selectedUserId, chatUserId);
+        });
+
+        function renderChatMessages(selectedUserId, chatUserId) {
             $.get("{{ route('chat-history.messages') }}", {
                 user_id: selectedUserId,
                 chat_user_id: chatUserId
-            }, function (chats) {
+            }, function(chats) {
 
                 let html = '';
                 let lastDate = '';
@@ -336,7 +406,8 @@
                             msg.attachment.forEach(file => {
 
                                 // 🖼 Image preview
-                                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.file_type)) {
+                                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(
+                                        file.file_type)) {
                                     html += `
                                         <a href="${file.file}" target="_blank">
                                             <img src="${file.file}"
@@ -387,7 +458,7 @@
                 $('#chatMessages').html(html);
                 $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
             });
-        });
+        }
 
         function parseCustomDate(dateStr) {
             if (!dateStr) return null;

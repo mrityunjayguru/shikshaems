@@ -67,12 +67,15 @@ class SyllabusController extends Controller
 
         foreach ($res as $row) {
             $operate = '<a href="javascript:void(0)"
-                            class="btn btn-sm btn-rounded btn-success view-syllabus text-white me-2"
+                            class="btn btn-sm btn-rounded  btn-eye view-syllabus text-white me-2"
                             data-id="' . $row->id . '">
-                            <i class="fa fa-eye me-3" style="margin-left: -2px;"></i>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M15.5799 11.9999C15.5799 13.9799 13.9799 15.5799 11.9999 15.5799C10.0199 15.5799 8.41992 13.9799 8.41992 11.9999C8.41992 10.0199 10.0199 8.41992 11.9999 8.41992C13.9799 8.41992 15.5799 10.0199 15.5799 11.9999Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.0001 20.27C15.5301 20.27 18.8201 18.19 21.1101 14.59C22.0101 13.18 22.0101 10.81 21.1101 9.39997C18.8201 5.79997 15.5301 3.71997 12.0001 3.71997C8.47009 3.71997 5.18009 5.79997 2.89009 9.39997C1.99009 10.81 1.99009 13.18 2.89009 14.59C5.18009 18.19 8.47009 20.27 12.0001 20.27Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
                         </a>';
             $operate .= '<a href="' . route('syllabus.edit', $row->id) . '"
-                            class="btn btn-xs btn-rounded btn-icon btn-warning me-2"
+                            class="btn btn-xs btn-rounded btn-icon btn-gradient-primary me-2"
                             data-id="' . $row->id . '">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M11 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22H15C20 22 22 20 22 15V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

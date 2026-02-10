@@ -227,10 +227,10 @@
                                 <div class="card-body">
                                     <h6 class="text-warning mb-3">Guardian Details</h6>
 
-                                    <div class="d-flex align-items-center">
+                                    <div class="d-flex justify-content-center align-items-center">
                                         <img src="{{ asset('assets/dummy_logo.jpg') }}"
-                                            class="rounded-circle"
-                                            width="40" height="40">
+                                            class="rounded-circle mr-2"
+                                            width="40" height="40" >
 
                                         <div class="ms-2 details">
                                             <div class="fw-semibold" style="font-size:16px;">
