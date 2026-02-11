@@ -15,8 +15,8 @@ class Vehicle extends Model
         'vehicle_type_id',
         'capacity',
         'status',
-        'is_device',
-        'iemi'
+        'gps_id',
+        // 'iemi'
     ];
 
     public function routeVehicles()

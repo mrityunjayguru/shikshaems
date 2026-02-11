@@ -10,7 +10,7 @@ class VehicleType extends Model
 {
     // use HasFactory;
     use SoftDeletes;
-
+    protected $connection = 'mysql';
     protected $fillable = [
         'vehicle_type',
         'vehicle_icon'

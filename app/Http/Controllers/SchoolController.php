@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SetupSchoolDatabase;
+use App\Models\GPS;
 use App\Models\Language;
 use App\Models\School;
 use App\Models\SchoolSetting;
@@ -200,7 +201,7 @@ class SchoolController extends Controller
                 'domain_type' => $request->domain_type,
                 'installed' => 0,
                 'status' => 1
-            ); 
+            );
             // Call store function of Schools Repository
             $schoolData = $this->schoolsRepository->create($school_data);
 
@@ -288,7 +289,6 @@ class SchoolController extends Controller
             );
 
             ResponseService::successResponse('School creation process has been started. You will receive an email notification once the setup is complete.');
-
         } catch (Throwable $e) {
             if (Str::contains($e->getMessage(), ['Failed', 'Mail', 'Mailer', 'MailManager'])) {
                 DB::commit();
@@ -298,7 +298,6 @@ class SchoolController extends Controller
                 ResponseService::logErrorResponse($e, "School Controller -> Store method");
                 ResponseService::errorResponse();
             }
-
         }
     }
 
@@ -412,6 +411,7 @@ class SchoolController extends Controller
                 $operate = BootstrapTableService::menuDeleteButton('delete', route('schools.destroy', $row->id));
             } else {
                 $operate = BootstrapTableService::menuButton('change_admin', "#", ['update-admin-data'], ['data-toggle' => "modal", 'data-target' => "#editAdminModal"]);
+                $operate .= BootstrapTableService::menuButton('Add GPS', "#", ['add-gps-data'], ['data-toggle' => "modal", 'data-target' => "#addGpsModal"]);
 
                 if ($row->status == 0) {
                     $operate .= BootstrapTableService::menuButton('activate_school', "#", ["change-school-status"], ['data-id' => $row->id]);
@@ -425,8 +425,7 @@ class SchoolController extends Controller
 
             $tempRow = $row->toArray();
             $tempRow['no'] = $no++;
-            $tempRow['active_plan'] = '-';
-            ;
+            $tempRow['active_plan'] = '-';;
 
             // Generate school URL based on domain type
             if ($row->domain_type == 'default') {
@@ -466,6 +465,12 @@ class SchoolController extends Controller
             // } else {
             //     $tempRow['operate'] = '';
             // }
+            // $tempRow['assigned_gps'] = GPS::where('school_id', $row->id)->select('id', 'imei_no','school_id')->get();
+            $tempRow['assigned_gps'] = GPS::where('school_id', $row->id)
+                ->pluck('id')
+                ->toArray();
+
+            $tempRow['gps'] = GPS::select('id', 'imei_no', 'school_id')->get();
             $rows[] = $tempRow;
         }
 
@@ -570,7 +575,6 @@ class SchoolController extends Controller
                     }
                 }
                 $this->extraSchoolData->upsert($schoolDataArray, ['id'], ['data', 'updated_at']);
-
             }
 
             DB::setDefaultConnection('school');
@@ -639,7 +643,6 @@ class SchoolController extends Controller
                 // Create subscription plan
                 $this->subscriptionService->createSubscription($request->assign_package, $request->edit_id, null, 1);
                 $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'), $request->edit_id);
-
             }
 
             ResponseService::successResponse('Data Updated Successfully');
@@ -849,6 +852,51 @@ class SchoolController extends Controller
         }
     }
 
+    public function updateGps(Request $request)
+    {
+        // ResponseService::noPermissionThenSendJson(['schools-edit']);
+        // dd($request->all());
+        $validator = Validator::make($request->all(), [
+            "school_id" => 'required',
+            "gps_id" => 'required|array',
+            "gps_id.*" => 'exists:g_p_s,id'
+        ]);
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+        try {
+
+            DB::beginTransaction();
+
+            $schoolId = $request->school_id;
+            $gpsIds   = $request->gps_id ?? [];
+
+            // Unassign all GPS of this school first
+            GPS::where('school_id', $schoolId)->update([
+                'school_id' => null,
+                'school_assigned' => 0
+            ]);
+
+            // Assign selected GPS
+            if (!empty($gpsIds)) {
+                GPS::whereIn('id', $gpsIds)->update([
+                    'school_id' => $schoolId,
+                    'school_assigned' => 1
+                ]);
+            }
+
+            DB::commit();
+
+            ResponseService::successResponse("GPS assigned successfully");
+            return redirect()->route('schools.index');
+        } catch (Throwable $e) {
+
+            DB::rollBack();
+            ResponseService::logErrorResponse($e, "School Controller -> updateGps");
+            ResponseService::errorResponse();
+        }
+    }
+
     public function changeStatus($id)
     {
         ResponseService::noPermissionThenSendJson(['schools-edit']);
@@ -1014,7 +1062,6 @@ class SchoolController extends Controller
                 });
 
                 ResponseService::successResponse(trans('School Inquiry Sent to Admin, wait for Admin Approval to successfully registered.'));
-
             } else {
                 if ($settings['email_verified'] == 0) {
                     ResponseService::errorResponse(trans('Please contact the super admin to configure the email.'));
@@ -1109,7 +1156,6 @@ class SchoolController extends Controller
                 );
                 ResponseService::successResponse(trans('School creation process has been started. You will receive an email notification once the setup is complete.'));
             }
-
         } catch (Throwable $e) {
             if (Str::contains($e->getMessage(), ['Failed', 'Mail', 'Mailer', 'MailManager'])) {
                 DB::commit();
@@ -1129,7 +1175,6 @@ class SchoolController extends Controller
 
 
         return view('settings.custom_email', compact('schools'));
-
     }
 
     public function sendMail(Request $request)
@@ -1193,7 +1238,6 @@ class SchoolController extends Controller
                 ResponseService::errorResponse(trans('error_occur'));
             }
         }
-
     }
 
     public function createDemoSchool()
@@ -1254,7 +1298,6 @@ class SchoolController extends Controller
             );
 
             ResponseService::successResponse(trans('School creation process has been started. You will receive an email notification once the setup is complete.'));
-
         } catch (Throwable $e) {
             if (Str::contains($e->getMessage(), ['Failed', 'Mail', 'Mailer', 'MailManager'])) {
                 DB::commit();
@@ -1265,7 +1308,6 @@ class SchoolController extends Controller
                 ResponseService::errorResponse();
             }
         }
-
     }
 
     public function schoolInquiryIndex()
@@ -1498,9 +1540,6 @@ class SchoolController extends Controller
             } else {
                 ResponseService::successResponse('Data Updated Successfully');
             }
-
-
-
         } catch (Throwable $e) {
             if (Str::contains($e->getMessage(), ['Failed', 'Mail', 'Mailer', 'MailManager'])) {
                 DB::commit();
@@ -1510,7 +1549,6 @@ class SchoolController extends Controller
                 ResponseService::logErrorResponse($e, "School Controller -> Store method");
                 ResponseService::errorResponse();
             }
-
         }
     }
 

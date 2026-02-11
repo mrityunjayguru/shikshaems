@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GPS;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Models\TransportationPayment;
@@ -11,6 +12,7 @@ use Carbon\Carbon;
 use Throwable;
 use App\Services\BootstrapTableService;
 use App\Services\ResponseService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -25,9 +27,13 @@ class VehicleController extends Controller
     public function index()
     {
         ResponseService::noAnyPermissionThenSendJson(['vehicles-list']);
+
+        $schoolId = Auth::user()->school_id;
+        // dd($schoolId);
         $vehicles = $this->vehiclesRepository->all();
-        $vehicleType = DB::table('shiksha_ems.vehicle_types')->get();
-        return view('vehicles.index', compact('vehicles','vehicleType'));
+        $vehicleType = VehicleType::get();
+        $gps = GPS::where('school_id', $schoolId)->get();
+        return view('vehicles.index', compact('vehicles', 'vehicleType', 'gps'));
     }
 
     public function store(Request $request)
@@ -40,6 +46,7 @@ class VehicleController extends Controller
             'capacity' => 'required|numeric|min:1',
             'status' => 'required|in:0,1',
             'vehicle_type' => 'required',
+            'gps_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -55,11 +62,17 @@ class VehicleController extends Controller
                 'capacity' => $request->capacity,
                 'status' => $request->status ?? 1,
                 'vehicle_type_id' =>  $request->vehicle_type,
-                // 'is_device' => $request->is_device,
+                'gps_id' => $request->gps_id,
                 // 'iemi' => $request->iemi ?? null 
             ];
-            
-            $this->vehiclesRepository->create($vehicleData);
+
+            $newVehicle = $this->vehiclesRepository->create($vehicleData);
+
+            $gps = GPS::where('id', $request->gps_id)->first();
+            $gps->assigned_to = $newVehicle->id;
+            $gps->assigned_on = Now();
+            $gps->status = 1;
+            $gps->save();
 
             DB::commit();
             ResponseService::successResponse('Vehicle created successfully');
@@ -121,13 +134,20 @@ class VehicleController extends Controller
                 'capacity' => $request->edit_capacity,
                 'status' => $request->edit_status,
                 'vehicle_type_id' => $request->vehicle_type,
-                // 'is_device' => $request->edit_is_device,
+                'gps_id' => $request->edit_gps_id,
                 // 'iemi' => $request->edit_iemi ?? null
             ];
 
             // dd($vehicleData);
             // Call repository update
             $vehicle = $this->vehiclesRepository->update($id, $vehicleData);
+            $gps = GPS::where('id', $request->edit_gps_id)->first();
+            // dd($gps);
+            $gps->assigned_to = $vehicle->id;
+            $gps->assigned_on = Now();
+            $gps->status = 1;
+            $gps->save();
+
 
             ResponseService::successResponse('Vehicle updated successfully');
         } catch (Throwable $e) {
@@ -221,13 +241,13 @@ class VehicleController extends Controller
             });
         }
         $sql->leftJoin('shiksha_ems.vehicle_types', 'vehicles.vehicle_type_id', '=', 'vehicle_types.id');
-        
+
         $total = $sql->count();
         if ($offset >= $total && $total > 0) {
             $lastPage = floor(($total - 1) / $limit) * $limit; // calculate last page offset
             $offset = $lastPage;
         }
-        
+
         $sql->orderBy($sort, $order)->skip($offset)->take($limit);
         $res = $sql->select('vehicles.*', 'vehicle_types.vehicle_type', 'vehicle_types.vehicle_icon')->get();
         // dd($res);
@@ -253,7 +273,7 @@ class VehicleController extends Controller
 
             $tempRow = $row->toArray();
             $tempRow['no'] = $no++;
-            $tempRow['status'] = $row->status ? __('active') : __('inactive');
+            $tempRow['status'] = $row->status == 1 ? __('Active') : __('Inactive');
             $tempRow['operate'] = BootstrapTableService::menuItem($operate);
             $rows[] = $tempRow;
         }
@@ -262,11 +282,13 @@ class VehicleController extends Controller
         return response()->json($bulkData);
     }
 
-    public function trackNow(){
+    public function trackNow()
+    {
         return view('vehicles.code-validate');
     }
 
-    public function trackByCode(){
+    public function trackByCode()
+    {
         return view('vehicles.track');
     }
 }

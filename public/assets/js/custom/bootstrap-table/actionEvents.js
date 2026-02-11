@@ -1226,6 +1226,203 @@ window.schoolEvents = {
         }
       
     },
+
+    
+    'click .add-gps-data': function (e, value, row) { 
+    
+        $('#school_id').val(row.id);
+        $('#view_school_name').val(row.name);
+        $('#view_school-logo-tag').attr('src', row.logo);
+        $('#view_school_support_email').val(row.support_email);
+        $('#view_school_support_phone').val(row.support_phone);
+        $('#view_school_address').val(row.address);
+        $('#view_school_tagline').val(row.tagline);
+        $('#view_school_lat').val(row.latitude);
+        $('#view_school_lng').val(row.longitude);
+        $('#view_school_state').val(row.state);
+        $('#view_school_city').val(row.city);
+        $('#view_school_pin_code').val(row.pin_code);
+
+        // gps dropdown
+        let $gpsDropdown = $('#gps_ids');
+        $gpsDropdown.empty();
+
+        let gpsList = row.gps || [];
+        let assignedGps = row.assigned_gps || [];
+
+        gpsList.forEach(function (gps) {
+
+            let isAssigned = assignedGps.includes(gps.id);
+            let isSameSchool = gps.school_id == row.id;
+
+            if (isSameSchool || isAssigned) {
+
+                let selected = isAssigned ? 'selected' : '';
+
+                $gpsDropdown.append(
+                    `<option value="${gps.id}" ${selected}>
+                        ${gps.imei_no}
+                    </option>`
+                );
+            }else if(gps.school_id == '' || gps.school_id == null){
+                $gpsDropdown.append(
+                    `<option value="${gps.id}">
+                        ${gps.imei_no}
+                    </option>`
+                );
+            }
+        });
+
+
+        $gpsDropdown.trigger('change');
+
+        
+        // set the school url based on the domain type
+        $('.school_url').attr('href', '');
+        $('.school_url').text('');
+        if (row.school_domain && row.school_url) {
+            if (row.domain_type == "default") {
+                $('.school_url').attr('href', row.school_url);
+                $('.school_url').text(row.school_url);
+            } else {
+                $('.school_url').attr('href', row.school_url);
+                $('.school_url').text(row.school_url);
+            }
+        } else {
+            $('.school_url').attr('href', '');
+            $('.school_url').text('');
+        }
+
+        $('#view_school_code').val(row.code);
+
+        // console.log(row.domain);
+        if (row.domain_type == "default") {
+            $('.default').prop('checked', true);
+
+            $('.defaultDomain').show().find('input').prop('disabled', false);
+            $('.customDomain').hide().find('input').prop('disabled', true);
+
+            $('#custom_domain').val('');
+            $('#default_domain').val(row.domain);
+
+        } else if (row.domain_type == "custom") {
+            $('.custom').prop('checked', true);
+
+            $('.customDomain').show().find('input').prop('disabled', false);
+            $('.defaultDomain').hide().find('input').prop('disabled', true);
+
+            $('#default_domain').val('');
+            $('#custom_domain').val(row.domain);
+
+        } else {
+            $('.default').prop('checked', false);
+            $('.custom').prop('checked', false);
+            $('#custom_domain').val('');
+            $('#default_domain').val('');
+            $('.defaultDomain').hide().find('input').prop('disabled', true);
+            $('.customDomain').hide().find('input').prop('disabled', true);
+
+        }
+
+        // Hide the school url if the default domain is not set
+        if ($('#default_domain').val()) {
+            $('#school_url').hide();
+        } else {
+            $('#school_url').show();
+        }
+
+        if (row.active_plan == '-') {
+            $('#assign_package_container').show();
+            $('#assign_package').attr('disabled', false);
+        } else {
+            $('#assign_package_container').hide();
+            $('#assign_package').attr('disabled', true);
+        }
+
+        // setTimeout(() => {
+        //     if (document.getElementById("editMap")) {
+        //         editInitMap();
+        //     }
+        //     // Fill the Extra Field's Data
+        //     if (row.extra_fields.length) {
+        //         $.each(row.extra_fields, function (index, value) {
+        //             let fieldName = $.escapeSelector(value.form_field.name.replace(/ /g, '_'));
+
+        //             $(`#${fieldName}_id`).val(value.id || '');
+
+        //             if (value.form_field.default_values && value.form_field.default_values.length) {
+        //                 $.each(value.form_field.default_values, function (key) {
+        //                     if (typeof (value.data) == 'object') {
+        //                         $.each(value.data, function (dataKey, dataValue) {
+        //                             let checked = ($('#' + fieldName + '_' + dataKey).val() == dataValue);
+        //                             $('#edit_' + fieldName + '_' + dataKey).prop('checked', checked);
+        //                         });
+        //                     } else if (value.form_field.type == 'dropdown') {
+        //                         $('#edit_' + fieldName).val(value.data);
+        //                     } else {
+        //                         $('#edit_' + fieldName + '_' + key).prop('checked', false);
+        //                         // Check data is json format or not
+        //                         if (isJSON(value.data)) { // Checkbox
+        //                             let chkArray = JSON.parse(value.data);
+        //                             $.each(chkArray, function (chkKey, chkValue) {
+        //                                 if ($('#edit_' + fieldName + '_' + key).val() == chkValue) {
+        //                                     $('#edit_' + fieldName + '_' + key).prop('checked', true);
+        //                                 }
+        //                             })
+        //                         } else {
+        //                             // Radio buttons
+        //                             let checked = ($('#' + fieldName + '_' + key).val() == value.data);
+        //                             $('#edit_' + fieldName + '_' + key).prop('checked', checked);
+        //                         }
+        //                     }
+        //                 });
+        //             } else {
+        //                 if (value.form_field.type == 'file') {
+        //                     if (value.data) {
+        //                         var file_url = value.data;
+        //                         var storage_url = window.location.origin + "/storage/" + file_url;
+
+        //                         $('#edit_file_div_' + fieldName).removeClass('d-none').find('#edit_file_link_' + fieldName).attr('href', storage_url);
+        //                         // Only remove required if field is not required in database
+        //                         if (!value.form_field.is_required) {
+        //                             $('#edit_' + fieldName).removeAttr('required');
+        //                         }
+        //                     } else {
+        //                         $('#edit_file_div_' + fieldName).addClass("d-none").find('#edit_file_link_' + fieldName).attr('href', "");
+        //                         // Only add required if field is required in database
+        //                         if (value.form_field.is_required) {
+        //                             $('#edit_' + fieldName).attr('required', 'required');
+        //                         }
+        //                     }
+        //                 } else {
+        //                     $('#edit_' + fieldName).val(value.data);
+        //                 }
+
+        //             }
+        //         });
+        //     } else {
+        //         $('.text-fields').val('');
+        //         $('.number-fields').val('');
+        //         $('.select-fields').val('');
+        //         $('.radio-fields').prop('checked', false);
+        //         $('.checkbox-fields').prop('checked', false);
+        //         $('.textarea-fields').val('');
+        //         $('.file-div').addClass('d-none');
+        //         $('.edit_extra_fields_id').val('');
+        //     }
+        // }, 1000);
+
+        function isJSON(data) {
+            try {
+                JSON.parse(data);
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+      
+    },
+
     'click .update-admin-data': function (e, value, row) {
         $('#edit_school_id').val(row.id);
 
@@ -1281,6 +1478,25 @@ window.packageEvents = {
     'click .edit-data': function (e, value, row) {
         $('#edit_id').val(row.id);
 
+    }
+};
+
+window.deviceTypeEvents = {
+    'click .edit-data': function (e, value, row) {
+        let deviceType = row.device_type == 'Wireless' ? 0 : 1;
+        $('#edit_id').val(row.id);
+        $('#edit_device_type').val(deviceType);
+        $('#edit_name').val(row.name);
+    }
+};
+
+window.gpsEvents = {
+    'click .edit-data': function (e, value, row) {
+        $('#edit_id').val(row.id);
+        $('#edit_device_type_id').val(row.device_type_id);
+        $('#edit_imei_no').val(row.imei_no);
+        $('#edit_sim_no').val(row.sim_no);
+        // $('#edit_wired_device').val(row.wired_device);
     }
 };
 
@@ -2248,8 +2464,6 @@ window.diaryCategoryEvents = {
 
 window.diaryEvents = {
     'click #diaryModal': function (e, value, row) {
-
-
         // $('.modal-title').html(row.name);
         $('.modal-title').html(row.title);
         $('.diary-student-data').html(row.student);
@@ -2261,12 +2475,11 @@ window.diaryEvents = {
 
 window.vehicleEvents = {
     'click .edit-data': function (e, value, row) {
-        console.log(row);
         $('#edit_vehicle_id').val(row.id);
         $('#edit_vehicle_type').val(row.vehicle_type_id);
         $('#edit_vehicle_name').val(row.name);
         $('#edit_vehicle_number').val(row.vehicle_number);
-        $('#edit_iemi').val(row.iemi);
+        $('#edit_gps_id').val(row.gps_id);
         $('#edit_capacity').val(row.capacity);
         let statusValue = row.status === 'Active' ? '1' : '0';
         $('#edit_status').val(statusValue);
