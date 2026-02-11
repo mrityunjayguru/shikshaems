@@ -37,6 +37,7 @@ Route::get('fees-due-notification', [ApiController::class, 'sendFeeNotification'
 /**
  * STUDENT APIs
  **/
+Route::get('school-details', [ApiController::class, 'schoolDetails']);
 Route::group(['prefix' => 'student'], static function () {
 
     //Non Authenticated APIs
@@ -307,7 +308,6 @@ Route::group(['prefix' => 'staff'], static function () {
 Route::get('settings', [ApiController::class, 'getSettings']);
 Route::post('forgot-password', [ApiController::class, 'forgotPassword']);
 
-Route::get('school-details', [ApiController::class, 'schoolDetails']);
 
 // Route::group(['middleware' => ['auth:sanctum',]], static function () {
 Route::group(['middleware' => ['APISwitchDatabase',]], static function () {

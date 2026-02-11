@@ -51,6 +51,16 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="form-group col-md-4">
+                                    <label for="gps">{{ __('GPS') }}<span
+                                            class="text-danger">*</span></label>
+                                    <select name="gps_id" id="gps" class="form-control" required>
+                                        <option value="" selected>Selcte GPS</option>
+                                        @foreach ($gps as $item)
+                                            <option value="{{ $item->id }}">{{ $item->imei_no }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
                                 <div class="form-group col-md-4">
                                     <label for="status">{{ __('status') }} <span class="text-danger">*</span></label>
@@ -182,6 +192,16 @@
                                         <option value="" selected>Selcte Vehicle Type</option>
                                         @foreach ($vehicleType as $item)
                                             <option value="{{ $item->id }}">{{ $item->vehicle_type }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="edit_gps">{{ __('GPS') }}<span
+                                            class="text-danger">*</span></label>
+                                    <select name="edit_gps_id" id="edit_gps_id" class="form-control" required>
+                                        <option value="" selected>Selcte GPS</option>
+                                        @foreach ($gps as $item)
+                                            <option value="{{ $item->id }}">{{ $item->imei_no }}</option>
                                         @endforeach
                                     </select>
                                 </div>

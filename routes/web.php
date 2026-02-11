@@ -85,6 +85,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\DiaryController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleTypeController;
+use App\Http\Controllers\GpsController;
+use App\Http\Controllers\DeviceTypeController;
 use App\Http\Controllers\DriverHelperController;
 use App\Http\Controllers\RouteVehicleController;
 use App\Http\Controllers\TransportationRequestController;
@@ -195,6 +197,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::PUT('/change/status/{id}', [SchoolController::class, 'changeStatus']);
             Route::get('/admin/search', [SchoolController::class, 'searchAdmin']);
 
+            Route::put('/gps/update', [SchoolController::class, 'updateGps'])->name('schools.updateGps');
             Route::get('/send-mail', [SchoolController::class, 'sendMailIndex'])->name('schools.send.mail');
             Route::post('/send-mail', [SchoolController::class, 'sendMail']);
             Route::post('/create-demo-school', [SchoolController::class, 'createDemoSchool'])->name('create.demo.school');
@@ -214,6 +217,27 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::post('store', [VehicleTypeController::class, 'store'])->name('vehicle-type.store');
             Route::get('show', [VehicleTypeController::class, 'show'])->name('vehicle-type.show');
             Route::put('update/{id}', [VehicleTypeController::class, 'update'])->name('vehicle-type.update');
+        });
+
+        //GPS
+        Route::group(['prefix' => 'gps'], static function () {
+            Route::get('/', [GpsController::class, 'index'])->name('gps.index');
+            Route::delete('destroy/{id}', [GpsController::class, 'destroy'])->name('gps.destroy');
+            Route::post('store', [GpsController::class, 'store'])->name('gps.store');
+            Route::get('show', [GpsController::class, 'show'])->name('gps.show');
+            Route::put('update/{id}', [GpsController::class, 'update'])->name('gps.update');
+        });
+        
+        Route::get('school-gps/show', [GpsController::class, 'schoolGpsShow'])->name('school.gps.show');
+        Route::get('school-gps', [GpsController::class, 'schoolGpsIndex'])->name('school.gps.index');
+
+        //Device type
+        Route::group(['prefix' => 'device-type'], static function () {
+            Route::get('/', [DeviceTypeController::class, 'index'])->name('device-type.index');
+            Route::delete('destroy/{id}', [DeviceTypeController::class, 'destroy'])->name('device-type.destroy');
+            Route::post('store', [DeviceTypeController::class, 'store'])->name('device-type.store');
+            Route::get('show', [DeviceTypeController::class, 'show'])->name('device-type.show');
+            Route::put('update/{id}', [DeviceTypeController::class, 'update'])->name('device-type.update');
         });
 
         //chat history

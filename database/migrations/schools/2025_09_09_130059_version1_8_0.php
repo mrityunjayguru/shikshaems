@@ -22,7 +22,7 @@ return new class extends Migration
                 $table->integer('capacity');
                 $table->tinyInteger('status'); // 0 = inactive, 1 = active
                 $table->tinyInteger('is_device'); // 0 = no, 1 = yes
-                $table->bigInteger('iemi')->nullable();
+                $table->bigInteger('gps_id')->nullable();
                 $table->softDeletes();
                 $table->timestamps();
             });

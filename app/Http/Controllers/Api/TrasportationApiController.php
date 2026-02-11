@@ -2395,7 +2395,6 @@ class TrasportationApiController extends Controller
             )
             ->get();
 
-
         // dd($vehicleDetails);
         return ResponseService::successResponse("Vehicles records fetched successfully", $vehicleDetails);
     }

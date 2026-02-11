@@ -675,7 +675,169 @@
         </div>
     </div>
 
+    {{-- Add GPS Model --}}
+    <div class="modal fade" id="addGpsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">{{ __('view') }} {{ __('school') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"><i class="fa fa-close"></i></span>
+                    </button>
+                </div>
+                <form id="view-form" class="pt-3 edit-form" action="{{ route('schools.updateGps') }}">
+                    <input type="hidden" name="school_id" id="school_id">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="form-group col-sm-12 col-md-6">
+                                <label for="view_school_name">{{ __('name') }}</label>
+                                <input type="text" name="view_school_name" id="view_school_name"
+                                    placeholder="{{ __('schools') }}" class="form-control" readonly>
+                            </div>
+                            <div class="form-group col-sm-12 col-md-6">
+                                <label>{{ __('logo') }}</label>
+                                <input type="file" id="view_school_image" name="view_school_image"
+                                    class="file-upload-default"
+                                    accept="image/png, image/jpg, image/jpeg, image/svg+xml" />
+                                <div class="input-group">
+                                    <input type="text" class="form-control file-upload-info" disabled="true"
+                                        placeholder="{{ __('logo') }}" aria-label="" />
+                                    <span class="input-group-append">
+                                        <button class=" btn btn-theme" type="button">{{ __('upload') }}</button>
+                                    </span>
+                                </div>
+                                <div style="width: 60px;">
+                                    <img src="" id="view_school-logo-tag" class="img-fluid w-100"
+                                        alt="" />
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-12 col-md-4">
+                                <label for="view_school_support_email">{{ __('school') . ' ' . __('email') }} <span
+                                        class="text-danger">*</span></label>
+                                <input type="email" name="view_school_support_email" id="view_school_support_email"
+                                    placeholder="{{ __('support') . ' ' . __('email') }}" class="form-control" readonly>
+                            </div>
+                            <div class="form-group col-sm-12 col-md-4">
+                                <label for="view_school_support_phone">{{ __('school') . ' ' . __('phone') }} <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" name="view_school_support_phone" min="0"
+                                    id="view_school_support_phone" placeholder="{{ __('support') . ' ' . __('phone') }}"
+                                    class="form-control remove-number-increment" readonly>
+                            </div>
 
+
+                            <div class="form-group col-sm-12 col-md-4">
+                                <label for="view_school_code">{{ __('school_code') }} </label>
+                                <input type="text" name="code" disabled id="view_school_code"
+                                    placeholder="{{ __('school_code') }}" class="form-control" readonly>
+
+                            </div>
+
+                            <div class="form-group col-sm-12 col-md-6">
+                                <label for="view_school_tagline">{{ __('tagline') }} <span
+                                        class="text-danger">*</span></label>
+                                <textarea name="view_school_tagline" id="view_school_tagline" cols="30" rows="3" class="form-control"
+                                    placeholder="{{ __('tagline') }}" readonly></textarea>
+                            </div>
+                            <div class="form-group col-sm-12 col-md-6">
+                                <label for="view_school_address">{{ __('address') }} <span
+                                        class="text-danger">*</span></label>
+                                <textarea name="view_school_address" id="view_school_address" cols="30" rows="3" class="form-control"
+                                    placeholder="{{ __('address') }}" readonly></textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-12 col-md-3">
+                                <label>{{ __('domain') . ' ' . __('type') }} <span
+                                        class="text-danger">*</span></label><br>
+                                <div class="d-flex">
+                                    <div class="form-check form-check-inline">
+                                        <label class="form-check-label">
+                                            {!! Form::radio('domain_type', 'default', false, ['class' => 'default', 'checked']) !!}{{ __('default') }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <label class="form-check-label">
+                                            {!! Form::radio('domain_type', 'custom', false, ['class' => 'custom']) !!}{{ __('custom') }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-12 col-md-4 defaultDomain" style="display: none">
+                                <label for="school_domain">{{ __('default_domain') }}</label>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control domain-pattern" id="default_domain"
+                                        name="domain" placeholder="{{ __('domain') }}"
+                                        aria-label="Recipient's username" aria-describedby="basic-addon2" readonly>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text text-body"
+                                            id="basic-addon2">.{{ $baseUrlWithoutScheme }}</span>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <label>{{ __('url') }}: <a href="" target="_blank"
+                                            class="text-theme school_url"></a></label>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-12 col-md-4 customDomain" style="display: none">
+                                <label for="school_domain">{{ __('custom_domain') }}</label>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control domain-pattern" id="custom_domain"
+                                        name="domain" placeholder="{{ __('domain') }}"
+                                        aria-label="Recipient's username" aria-describedby="basic-addon2" readonly>
+                                </div>
+                                <div class="mt-2">
+                                    <label>{{ __('url') }}: <a href="" target="_blank"
+                                            class="text-theme school_url"></a></label>
+                                </div>
+                            </div>
+                            {{-- </div> --}}
+                            {{-- <div class="row"> --}}
+                            <div class="form-group col-sm-12 col-md-4">
+                                <label for="state">{{ __('state') }}</label>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" name="state" id="view_school_state"
+                                        placeholder="{{ __('state') }}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-12 col-md-4">
+                                <label for="city">{{ __('city') }}</label>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" name="city" id="view_school_city"
+                                        placeholder="{{ __('city') }}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-12 col-md-4">
+                                <label for="pin_code">{{ __('pin_code') }}</label>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" name="pin_code" id="view_school_pin_code"
+                                        placeholder="{{ __('pin_code') }}" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-12 col-md-4">
+                                <label for="gps">{{ __('GPS') }}</label>
+                                <div class="input-group mb-3">
+                                    <select name="gps_id[]" id="gps_ids"
+                                        class="form-control select2-dropdown select2-hidden-accessible" placeholder="Select GPS" multiple>
+                                        {{-- <option value="">Select GPS</option> --}}
+                                    </select>                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">{{ __('close') }}</button>
+                        <input class="btn btn-theme" type="submit" value={{ __('submit') }} />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     {{-- Manage Admin --}}
     <div class="modal fade" id="editAdminModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
@@ -1129,7 +1291,7 @@
 
         function fetchAddress(lat, lng, targetInputId) {
             console.log(targetInputId);
-            
+
             fetch("https://app.trackroutepro.com/common/jioCode", {
                     method: "POST",
                     headers: {
