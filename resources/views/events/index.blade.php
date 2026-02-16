@@ -49,14 +49,17 @@
                                         'class' => 'form-control',
                                     ]) !!}
                                 </div>
-                                <input class="btn btn-theme float-right ml-3" type="button" onclick="sendNotification()"
-                                    value="Send Notification">
+                                {{-- <input class="btn btn-theme float-right ml-3" type="button" onclick="sendNotification()"
+                                    value="Send Notification"> --}}
                             </div>
-                             <div class="mt-3">
-                            <input class="btn btn-secondary float-left px-10 py-6 ml-3" type="reset" value={{ __('reset') }} style="border-radius: 4px; min-width: 150px; background: #fff; color: var(--theme-color); border: 1px solid var(--theme-color); margin-bottom: 5px;">
+                            <div class="mt-3">
+                                <input class="btn btn-secondary float-left px-10 py-6 ml-3" type="reset"
+                                    value={{ __('reset') }}
+                                    style="border-radius: 4px; min-width: 150px; background: #fff; color: var(--theme-color); border: 1px solid var(--theme-color); margin-bottom: 5px;">
 
-                            <input class="btn btn-theme float-left ml-3 px-10 py-6" id="create-btn" type="submit"
-                                value={{ __('submit') }} style="border-radius: 4px; min-width: 150px; background: var(--theme-color); color: white; border: 1px solid var(--theme-color); margin-bottom: 5px;">
+                                <input class="btn btn-theme float-left ml-3 px-10 py-6" id="create-btn" type="submit"
+                                    value={{ __('submit') }}
+                                    style="border-radius: 4px; min-width: 150px; background: var(--theme-color); color: white; border: 1px solid var(--theme-color); margin-bottom: 5px;">
                             </div>
                         </form>
                     </div>
@@ -111,8 +114,8 @@
                                                 data-formatter="descriptionFormatter" data-field="desc">
                                                 {{ __('description') }}</th>
                                             {{-- @if (Auth::user()->can('holiday-edit') || Auth::user()->can('holiday-delete')) --}}
-                                                <th data-events="eventEvents" data-width="150" scope="col"
-                                                    data-field="operate">{{ __('action') }}</th>
+                                            <th data-events="eventEvents" data-width="150" scope="col"
+                                                data-field="operate">{{ __('action') }}</th>
                                             {{-- @endif --}}
                                         </tr>
                                     </thead>
@@ -202,25 +205,6 @@
                 todayHighlight: true
             });
         });
-
-        function sendNotification() {
-            Swal.fire({
-                title: "Are you sure?",
-                text: "You want to send notification!",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Yes"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: "Send!",
-                        text: "Notification has been send.",
-                        icon: "success"
-                    });
-                }
-            });
-        }
-    </script>
+       
+   </script>
 @endsection

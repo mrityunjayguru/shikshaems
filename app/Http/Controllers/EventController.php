@@ -9,6 +9,7 @@ use App\Services\ResponseService;
 use App\Services\SessionYearsTrackingsService;
 use App\Services\CachingService;
 use App\Models\Events;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -122,7 +123,16 @@ class EventController extends Controller
         $rows = array();
         $no = 1;
         foreach ($res as $row) {
-            $operate = BootstrapTableService::editButton(route('event.update', $row->id));
+            $operate = BootstrapTableService::button(
+                'fa fa-bell mb-4',
+                'javascript:void(0)',
+                ['btn-warning', 'btn-sm', 'send-notification'],
+                ['title' => "send notification"],
+                ['data-id' => $row->id]
+            );
+
+
+            $operate .= BootstrapTableService::editButton(route('event.update', $row->id));
             $operate .= BootstrapTableService::deleteButton(route('event.destroy', $row->id));
             $tempRow = $row->toArray();
             $tempRow['no'] = $no++;
@@ -150,7 +160,7 @@ class EventController extends Controller
             $event->desc = $request->description ?? null;
             $event->date = Carbon::parse($request->date)->format('Y-m-d');
             $event->save();
-            
+
             $sessionYear = $this->cache->getDefaultSessionYear();
             $this->sessionYearsTrackingsService->storeSessionYearsTracking('App\Models\Events', $id, Auth::user()->id, $sessionYear->id, Auth::user()->school_id, null);
             ResponseService::successResponse('Data Updated Successfully');
@@ -172,6 +182,49 @@ class EventController extends Controller
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e, "Event Controller -> Delete Method");
             ResponseService::errorResponse();
+        }
+    }
+
+    public function sendNotification($id)
+    {
+        try {
+
+            $event = Events::findOrFail($id);
+
+            // Get users you want to notify
+            $users = User::pluck('id')->toArray();
+            
+            // or filter:
+            // $users = User::where('school_id',$event->school_id)->pluck('id')->toArray();
+
+            if (empty($users)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No users found'
+                ]);
+            }
+
+            // Call your function
+            send_notification(
+                $users,
+                $event->title,
+                $event->desc,
+                'event',
+                // [
+                //     'event_id' => $event->id
+                // ]
+            );
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Notification sent successfully'
+            ]);
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ]);
         }
     }
 }

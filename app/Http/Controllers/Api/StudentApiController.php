@@ -11,6 +11,7 @@ use App\Models\School;
 use App\Models\Students;
 use App\Models\StudentLeave;
 use App\Models\User;
+use App\Models\UserDevices;
 use Carbon\Carbon;
 use App\Repositories\Announcement\AnnouncementInterface;
 use App\Repositories\Assignment\AssignmentInterface;
@@ -182,6 +183,15 @@ class StudentApiController extends Controller
             if ($request->fcm_id) {
                 $auth->fcm_id = $request->fcm_id;
                 $auth->save();
+                UserDevices::updateOrCreate(
+                    [
+                        'user_id' => $auth->id,
+                        'fcm_id' => $request->fcm_id
+                    ],
+                    [
+                        'device_type' => $request->device_type
+                    ]
+                );
             }
             ResponseService::successResponse('User logged-in!', new UserDataResource($user), ['error' => false, 'token' => $token]);
         }
@@ -964,7 +974,6 @@ class StudentApiController extends Controller
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
         }
-
     }
 
     public function getSessionYear()
@@ -994,11 +1003,11 @@ class StudentApiController extends Controller
             $sessionYear = $this->cache->getDefaultSessionYear();
 
             $classSubjectId = [];
-            if($request->class_subject_id){
+            if ($request->class_subject_id) {
                 $classSubjectId[] = $request->class_subject_id;
-            }else{
+            } else {
                 $studentSubjects = $student->currentSemesterSubjects();
-            
+
                 $coreSubject = $studentSubjects['core_subject']->toArray();
                 $electiveSubject = [];
                 if (isset($studentSubjects['elective_subject'])) {
@@ -1006,11 +1015,10 @@ class StudentApiController extends Controller
                         ? $studentSubjects['elective_subject']
                         : $studentSubjects['elective_subject']->toArray();
                 }
-    
+
                 $classSubjectId = collect($coreSubject)->pluck('class_subject_id')->toArray();
                 $elective_subject_ids = collect($electiveSubject)->pluck('class_subject_id')->toArray();
                 $classSubjectId = array_merge($classSubjectId, $elective_subject_ids);
-    
             }
 
             if (env('DEMO_MODE')) {
@@ -1064,8 +1072,8 @@ class StudentApiController extends Controller
             // Checks Student Exam Status
             if (
                 $this->studentOnlineExamStatus->builder()
-                    ->where(['online_exam_id' => $request->exam_id, 'student_id' => $student->user_id])
-                    ->exists()
+                ->where(['online_exam_id' => $request->exam_id, 'student_id' => $student->user_id])
+                ->exists()
             ) {
                 ResponseService::errorResponse('Student already attempted exam', null, config('constants.RESPONSE_CODE.STUDENT_ALREADY_ATTEMPTED_EXAM'));
             }
@@ -1138,7 +1146,6 @@ class StudentApiController extends Controller
                 'total_questions' => $totalQuestions,
                 'total_marks' => $totalMarks
             ]);
-
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
@@ -1161,10 +1168,10 @@ class StudentApiController extends Controller
 
             DB::beginTransaction();
             // Check Online Exam Exists or not
-//            $onlineExamData = $this->onlineExam->findById($request->online_exam_id);
-//            if (!$onlineExamData) {
-//                ResponseService::errorResponse('Invalid online exam id');
-//            }
+            //            $onlineExamData = $this->onlineExam->findById($request->online_exam_id);
+            //            if (!$onlineExamData) {
+            //                ResponseService::errorResponse('Invalid online exam id');
+            //            }
 
             // Clean existing answers for fresh submission
             $this->onlineExamStudentAnswer->builder()->where(['student_id' => $student->user_id, 'online_exam_id' => $request->online_exam_id])->delete();
@@ -1209,7 +1216,6 @@ class StudentApiController extends Controller
             );
             DB::commit();
             ResponseService::successResponse('Data Stored Successfully');
-
         } catch (Throwable $e) {
             DB::rollback();
             ResponseService::logErrorResponse($e, "StudentApiController submitOnlineExamAnswers Method");
@@ -1233,11 +1239,11 @@ class StudentApiController extends Controller
             $sessionYear = $this->cache->getDefaultSessionYear();
             $classSubjectId = [];
 
-            if($request->class_subject_id){
+            if ($request->class_subject_id) {
                 $classSubjectId[] = $request->class_subject_id;
-            }else{
+            } else {
                 $studentSubjects = $student->currentSemesterSubjects();
-            
+
                 $coreSubject = $studentSubjects['core_subject']->toArray();
                 $electiveSubject = [];
                 if (isset($studentSubjects['elective_subject'])) {
@@ -1245,11 +1251,10 @@ class StudentApiController extends Controller
                         ? $studentSubjects['elective_subject']
                         : $studentSubjects['elective_subject']->toArray();
                 }
-    
+
                 $classSubjectId = collect($coreSubject)->pluck('class_subject_id')->toArray();
                 $elective_subject_ids = collect($electiveSubject)->pluck('class_subject_id')->toArray();
                 $classSubjectId = array_merge($classSubjectId, $elective_subject_ids);
-    
             }
 
             // Get Online Exam Data Where Logged in Student have attempted data and Relation Data with Question Choice , Student's answer with user submitted question with question and its option
@@ -1607,7 +1612,6 @@ class StudentApiController extends Controller
 
             // Return the response
             ResponseService::successResponse("", $onlineExamReportData);
-
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
@@ -1683,7 +1687,6 @@ class StudentApiController extends Controller
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
         }
-
     }
 
     public function getSchoolSettings()
@@ -1705,8 +1708,6 @@ class StudentApiController extends Controller
             } else {
                 ResponseService::errorResponse(trans('your_account_has_been_deactivated_please_contact_admin'), null, config('constants.RESPONSE_CODE.INACTIVATED_USER'));
             }
-
-
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
@@ -1816,7 +1817,7 @@ class StudentApiController extends Controller
             }
 
             $leave->save();
-          
+
             ResponseService::successResponse('Data added Successfully');
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);

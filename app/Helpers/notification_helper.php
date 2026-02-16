@@ -1,11 +1,12 @@
 <?php
 
-use App\Models\User;
+use App\Models\UserDevices;
 use App\Services\CachingService;
 use Google\Client;
 
-function send_notification($user, $title, $body, $type, $customData = []) {
-    $FcmTokens = User::where('fcm_id', '!=', '')->whereIn('id', $user)->get()->pluck('fcm_id');
+function send_notification($user, $title, $body, $type, $customData = [])
+{
+    $FcmTokens = UserDevices::where('fcm_id', '!=', '')->whereIn('user_id', $user)->get()->pluck('fcm_id');
 
     $cache = app(CachingService::class);
 
@@ -14,7 +15,7 @@ function send_notification($user, $title, $body, $type, $customData = []) {
     $url = 'https://fcm.googleapis.com/v1/projects/' . $project_id . '/messages:send';
 
     $access_token = getAccessToken();
-   
+
     foreach ($FcmTokens as $FcmToken) {
 
         $data = [
@@ -24,19 +25,18 @@ function send_notification($user, $title, $body, $type, $customData = []) {
                     "title" => $title,
                     "body" => $body
                 ],
-                "data" => [
+                "data" => fcmStringify(array_merge([
                     "title" => $title,
-                    "body" => $body,
-                    "type" => $type,
-                    ...$customData
-                ],
+                    "body"  => $body,
+                    "type"  => $type,
+                ], $customData)),
                 "android" => [
-                    "notification"=> [
+                    "notification" => [
                         'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                         "sound" => "default"  // This is for Android sound
                     ],
                     "priority" => "high"
-                   
+
                 ],
                 "apns" => [
                     "headers" => [
@@ -51,7 +51,7 @@ function send_notification($user, $title, $body, $type, $customData = []) {
                             "type" => $type,
                             ...$customData,
                             "sound" => "default",  // This is for iOS sound
-                            "mutable-content" => 1, 
+                            "mutable-content" => 1,
                             "content-available" => 1
                         ]
                     ]
@@ -60,7 +60,7 @@ function send_notification($user, $title, $body, $type, $customData = []) {
         ];
 
         $encodedData = json_encode($data);
-       
+
         $headers = [
             'Authorization: Bearer ' . $access_token,
             'Content-Type: application/json',
@@ -86,7 +86,7 @@ function send_notification($user, $title, $body, $type, $customData = []) {
         }
         // Close connection
         curl_close($ch);
-    }    
+    }
 }
 
 function getAccessToken()
@@ -97,7 +97,7 @@ function getAccessToken()
     $data = explode("storage/", $file_name ?? '');
     $file_name = end($data);
 
-    $file_path = base_path('public/storage/'. $file_name);
+    $file_path = base_path('public/storage/' . $file_name);
 
     $client = new Client();
     $client->setAuthConfig($file_path);
@@ -105,4 +105,19 @@ function getAccessToken()
     $accessToken = $client->fetchAccessTokenWithAssertion()['access_token'];
 
     return $accessToken;
+}
+
+// Force everything to string and remove nulls
+function fcmStringify($array)
+{
+    $clean = [];
+
+    foreach ($array as $key => $value) {
+        if ($value === null) continue;
+        if (is_array($value)) $value = json_encode($value);
+
+        $clean[$key] = (string) $value;
+    }
+
+    return $clean;
 }

@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\Students;
 use App\Models\SubjectTeacher;
 use App\Models\User;
+use App\Models\UserDevices;
 use App\Models\Events;
 use App\Models\TransportationPayment;
 use App\Models\TransportationFee;
@@ -113,8 +114,13 @@ class ApiController extends Controller
         try {
 
             $user = $request->user();
-            $user->fcm_id = '';
-            $user->save();
+            // $user->fcm_id = '';
+            // $user->save();
+            if ($request->filled('fcm_id')) {
+                UserDevices::where('user_id', $user->id)
+                    ->where('fcm_id', $request->fcm_id)
+                    ->delete(); 
+            }
             // $user->currentAccessToken()->delete();
             $token = $request->bearerToken();
 

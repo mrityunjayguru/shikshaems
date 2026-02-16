@@ -9,6 +9,7 @@ use App\Models\File;
 use App\Models\School;
 use App\Models\SubjectTeacher;
 use App\Models\User;
+use App\Models\UserDevices;
 use App\Repositories\Announcement\AnnouncementInterface;
 use App\Repositories\AnnouncementClass\AnnouncementClassInterface;
 use App\Repositories\Assignment\AssignmentInterface;
@@ -188,6 +189,15 @@ class TeacherApiController extends Controller
             if ($request->fcm_id) {
                 $auth->fcm_id = $request->fcm_id;
                 $auth->save();
+                UserDevices::updateOrCreate(
+                    [
+                        'user_id' => $auth->id,
+                        'fcm_id' => $request->fcm_id
+                    ],
+                    [
+                        'device_type' => $request->device_type
+                    ]
+                );
             }
             // Check school status is activated or not
             if ($auth->school->status == 0 || $auth->status == 0) {
