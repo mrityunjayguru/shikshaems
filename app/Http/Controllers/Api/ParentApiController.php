@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TimetableCollection;
 use App\Http\Resources\UserDataResource;
 use App\Models\School;
+use App\Models\UserDevices;
 use App\Models\StudentLeave;
 use App\Models\ParentSupport;
 use App\Models\ClassSection;
@@ -161,12 +162,22 @@ class ParentApiController extends Controller
             if ($request->fcm_id) {
                 $auth->fcm_id = $request->fcm_id;
                 $auth->save();
+                UserDevices::updateOrCreate(
+                    [
+                        'user_id' => $auth->id,
+                        'fcm_id' => $request->fcm_id
+                    ],
+                    [
+                        'device_type' => $request->device_type
+                    ]
+                );
             }
 
             // session(['database_name' => $school->database_name]);
             $token = $auth->createToken($auth->first_name)->plainTextToken;
             // $token = $auth->createToken('API Token', ['school_code' => $request->school_code])->plainTextToken;
             $user = $auth;
+            
             $request->headers->set('school_code', $request->school_code);
             ResponseService::successResponse('User logged-in!', new UserDataResource($user), ['token' => $token], config('constants.RESPONSE_CODE.LOGIN_SUCCESS'));
         } else {

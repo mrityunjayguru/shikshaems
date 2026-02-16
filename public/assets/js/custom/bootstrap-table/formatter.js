@@ -914,7 +914,7 @@ function classSubjectsDetailFormatter(value, row) {
             html += `<thead>
                         <tr>
                             <th scope="col"></th>
-                            <th scope="col" class="text-right pr-5"><h3><u>` + semester.name + `</u></h3></th>
+                            <th scope="col" class="text-right pr-5"><u>` + semester.name + `</u></th>
                             <th scope="col"></th>
                         </tr>
                     </thead>

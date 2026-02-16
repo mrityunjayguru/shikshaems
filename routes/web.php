@@ -227,7 +227,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::get('show', [GpsController::class, 'show'])->name('gps.show');
             Route::put('update/{id}', [GpsController::class, 'update'])->name('gps.update');
         });
-        
+
         Route::get('school-gps/show', [GpsController::class, 'schoolGpsShow'])->name('school.gps.show');
         Route::get('school-gps', [GpsController::class, 'schoolGpsIndex'])->name('school.gps.index');
 
@@ -676,6 +676,9 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
         Route::get('events/show', [EventController::class, 'show'])->name('event.show');
         Route::delete('events/destroy/{id}', [EventController::class, 'destroy'])->name('event.destroy');
         Route::put('events/update/{id}', [EventController::class, 'update'])->name('event.update');
+        Route::post('/event/send-notification/{eventId}', [EventController::class, 'sendNotification'])
+            ->name('event.sendNotification');
+
         /*** Assignment ***/
         // TODO : Improve this
         Route::get('assignment-submission', [AssignmentController::class, 'viewAssignmentSubmission'])->name('assignment.submission');

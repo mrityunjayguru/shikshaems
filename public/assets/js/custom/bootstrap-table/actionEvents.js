@@ -1552,6 +1552,54 @@ window.eventEvents = {
         $('#edit-date').val(moment(row.date, momentFormat).format(momentFormat));
         $('#edit-title').val(row.title);
         $('#edit-description').val(row.desc);
+    },
+
+     'click .send-notification' : function(e, value, row) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You want to send notification!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes"
+        }).then((result) => {
+            if (result.isConfirmed) {
+
+                let id = row.id;
+
+                $.ajax({
+                    url: "/event/send-notification/" + id,
+                    type: "POST",
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.status == true) {
+                            Swal.fire({
+                                title: "Send!",
+                                text: "Notification has been send.",
+                                icon: "success"
+                            });
+                        } else {
+                            Swal.fire({
+                                title: "Error!",
+                                text: "Failed to send notification.",
+                                icon: "error"
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: "Error!",
+                            text: "Failed to send notification.",
+                            icon: "error"
+                        });
+                    }
+                });
+            }
+        });
+
     }
 };
 

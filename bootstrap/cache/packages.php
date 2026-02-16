@@ -36,17 +36,6 @@
       0 => 'BeyondCode\\QueryDetector\\QueryDetectorServiceProvider',
     ),
   ),
-  'dacoto/laravel-env-set' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'dacoto\\EnvSet\\EnvSetServiceProvider',
-    ),
-    'aliases' => 
-    array (
-      'EnvSet' => 'dacoto\\EnvSet\\Facades\\EnvSet',
-    ),
-  ),
   'intervention/image' => 
   array (
     'providers' => 
@@ -135,13 +124,6 @@
     'providers' => 
     array (
       0 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    ),
-  ),
-  'sagar/laravel-wizard-installer' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'dacoto\\LaravelWizardInstaller\\Providers\\LaravelWizardInstallerProvider',
     ),
   ),
   'spatie/laravel-permission' => 
