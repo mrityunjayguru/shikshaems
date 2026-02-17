@@ -624,6 +624,7 @@ class StudentApiController extends Controller
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
         }
+
         try {
             $student = $request->user()->student;
             $sessionYear = $this->cache->getDefaultSessionYear();
@@ -640,11 +641,70 @@ class StudentApiController extends Controller
                 $attendance = $attendance->whereYear('date', $request->year);
                 $holidays = $holidays->whereYear('date', $request->year);
             }
+
+            $leaves = StudentLeave::where('user_id', $student->user_id)
+                ->where('status', 1)
+                ->get();
+
             $attendance = $attendance->get();
             $holidays = $holidays->get();
 
+            // $month = $request->month ?? now()->month;
+            // $year  = $request->year ?? now()->year;
 
-            $data = ['attendance' => $attendance, 'holidays' => $holidays, 'session_year' => $session_year_data];
+            // $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+            // $endDate   = Carbon::create($year, $month, 1)->endOfMonth();
+
+            // $calendar = [];
+
+            // for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+
+            //     $currentDate = $date->copy()->startOfDay();
+
+            //     // 1️⃣ Check Holiday
+            //     $holiday = $holidays->first(function ($h) use ($currentDate) {
+            //         return Carbon::parse($h->date)->isSameDay($currentDate);
+            //     });
+
+            //     if ($holiday) {
+            //         $status = 'H';
+            //     } else {
+
+            //         // 2️⃣ Check Leave
+            //         $leave = $leaves->first(function ($leave) use ($currentDate) {
+
+            //             return $currentDate->between(
+            //                 Carbon::parse($leave->from_date)->startOfDay(),
+            //                 Carbon::parse($leave->to_date)->endOfDay()
+            //             );
+            //         });
+
+            //         if ($leave) {
+            //             $status = 'L';
+            //         } else {
+
+            //             // 3️⃣ Check Attendance
+            //             $present = $attendance->first(function ($a) use ($currentDate) {
+            //                 return Carbon::parse($a->date)->isSameDay($currentDate);
+            //             });
+
+            //             $status = $present ? 'P' : 'A';
+            //         }
+            //     }
+
+                // $calendar[] = [
+                //     'date' => $currentDate->toDateString(),
+                //     'day' => $currentDate->format('D'),
+                //     'status' => $status
+                // ];
+            //     $data = [
+            //         'calendar' => $calendar,
+            //         'session_year' => $session_year_data
+            //     ];
+            // }
+
+
+            $data = ['attendance' => $attendance, 'holidays' => $holidays, 'leaves' => $leaves, 'session_year' => $session_year_data];
 
             ResponseService::successResponse("Attendance Details Fetched Successfully", $data);
         } catch (Throwable $e) {

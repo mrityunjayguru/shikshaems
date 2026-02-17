@@ -75,6 +75,8 @@
             var table = $('#table_list');
             const response = await fetch(`/attendance/month-wise/list?class_section_id=${class_section_id}&month=${month}`);
             const data = await response.json();
+            // console.log(data);
+            
             table.bootstrapTable('load', data);
             try {
                 // Fetch the attendance data
