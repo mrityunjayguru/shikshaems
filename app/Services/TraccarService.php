@@ -137,7 +137,7 @@ class TraccarService
                 ];
 
                 $client = new Client(
-                    "wss://trackback.trackroutepro.com/api/socket",
+                    "ws://trackback.trackroutepro.com/api/socket",
                     [
                         'headers' => $headers,
                         'timeout' => 60

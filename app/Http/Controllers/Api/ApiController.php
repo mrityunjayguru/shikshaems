@@ -12,6 +12,7 @@ use App\Models\SubjectTeacher;
 use App\Models\User;
 use App\Models\UserDevices;
 use App\Models\Events;
+use App\Models\Syllabus;
 use App\Models\TransportationPayment;
 use App\Models\TransportationFee;
 use App\Repositories\Attachment\AttachmentInterface;
@@ -119,7 +120,7 @@ class ApiController extends Controller
             if ($request->filled('fcm_id')) {
                 UserDevices::where('user_id', $user->id)
                     ->where('fcm_id', $request->fcm_id)
-                    ->delete(); 
+                    ->delete();
             }
             // $user->currentAccessToken()->delete();
             $token = $request->bearerToken();
@@ -189,6 +190,34 @@ class ApiController extends Controller
             ])->get();
 
             ResponseService::successResponse("Event Fetched Successfully", $events);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function getSyllabus(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'class_id' => 'required',
+            'subject_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+        try {
+            // $syllabus = Syllabus::with('class','subject','contents')->get();
+            $syllabus = Syllabus::with('class', 'subject', 'contents')
+                ->when($request->class_id, function ($q) use ($request) {
+                    $q->where('class_id', $request->class_id);
+                })
+                ->when($request->subject_id, function ($q) use ($request) {
+                    $q->where('subject_id', $request->subject_id);
+                })
+                ->get();
+
+            ResponseService::successResponse("Event Fetched Successfully", $syllabus);
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
