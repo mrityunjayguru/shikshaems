@@ -129,7 +129,6 @@ Route::group(['prefix' => 'parent'], static function () {
                 Route::get('/receipt', [ParentApiController::class, 'feesPaidReceiptPDF']); //Fees Receipt
             });
 
-
             // Online Exam
             Route::get('get-online-exam-list', [ParentApiController::class, 'getOnlineExamList']); // Get Online Exam List Route
             Route::get('get-online-exam-result-list', [ParentApiController::class, 'getOnlineExamResultList']); // Online exam result list Route
@@ -158,6 +157,7 @@ Route::group(['prefix' => 'parent'], static function () {
 
             //
             Route::post('apply-leave', [ParentApiController::class, 'applyLeave']);
+            Route::get('get-leaves', [ParentApiController::class, 'getLeaves']);
             Route::post('submit-support', [ParentApiController::class, 'support']);
         });
     });

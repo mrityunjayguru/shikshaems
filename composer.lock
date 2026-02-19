@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "16ac883840e4b15be8e79958a685612f",
+    "content-hash": "a181d00d144aee7c3ba8cff9d03ae418",
     "packages": [
         {
             "name": "awobaz/compoships",
@@ -417,64 +417,6 @@
                 }
             ],
             "time": "2024-09-19T14:15:21+00:00"
-        },
-        {
-            "name": "dacoto/laravel-env-set",
-            "version": "1.0.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/dacoto/laravel-env-set.git",
-                "reference": "a0a7ce173c01ba0fac7899e57182c9c226e5efdc"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/dacoto/laravel-env-set/zipball/a0a7ce173c01ba0fac7899e57182c9c226e5efdc",
-                "reference": "a0a7ce173c01ba0fac7899e57182c9c226e5efdc",
-                "shasum": ""
-            },
-            "require": {
-                "illuminate/support": "^10.8",
-                "php": "^8.1"
-            },
-            "require-dev": {
-                "nunomaduro/larastan": "^2.6",
-                "orchestra/testbench": "^8.5",
-                "pestphp/pest": "^2.5",
-                "pestphp/pest-plugin-laravel": "^2.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "aliases": {
-                        "EnvSet": "dacoto\\EnvSet\\Facades\\EnvSet"
-                    },
-                    "providers": [
-                        "dacoto\\EnvSet\\EnvSetServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "dacoto\\EnvSet\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Cortés",
-                    "email": "dacoto@dacoto.com"
-                }
-            ],
-            "description": "A .env editor for Laravel",
-            "homepage": "https://dacoto.github.io/laravel-env-set/",
-            "support": {
-                "issues": "https://github.com/dacoto/laravel-env-set/issues",
-                "source": "https://github.com/dacoto/laravel-env-set/tree/1.0.1"
-            },
-            "time": "2023-08-22T11:53:45+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -5345,6 +5287,59 @@
             "time": "2024-04-27T21:32:50+00:00"
         },
         {
+            "name": "ratchet/pawl",
+            "version": "v0.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ratchetphp/Pawl.git",
+                "reference": "31769d2a78d65b4b774caf4806f70f33bfef8712"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ratchetphp/Pawl/zipball/31769d2a78d65b4b774caf4806f70f33bfef8712",
+                "reference": "31769d2a78d65b4b774caf4806f70f33bfef8712",
+                "shasum": ""
+            },
+            "require": {
+                "evenement/evenement": "^3.0 || ^2.0",
+                "php": ">=5.4",
+                "ratchet/rfc6455": "^0.3",
+                "react/socket": "^1.9"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.3 || ^5.7 || ^4.8"
+            },
+            "suggest": {
+                "reactivex/rxphp": "~2.0"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions_include.php"
+                ],
+                "psr-4": {
+                    "Ratchet\\Client\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Asynchronous WebSocket client",
+            "keywords": [
+                "Ratchet",
+                "async",
+                "client",
+                "websocket",
+                "websocket client"
+            ],
+            "support": {
+                "issues": "https://github.com/ratchetphp/Pawl/issues",
+                "source": "https://github.com/ratchetphp/Pawl/tree/v0.4.0"
+            },
+            "time": "2021-11-04T14:42:40+00:00"
+        },
+        {
             "name": "ratchet/rfc6455",
             "version": "v0.3.1",
             "source": {
@@ -5616,31 +5611,33 @@
         },
         {
             "name": "react/event-loop",
-            "version": "v1.5.0",
+            "version": "v1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/event-loop.git",
-                "reference": "bbe0bd8c51ffc05ee43f1729087ed3bdf7d53354"
+                "reference": "187fb56f46d424afb6ec4ad089269c72eec2e137"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/event-loop/zipball/bbe0bd8c51ffc05ee43f1729087ed3bdf7d53354",
-                "reference": "bbe0bd8c51ffc05ee43f1729087ed3bdf7d53354",
+                "url": "https://api.github.com/repos/reactphp/event-loop/zipball/187fb56f46d424afb6ec4ad089269c72eec2e137",
+                "reference": "187fb56f46d424afb6ec4ad089269c72eec2e137",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^9.6 || ^5.7 || ^4.8.36"
+                "phpunit/phpunit": "^9.3 || ^5.7 || ^4.8.35"
             },
             "suggest": {
-                "ext-pcntl": "For signal handling support when using the StreamSelectLoop"
+                "ext-event": "~1.0 for ExtEventLoop",
+                "ext-pcntl": "For signal handling support when using the StreamSelectLoop",
+                "ext-uv": "* for ExtUvLoop"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "React\\EventLoop\\": "src/"
+                    "React\\EventLoop\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -5676,15 +5673,19 @@
             ],
             "support": {
                 "issues": "https://github.com/reactphp/event-loop/issues",
-                "source": "https://github.com/reactphp/event-loop/tree/v1.5.0"
+                "source": "https://github.com/reactphp/event-loop/tree/v1.3.0"
             },
             "funding": [
                 {
-                    "url": "https://opencollective.com/reactphp",
-                    "type": "open_collective"
+                    "url": "https://github.com/WyriHaximus",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/clue",
+                    "type": "github"
                 }
             ],
-            "time": "2023-11-13T13:48:05+00:00"
+            "time": "2022-03-17T11:10:22+00:00"
         },
         {
             "name": "react/promise",
@@ -6068,48 +6069,6 @@
                 "source": "https://github.com/MyIntervals/PHP-CSS-Parser/tree/v8.7.0"
             },
             "time": "2024-10-27T17:38:32+00:00"
-        },
-        {
-            "name": "sagar/laravel-wizard-installer",
-            "version": "dev-purnima",
-            "dist": {
-                "type": "path",
-                "url": "packages/laravel-wizard-installer",
-                "reference": "f928a8f0f3693eeebc8b2ae9a77c786b4a85cd6e"
-            },
-            "require": {
-                "dacoto/laravel-env-set": "^1.0",
-                "ext-json": "*",
-                "ext-pdo": "*",
-                "laravel/framework": "^10.0",
-                "php": "^8.1|^8.2"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "dacoto\\LaravelWizardInstaller\\Providers\\LaravelWizardInstallerProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "dacoto\\LaravelWizardInstaller\\": "src/"
-                }
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Cortés",
-                    "email": "cortestoledanodavid@gmail.com"
-                }
-            ],
-            "description": "Laravel wizard installer package",
-            "transport-options": {
-                "relative": true
-            }
         },
         {
             "name": "spatie/laravel-permission",
@@ -8411,6 +8370,55 @@
                 }
             ],
             "time": "2024-11-08T15:28:48+00:00"
+        },
+        {
+            "name": "textalk/websocket",
+            "version": "1.5.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Textalk/websocket-php.git",
+                "reference": "d05dbaa97500176447ffb1f1800573f23085ab13"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Textalk/websocket-php/zipball/d05dbaa97500176447ffb1f1800573f23085ab13",
+                "reference": "d05dbaa97500176447ffb1f1800573f23085ab13",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2 | ^8.0",
+                "psr/log": "^1 | ^2 | ^3"
+            },
+            "require-dev": {
+                "php-coveralls/php-coveralls": "^2.0",
+                "phpunit/phpunit": "^8.0|^9.0",
+                "squizlabs/php_codesniffer": "^3.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "WebSocket\\": "lib"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "ISC"
+            ],
+            "authors": [
+                {
+                    "name": "Fredrik Liljegren"
+                },
+                {
+                    "name": "Sören Jensen",
+                    "email": "soren@abicart.se"
+                }
+            ],
+            "description": "WebSocket client and server",
+            "support": {
+                "issues": "https://github.com/Textalk/websocket-php/issues",
+                "source": "https://github.com/Textalk/websocket-php/tree/1.5.8"
+            },
+            "time": "2022-04-26T06:28:24+00:00"
         },
         {
             "name": "tijsverkoyen/css-to-inline-styles",
@@ -12287,6 +12295,6 @@
         "ext-pdo": "*",
         "ext-zip": "*"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }

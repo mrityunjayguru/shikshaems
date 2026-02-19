@@ -36,8 +36,8 @@ return [
     ],
 
     'traccar' => [
+        'socket_url' => env('TRACCAR_SOCKET_URL'),
         'phone' => env('TRACCAR_PHONE'),
     ],
-
 
 ];

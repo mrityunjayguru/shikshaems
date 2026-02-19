@@ -26,6 +26,7 @@ use App\Models\TransportationAttendance;
 use App\Models\TransportationRequest;
 use Illuminate\Support\Facades\Config;
 use App\Services\ResponseService;
+use App\Jobs\StartTripTracking;
 use App\Services\SessionYearsTrackingsService;
 use Illuminate\Support\Facades\Validator;
 use App\Services\CachingService;
@@ -1861,6 +1862,10 @@ class TrasportationApiController extends Controller
                     }
 
                     $id = RouteVehicleHistory::create($data);
+                    $id->tracking = 1;
+                    $id->save;
+                    // StartTripTracking::dispatch($id->id);
+
                     $trip_id = ["trip_id" => $id->id];
                     return ResponseService::successResponse("Trip Started", $trip_id);
                 } else {
@@ -1888,7 +1893,9 @@ class TrasportationApiController extends Controller
                     if ($trip->last_pickup_point_id == $last_pickup_point) {
                         $trip->actual_end_time = date("H:i:s");
                         $trip->status = "completed";
+                        $trip->tracking = 0;
                         $trip->save();
+                        cache()->forget('active_trip');
                         return ResponseService::successResponse("Trip ended");
                     } else {
                         return ResponseService::errorResponse("You have not reached the last pickup point yet");

@@ -47,6 +47,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use JetBrains\PhpStorm\NoReturn;
 use Throwable;
+use Carbon;
 
 class ParentApiController extends Controller
 {
@@ -177,7 +178,7 @@ class ParentApiController extends Controller
             $token = $auth->createToken($auth->first_name)->plainTextToken;
             // $token = $auth->createToken('API Token', ['school_code' => $request->school_code])->plainTextToken;
             $user = $auth;
-            
+
             $request->headers->set('school_code', $request->school_code);
             ResponseService::successResponse('User logged-in!', new UserDataResource($user), ['token' => $token], config('constants.RESPONSE_CODE.LOGIN_SUCCESS'));
         } else {
@@ -450,6 +451,10 @@ class ParentApiController extends Controller
 
             $attendance = $this->attendance->builder()->where(['student_id' => $children->user_id, 'session_year_id' => $sessionYear->id]);
             $holidays = $this->holiday->builder();
+
+            $leaves = StudentLeave::where('user_id', $children->user_id)
+                ->where('status', 1);
+
             if (isset($request->month)) {
                 $attendance = $attendance->whereMonth('date', $request->month);
                 $holidays = $holidays->whereMonth('date', $request->month);
@@ -459,12 +464,52 @@ class ParentApiController extends Controller
                 $attendance = $attendance->whereYear('date', $request->year);
                 $holidays = $holidays->whereYear('date', $request->year);
             }
+
+            if (isset($request->month) && isset($request->year)) {
+
+                $startDate = Carbon::create($request->year, $request->month, 1)->startOfMonth();
+                $endDate   = Carbon::create($request->year, $request->month, 1)->endOfMonth();
+
+                $leaves = $leaves->where(function ($q) use ($startDate, $endDate) {
+
+                    $q->whereBetween('from_date', [$startDate, $endDate])
+                        ->orWhereBetween('to_date', [$startDate, $endDate])
+                        ->orWhere(function ($q2) use ($startDate, $endDate) {
+                            $q2->where('from_date', '<=', $startDate)
+                                ->where('to_date', '>=', $endDate);
+                        });
+                });
+            }
+
             $attendance = $attendance->get();
             $holidays = $holidays->get();
+            $leaves     = $leaves->get();
 
-            $data = ['attendance' => $attendance, 'holidays' => $holidays, 'session_year' => $sessionYear];
+            $data = ['attendance' => $attendance, 'holidays' => $holidays, 'leaves' => $leaves, 'session_year' => $sessionYear];
 
             ResponseService::successResponse("Attendance Details Fetched Successfully", $data);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function getLeaves(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|numeric', //user_id
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+
+        try {
+            $leave = StudentLeave::with('user:id,first_name,last_name,image')
+            ->where('user_id', $request->user_id)
+            ->orderBy('created_at', 'ASC')
+            ->get();
+            ResponseService::successResponse("Data Fetched Successfully", $leave);
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
@@ -2156,7 +2201,8 @@ class ParentApiController extends Controller
     public function applyLeave(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
+            'user_id'   => 'required|array',
+            'user_id.*' => 'exists:users,id',
             'reason' => 'required',
             'from_date' => 'required',
             'to_date' => 'required',
@@ -2167,13 +2213,28 @@ class ParentApiController extends Controller
             ResponseService::validationError($validator->errors()->first());
         }
         try {
-            $leave = new StudentLeave();
-            $leave->user_id = $request->user_id;
-            $leave->reason = $request->reason;
-            $leave->from_date = $request->from_date;
-            $leave->to_date = $request->to_date;
-            $leave->days = $request->days;
-            $leave->save();
+            // $leave = new StudentLeave();
+            // $leave->user_id = $request->user_id;
+            // $leave->reason = $request->reason;
+            // $leave->from_date = $request->from_date;
+            // $leave->to_date = $request->to_date;
+            // $leave->days = $request->days;
+            // $leave->save();
+
+            DB::beginTransaction();
+
+            foreach ($request->user_id as $userId) {
+
+                StudentLeave::create([
+                    'user_id'   => $userId,
+                    'reason'    => $request->reason,
+                    'from_date' => $request->from_date,
+                    'to_date'   => $request->to_date,
+                    'days'      => $request->days,
+                ]);
+            }
+
+            DB::commit();
             ResponseService::successResponse("Leave Apllied Successfully");
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
@@ -2194,12 +2255,12 @@ class ParentApiController extends Controller
             ResponseService::validationError($validator->errors()->first());
         }
         try {
-            $leave = new ParentSupport();
-            $leave->child_id = $request->child_id;
-            $leave->class_section_id = $request->class_section_id;
-            $leave->subject = $request->subject;
-            $leave->message = $request->message;
-            $leave->save();
+            $support = new ParentSupport();
+            $support->child_id = $request->child_id;
+            $support->class_section_id = $request->class_section_id;
+            $support->subject = $request->subject;
+            $support->message = $request->message;
+            $support->save();
             ResponseService::successResponse("Support Submitted Successfully");
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);

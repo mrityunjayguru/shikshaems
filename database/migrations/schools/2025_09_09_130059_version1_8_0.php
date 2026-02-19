@@ -111,6 +111,7 @@ return new class extends Migration
                 $table->time('actual_end_time')->nullable();
                 $table->date('date');
                 $table->enum('status', ['upcoming', 'inprogress', 'completed'])->default('upcoming');
+                $table->boolean('tracking')->default(0);
                 $table->foreignId('session_year_id')->constrained('session_years')->cascadeOnDelete();
                 $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamps();
