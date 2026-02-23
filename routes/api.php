@@ -401,4 +401,8 @@ Route::group(['middleware' => ['APISwitchDatabase',]], static function () {
     Route::get('syllabus', [ApiController::class, 'getSyllabus']);
 
     Route::post('track-vehicles', [TrasportationApiController::class, 'trackVehicles']);
+    
+    // Live Trip Tracking APIs
+    Route::get('trip/live-tracking', [TrasportationApiController::class, 'getLiveTracking']);
+    Route::get('trip/stops', [TrasportationApiController::class, 'getTripStops']);
 });

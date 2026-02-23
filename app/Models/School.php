@@ -36,7 +36,14 @@ class School extends Model
         'code',
         'type',
         'domain_type',
-        'installed'
+        'installed',
+        'traccar_phone',
+        'traccar_session_id',
+        'traccar_session_expires_at'
+    ];
+
+    protected $casts = [
+        'traccar_session_expires_at' => 'datetime'
     ];
 
     protected $hidden = ['database_name'];
@@ -91,5 +98,63 @@ class School extends Model
     public function getUpdatedAtAttribute()
     {
         return $this->formatDateValue($this->getRawOriginal('updated_at'));
+    }
+
+    /**
+     * Get Traccar session for this school
+     */
+    public function getTraccarSession()
+    {
+        // Check if session exists and is valid
+        if ($this->traccar_session_id && 
+            $this->traccar_session_expires_at && 
+            $this->traccar_session_expires_at->isFuture()) {
+            return $this->traccar_session_id;
+        }
+
+        // Generate new session
+        return $this->refreshTraccarSession();
+    }
+
+    /**
+     * Refresh Traccar session
+     */
+    public function refreshTraccarSession()
+    {
+        if (!$this->traccar_phone) {
+            return null;
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::asForm()->post(
+                "https://app.trackroutepro.com/Auth/verifyUser",
+                ['phone' => $this->traccar_phone]
+            );
+
+            if ($response->successful()) {
+                $sessionId = $response->json()['jsessionid'] ?? null;
+                
+                if ($sessionId) {
+                    $this->update([
+                        'traccar_session_id' => $sessionId,
+                        'traccar_session_expires_at' => now()->addHours(2)
+                    ]);
+                    
+                    return $sessionId;
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Traccar session refresh failed for school {$this->id}: " . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Get vehicles relationship
+     */
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class);
     }
 }

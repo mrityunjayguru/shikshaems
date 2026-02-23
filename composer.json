@@ -28,6 +28,7 @@
         "maatwebsite/excel": "^3.1",
         "mahesh-kerai/update-generator": "^2.0",
         "psr/simple-cache": "^2.0",
+        "pusher/pusher-php-server": "^7.2",
         "ratchet/pawl": "0.4",
         "razorpay/razorpay": "2.*",
         "react/event-loop": "1.3",
