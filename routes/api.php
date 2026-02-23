@@ -405,4 +405,9 @@ Route::group(['middleware' => ['APISwitchDatabase',]], static function () {
     // Live Trip Tracking APIs
     Route::get('trip/live-tracking', [TrasportationApiController::class, 'getLiveTracking']);
     Route::get('trip/stops', [TrasportationApiController::class, 'getTripStops']);
+    
+    // Tracking Page API (for user's specific stop)
+    Route::get('trip/details', [\App\Http\Controllers\Api\TrackingPageController::class, 'getMyStopTracking']);
+
+
 });

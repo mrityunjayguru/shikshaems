@@ -57,7 +57,7 @@ class SimpleTripTrackingService
     {
         try {
             // Use current default connection (which is already switched to school DB)
-            $trip = RouteVehicleHistory::with(['route.pickupPoints'])
+            $trip = RouteVehicleHistory::with(['route.pickupPoints','vehicle'])
                 ->find($tripId);
 
             if (!$trip || !$trip->route) {
@@ -77,7 +77,7 @@ class SimpleTripTrackingService
             // Build payload
             $payload = [
                 'trip_id' => $tripId,
-                'vehicle_number' => $trip->vehicle->number ?? 'Unknown',
+                'vehicle_number' => $trip->vehicle->vehicle_number ?? 'Unknown',
                 'current_location' => [
                     'latitude' => $latitude,
                     'longitude' => $longitude,
