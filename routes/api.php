@@ -129,7 +129,6 @@ Route::group(['prefix' => 'parent'], static function () {
                 Route::get('/receipt', [ParentApiController::class, 'feesPaidReceiptPDF']); //Fees Receipt
             });
 
-
             // Online Exam
             Route::get('get-online-exam-list', [ParentApiController::class, 'getOnlineExamList']); // Get Online Exam List Route
             Route::get('get-online-exam-result-list', [ParentApiController::class, 'getOnlineExamResultList']); // Online exam result list Route
@@ -158,6 +157,7 @@ Route::group(['prefix' => 'parent'], static function () {
 
             //
             Route::post('apply-leave', [ParentApiController::class, 'applyLeave']);
+            Route::get('get-leaves', [ParentApiController::class, 'getLeaves']);
             Route::post('submit-support', [ParentApiController::class, 'support']);
         });
     });
@@ -401,4 +401,311 @@ Route::group(['middleware' => ['APISwitchDatabase',]], static function () {
     Route::get('syllabus', [ApiController::class, 'getSyllabus']);
 
     Route::post('track-vehicles', [TrasportationApiController::class, 'trackVehicles']);
+    
+    // Live Trip Tracking APIs
+    Route::get('trip/live-tracking', [TrasportationApiController::class, 'getLiveTracking']);
+    Route::get('trip/stops', [TrasportationApiController::class, 'getTripStops']);
+    
+    // My Wards Transportation API
+    Route::get('my-wards', [TrasportationApiController::class, 'getMyWards']);
+});
+
+// Get all cached trips (for debugging)
+Route::get('test-cached-trips', function() {
+    try {
+        // Try to get all trip cache keys
+        $trips = [];
+        
+        // Check for trips 1-50 (adjust range as needed)
+        for ($i = 1; $i <= 50; $i++) {
+            $tripCache = \Illuminate\Support\Facades\Cache::get("trip_{$i}");
+            if ($tripCache) {
+                $trips[] = [
+                    'trip_id' => $i,
+                    'has_data' => true,
+                    'current_location' => $tripCache['current_location'] ?? null,
+                    'next_stop' => $tripCache['next_stop']['name'] ?? 'N/A'
+                ];
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Found ' . count($trips) . ' cached trips',
+            'trips' => $trips
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Get all schools (for debugging)
+Route::get('test-schools', function() {
+    try {
+        $schools = \App\Models\School::select('id', 'name', 'database_name', 'traccar_phone')
+            ->where('status', 1)
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'schools' => $schools,
+            'total' => $schools->count()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Test Broadcast Endpoint (for testing Pusher) - Fetches live data from API
+Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\Illuminate\Http\Request $request, $tripId, $schoolId = null) {
+    try {
+        // Get school_id from URL parameter, request body, or query string
+        $schoolId = $schoolId ?? $request->input('school_id') ?? $request->query('school_id');
+        
+        if (!$schoolId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'school_id is required. Use: /api/test-broadcast/{tripId}/{schoolId} or pass as parameter',
+                'example' => '/api/test-broadcast/19/7'
+            ], 400);
+        }
+
+        // Get school details from main database
+        $school = \App\Models\School::find($schoolId);   
+        if (!$school) {
+            return response()->json([
+                'success' => false,
+                'message' => 'School not found with ID: ' . $schoolId
+            ], 404);
+        }
+
+        // Switch to school database
+        $schoolDbName = $school->database_name;
+        if (!$schoolDbName) {
+            return response()->json([
+                'success' => false,
+                'message' => 'School database name not configured'
+            ], 404);
+        }
+
+        // Set school database connection
+        config(['database.connections.school.database' => $schoolDbName]);
+        \Illuminate\Support\Facades\DB::purge('school');
+        \Illuminate\Support\Facades\DB::reconnect('school');
+
+        // Get trip details from school database
+        $trip = \App\Models\RouteVehicleHistory::on('school')->with([
+            'route.routePickupPoints.pickupPoint',
+            'vehicle'
+        ])->find($tripId);
+
+        if (!$trip) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Trip not found with ID: ' . $tripId . ' in school database: ' . $schoolDbName
+            ], 404);
+        }
+
+        if (!$trip->vehicle) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vehicle not found for this trip'
+            ], 404);
+        }
+
+        // Get GPS device from main database using vehicle's gps_id
+        $gps = \App\Models\GPS::where('assigned_to', $trip->vehicle->id)->first();
+        
+        if (!$gps || !$gps->imei_no) {
+            return response()->json([
+                'success' => false,
+                'message' => 'GPS device not found for vehicle ID: ' . $trip->vehicle->id
+            ], 404);
+        }
+
+        // Get Traccar phone from school
+        $traccarPhone = $school->traccar_phone ?? env('TRACCAR_PHONE');
+        
+        if (!$traccarPhone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'School Traccar phone not configured'
+            ], 404);
+        }
+
+        // Get Traccar URL from env (same as TraccarHttpListener uses)
+        $traccarBaseUrl = rtrim(str_replace('wss://', 'https://', env('TRACCAR_SOCKET_URL', 'https://trackback.trackroutepro.com')), '/api/socket');
+        $traccarAuthUrl = env('TRACCAR_AUTH_URL', 'https://app.trackroutepro.com/Auth/verifyUser');
+
+        // Authenticate with Traccar
+        $authResponse = \Illuminate\Support\Facades\Http::asForm()->post($traccarAuthUrl, [
+            'phone' => env('TRACCAR_PHONE')
+        ]);
+
+        if (!$authResponse->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to authenticate with Traccar'
+            ], 500);
+        }
+
+        $sessionId = $authResponse->json()['jsessionid'] ?? null;
+        
+        if (!$sessionId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No session ID received from Traccar'
+            ], 500);
+        }
+
+        // Get device ID from Traccar using IMEI
+        $devicesUrl = "{$traccarBaseUrl}/api/devices";
+        
+        $devicesCh = curl_init($devicesUrl);
+        curl_setopt($devicesCh, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($devicesCh, CURLOPT_HTTPHEADER, [
+            'Cookie: JSESSIONID=' . $sessionId,
+            'Content-Type: application/json'
+        ]);
+        curl_setopt($devicesCh, CURLOPT_SSL_VERIFYPEER, false);
+        
+        $devicesResponse = curl_exec($devicesCh);
+        $httpCode = curl_getinfo($devicesCh, CURLINFO_HTTP_CODE);
+        curl_close($devicesCh);
+        
+        if ($httpCode !== 200) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch devices from Traccar. HTTP Code: ' . $httpCode,
+                'response' => $devicesResponse
+            ], 500);
+        }
+        
+        $devices = json_decode($devicesResponse, true);
+        
+        if (!$devices || !is_array($devices)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid devices response from Traccar',
+                'raw_response' => $devicesResponse,
+                'decoded' => $devices
+            ], 500);
+        }
+        
+        $traccarDevice = null;
+        
+        // Debug: collect all device info
+        $availableDevices = [];
+        foreach ($devices as $device) {
+            $deviceImei = $device['uniqueId'] ?? '';
+            $deviceName = $device['name'] ?? '';
+            $deviceId = $device['id'] ?? '';
+            
+            $availableDevices[] = [
+                'id' => $deviceId,
+                'name' => $deviceName,
+                'uniqueId' => $deviceImei
+            ];
+            
+            // Try exact match and trimmed match on IMEI
+            if ($deviceImei && ($deviceImei === $gps->imei_no || trim($deviceImei) === trim($gps->imei_no))) {
+                $traccarDevice = $device;
+                break;
+            }
+            
+            // Also try matching by name if IMEI is empty
+            if (!$deviceImei && $deviceName && strpos($deviceName, $gps->imei_no) !== false) {
+                $traccarDevice = $device;
+                break;
+            }
+        }
+        
+        if (!$traccarDevice) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Traccar device not found with IMEI: ' . $gps->imei_no,
+                'looking_for' => $gps->imei_no,
+                'available_devices' => $availableDevices,
+                'total_devices' => count($devices),
+                'hint' => 'Device uniqueId is empty in Traccar. Please set the IMEI in Traccar device settings.'
+            ], 404);
+        }
+
+        // Fetch live position from Traccar API
+        $traccarDeviceId = $traccarDevice['id'];
+        $apiUrl = "{$traccarBaseUrl}/api/positions?deviceId={$traccarDeviceId}";
+
+        $ch = curl_init($apiUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Cookie: JSESSIONID=' . $sessionId,
+            'Content-Type: application/json'
+        ]);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch position from Traccar. HTTP Code: ' . $httpCode,
+                'traccar_url' => $apiUrl
+            ], 500);
+        }
+
+        $positions = json_decode($response, true);
+        
+        if (empty($positions)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No position data available from Traccar'
+            ], 404);
+        }
+
+        $position = $positions[0];
+
+        // Extract position data
+        $latitude = $position['latitude'];
+        $longitude = $position['longitude'];
+        $speed = round(($position['speed'] ?? 0) * 1.852, 2); // knots to km/h
+        $deviceTime = \Carbon\Carbon::parse($position['deviceTime'])->format('Y-m-d H:i:s');
+        $attributes = $position['attributes'] ?? [];
+
+        // Use SimpleTripTrackingService to process and broadcast (includes Pusher)
+        $trackingService = app(\App\Services\SimpleTripTrackingService::class);
+        $trackingService->processGPSData($tripId, $latitude, $longitude, $speed, $deviceTime, $attributes);
+
+        // Get the cached data that was just updated
+        $trackingData = \Illuminate\Support\Facades\Cache::get("trip_{$tripId}");
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Live data fetched and broadcasted successfully',
+            'data' => $trackingData,
+            'source' => 'live_api',
+            'school_db' => $schoolDbName,
+            'position' => [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'speed' => $speed,
+                'device_time' => $deviceTime
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Test broadcast error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Broadcast failed: ' . $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
 });

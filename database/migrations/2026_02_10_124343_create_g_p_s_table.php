@@ -20,7 +20,7 @@ return new class extends Migration
             $table->integer('school_id')->nullable(); 
             $table->boolean('school_assigned')->default(0); //0 - unassigned, 1-assigned
             $table->dateTime('assigned_on')->nullable();
-            $table->integer('assigned_to')->nullable();
+            $table->integer('assigned_to')->nullable(); //vehicle_id
             $table->timestamps();
         });
     }

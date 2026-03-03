@@ -39,3 +39,17 @@ shiksha-ems-firebase-adminsdk*.json
 /qodana.yaml
 
 .cursor/rules/my-laravel-rules.mdc
+
+# Markdown files
+*.md
+*.sh
+
+# Cache folders
+/cache
+/bootstrap/cache/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# Log files
+*.log

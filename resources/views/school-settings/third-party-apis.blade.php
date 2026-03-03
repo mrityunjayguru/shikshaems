@@ -67,6 +67,33 @@
                             </div>
                             {{-- End System Settings --}}
 
+                            {{-- Traccar GPS Tracking --}}
+                            <div class="border border-secondary rounded-lg my-4 mx-1">
+                                <div class="col-md-12 mt-3">
+                                    <h4>{{ __('Traccar GPS Tracking') }}</h4>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <hr class="mt-0">
+                                </div>
+                                <div class="row my-4 mx-1">
+                                    <div class="form-group col-md-6 col-sm-12">
+                                        <label for="traccar_phone">{{ __('Traccar Phone Number') }} <span class="text-danger">*</span></label>
+                                        <input name="traccar_phone" id="traccar_phone" value="{{ $schoolSettings['traccar_phone'] ?? '' }}" type="text" placeholder="{{ __('Enter Traccar account phone number') }}" class="form-control"/>
+                                        <small class="form-text text-muted">
+                                            {{ __('This phone number is used to authenticate with Traccar for live GPS tracking') }}
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <p class="mt-2 text-primary">
+                                        <b>Note: </b>
+                                        This phone number should match your Traccar account credentials. It's used for real-time bus tracking and live location updates.
+                                    </p>
+                                </div>
+                            </div>
+                            {{-- End Traccar GPS Tracking --}}
+
                               <div class="mt-3">
                             <input class="btn btn-secondary float-left px-10 py-6 ml-3" type="reset" value={{ __('reset') }} style="border-radius: 4px; min-width: 150px; background: #fff; color: var(--theme-color); border: 1px solid var(--theme-color); margin-bottom: 5px;">
                             <input class="btn btn-theme float-left ml-3 px-10 py-6" id="create-btn" type="submit"

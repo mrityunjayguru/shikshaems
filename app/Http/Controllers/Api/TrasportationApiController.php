@@ -11,6 +11,7 @@ use App\Repositories\SystemSetting\SystemSettingInterface;
 use App\Repositories\Student\StudentInterface;
 use Illuminate\Http\Request;
 use App\Models\School;
+use App\Models\Students;
 use App\Models\TransportationFee;
 use App\Models\RoutePickupPoint;
 use App\Models\Shift;
@@ -26,10 +27,12 @@ use App\Models\TransportationAttendance;
 use App\Models\TransportationRequest;
 use Illuminate\Support\Facades\Config;
 use App\Services\ResponseService;
+use App\Jobs\StartTripTracking;
 use App\Services\SessionYearsTrackingsService;
 use Illuminate\Support\Facades\Validator;
 use App\Services\CachingService;
 use App\Services\Payment\PaymentService;
+use Illuminate\Support\Facades\Cache;
 use Auth;
 use DB;
 use Carbon\Carbon;
@@ -1838,7 +1841,7 @@ class TrasportationApiController extends Controller
                             'status' => 'inprogress',
                             'start_time' => $routeVehicles->pickup_start_time,
                             'actual_start_time' => date("H:i:s"),
-                            'end_time' => $routeVehicles->pickup_end_time,
+                            'end_time' => $routeVehicles->pickup_end_time, // Scheduled end time
                             'session_year_id' => $sessionYear->id,
                             'created_by' => $user_id,
                         ];
@@ -1854,15 +1857,54 @@ class TrasportationApiController extends Controller
                             'status' => 'inprogress',
                             'start_time' => $routeVehicles->drop_start_time,
                             'actual_start_time' => date("H:i:s"),
-                            'end_time' => $routeVehicles->drop_end_time,
+                            'end_time' => $routeVehicles->drop_end_time, // Scheduled end time
                             'session_year_id' => $sessionYear->id,
                             'created_by' => $user_id,
                         ];
                     }
 
-                    $id = RouteVehicleHistory::create($data);
-                    $trip_id = ["trip_id" => $id->id];
-                    return ResponseService::successResponse("Trip Started", $trip_id);
+                    $trip = RouteVehicleHistory::create($data);
+                    $trip->tracking = 1;
+                    $trip->save();
+
+                    // Send trip started notification (optional)
+                    try {
+                        $routeStudents = TransportationPayment::where('route_vehicle_id', $routeVehicles->id)
+                            ->where('shift_id', $routeVehicles->route->shift_id)
+                            ->where('expiry_date', '>', now())
+                            ->with(['user'])
+                            ->get();
+
+                        foreach ($routeStudents as $payment) {
+                            $student = $payment->user;
+                            
+                            send_notification(
+                                [$student->id],
+                                "Trip Started 🚌",
+                                "Your bus trip has started. Track live location now!",
+                                'trip_started',
+                                ['trip_id' => $trip->id, 'socket_channel' => "trip.{$trip->id}"]
+                            );
+
+                            if ($student->guardian_id) {
+                                send_notification(
+                                    [$student->guardian_id],
+                                    "Trip Started 🚌",
+                                    "Bus trip has started for {$student->full_name}",
+                                    'trip_started',
+                                    ['trip_id' => $trip->id, 'socket_channel' => "trip.{$trip->id}"]
+                                );
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning("Failed to send trip notifications: " . $e->getMessage());
+                    }
+
+                    $trip_data = [
+                        "trip_id" => $trip->id,
+                        "socket_channel" => "trip.{$trip->id}"
+                    ];
+                    return ResponseService::successResponse("Trip Started", $trip_data);
                 } else {
                     $trip = RouteVehicleHistory::with(['route', 'route.routePickupPoints', 'route.routePickupPoints.pickupPoint'])->where('id', $request->trip_id)->first();
                     $users = TransportationPayment::with(['user', 'user.roles', 'pickupPoint', 'shift'])
@@ -1888,7 +1930,47 @@ class TrasportationApiController extends Controller
                     if ($trip->last_pickup_point_id == $last_pickup_point) {
                         $trip->actual_end_time = date("H:i:s");
                         $trip->status = "completed";
+                        $trip->tracking = 0;
                         $trip->save();
+
+                        // ============================================
+                        // LIVE TRACKING: Clear trip cache
+                        // ============================================
+                        Cache::forget("trip_{$trip->id}");
+                        
+                        // Send trip ended notifications
+                        try {
+                            $stops = RoutePickupPoint::where('route_id', $trip->route_id)
+                                ->with(['students.user', 'students.guardian'])
+                                ->get();
+
+                            foreach ($stops as $stop) {
+                                foreach ($stop->students as $student) {
+                                    send_notification(
+                                        [$student->user_id],
+                                        "Trip Completed ✅",
+                                        "Your bus trip has been completed",
+                                        'trip_ended',
+                                        ['trip_id' => $trip->id]
+                                    );
+
+                                    if ($student->guardian_id) {
+                                        send_notification(
+                                            [$student->guardian_id],
+                                            "Trip Completed ✅",
+                                            "Bus trip completed for {$student->user->full_name}",
+                                            'trip_ended',
+                                            ['trip_id' => $trip->id, 'student_id' => $student->id]
+                                        );
+                                    }
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            \Log::warning("Failed to send trip ended notifications: " . $e->getMessage());
+                        }
+                        // ============================================
+
+                        cache()->forget('active_trip');
                         return ResponseService::successResponse("Trip ended");
                     } else {
                         return ResponseService::errorResponse("You have not reached the last pickup point yet");
@@ -2397,5 +2479,278 @@ class TrasportationApiController extends Controller
 
         // dd($vehicleDetails);
         return ResponseService::successResponse("Vehicles records fetched successfully", $vehicleDetails);
+    }
+
+    /**
+     * Get live tracking data for a trip
+     */
+    public function getLiveTracking(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'trip_id' => 'required|exists:route_vehicle_histories,id'
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseService::validationError($validator->errors()->first());
+        }
+
+        $tripId = $request->trip_id;
+        
+        // Try to read from file cache first
+        $cacheFile = storage_path("app/websocket/trip_{$tripId}.json");
+        
+        if (file_exists($cacheFile)) {
+            $cacheData = json_decode(file_get_contents($cacheFile), true);
+            
+            // Check if data is fresh (less than 60 seconds old)
+            if (isset($cacheData['timestamp']) && (time() - $cacheData['timestamp']) < 60) {
+                $data = $cacheData['data'];
+                return ResponseService::successResponse('Live tracking data', [
+                    'trip_id' => $tripId,
+                    'vehicle_number' => $data['vehicle_number'] ?? null,
+                    'current_location' => $data['current_location'] ?? null,
+                    'current_stop' => $data['current_stop'] ?? null,
+                    'next_stop' => $data['next_stop'] ?? null,
+                    'distance_to_next' => $data['distance_to_next'] ?? null,
+                    'eta_minutes' => $data['eta_minutes'] ?? null,
+                    'stops_status' => $data['stops_status'] ?? [],
+                    'last_update' => $data['timestamp'] ?? null,
+                    'socket_channel' => "trip.{$tripId}",
+                    'websocket_url' => env('WEBSOCKET_URL', 'ws://localhost:8090')
+                ]);
+            }
+        }
+        
+        // Fallback: Check if trip is active
+        $trip = RouteVehicleHistory::with(['vehicle', 'route.pickupPoints'])
+            ->where('id', $tripId)
+            ->where('tracking', 1)
+            ->where('status', 'inprogress')
+            ->first();
+            
+        if (!$trip) {
+            return ResponseService::errorResponse('Trip not found or inactive');
+        }
+        
+        // Return basic trip info (no GPS data yet)
+        return ResponseService::successResponse('Trip is active, waiting for GPS data', [
+            'trip_id' => $tripId,
+            'vehicle_number' => $trip->vehicle->number ?? null,
+            'current_location' => null,
+            'current_stop' => null,
+            'next_stop' => null,
+            'distance_to_next' => null,
+            'eta_minutes' => null,
+            'stops_status' => [],
+            'last_update' => null,
+            'socket_channel' => "trip.{$tripId}",
+            'websocket_url' => env('WEBSOCKET_URL', 'ws://localhost:8090'),
+            'message' => 'Waiting for GPS data from Traccar'
+        ]);
+    }
+
+    /**
+     * Get trip stops with status
+     */
+    public function getTripStops(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'trip_id' => 'required|exists:route_vehicle_histories,id'
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseService::validationError($validator->errors()->first());
+        }
+
+        $tripId = $request->trip_id;
+        $tripCache = Cache::get("trip_{$tripId}");
+
+        if (!$tripCache) {
+            return ResponseService::errorResponse('Trip not found');
+        }
+
+        return ResponseService::successResponse('Trip stops', [
+            'stops' => $tripCache['stops_status'] ?? []
+        ]);
+    }
+ 
+    /**
+     * Get My Wards transportation details
+     * Returns all children with their transportation info for parent
+     */
+    public function getMyWards(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Get all children (students) for this guardian/parent
+            $students = Students::where('guardian_id', $user->id)
+                ->with([
+                    'user',
+                    'class_section.class',
+                    'class_section.section'
+                ])
+                ->get();
+
+            if ($students->isEmpty()) {
+                return ResponseService::successResponse('No wards found', []);
+            }
+
+            $wardsData = [];
+
+            foreach ($students as $student) {
+                $child = $student->user; // Student's user account
+                
+                if (!$child) {
+                    continue; // Skip if user account not found
+                }
+                
+                // Get active transportation payment
+                $transportationPayment = TransportationPayment::where('user_id', $child->id)
+                    ->where('expiry_date', '>', now())
+                    ->with([
+                        'pickupPoint',
+                        'routeVehicle.route',
+                        'routeVehicle.vehicle',
+                        'routeVehicle.driver',
+                        'shift'
+                    ])
+                    ->first();
+
+                if (!$transportationPayment) {
+                    // No active transportation subscription
+                    $wardsData[] = [
+                        'student_id' => $student->id,
+                        'user_id' => $child->id,
+                        'name' => $child->first_name . ' ' . $child->last_name,
+                        'admission_no' => $student->admission_no,
+                        'class' => $student->class_section->class->name ?? 'N/A',
+                        'section' => $student->class_section->section->name ?? 'N/A',
+                        'image' => $child->image,
+                        'transportation_status' => 'inactive',
+                        'route' => null,
+                        'pickup_point' => null,
+                        'pickup_time' => null,
+                        'dropoff_time' => null,
+                        'trip_status' => 'no_active_trip',
+                        'vehicle_number' => null,
+                        'driver_name' => null,
+                        'driver_phone' => null
+                    ];
+                    continue;
+                }
+
+                // Get route and pickup point details
+                $route = $transportationPayment->routeVehicle->route ?? null;
+                $pickupPoint = $transportationPayment->pickupPoint ?? null;
+                $vehicle = $transportationPayment->routeVehicle->vehicle ?? null;
+                $shift = $transportationPayment->shift ?? null;
+
+                // Get pickup/dropoff times from route_pickup_points
+                $routePickupPoint = null;
+                $pickupTime = null;
+                $dropoffTime = null;
+
+                if ($route && $pickupPoint) {
+                    $routePickupPoint = RoutePickupPoint::where('route_id', $route->id)
+                        ->where('pickup_point_id', $pickupPoint->id)
+                        ->first();
+                    
+                    if ($routePickupPoint) {
+                        $pickupTime = $routePickupPoint->pickup_time;
+                        $dropoffTime = $routePickupPoint->dropoff_time;
+                    }
+                }
+
+                // Check for active trip today
+                $activeTrip = null;
+                if ($transportationPayment->routeVehicle) {
+                    $routeVehicle = $transportationPayment->routeVehicle;
+                    
+                    $activeTrip = RouteVehicleHistory::where('route_id', $routeVehicle->route_id)
+                        ->where('vehicle_id', $routeVehicle->vehicle_id)
+                        ->where('driver_id', $routeVehicle->driver_id)
+                        ->where('helper_id', $routeVehicle->helper_id)
+                        ->where('shift_id', $routeVehicle->shift_id)
+                        ->where('tracking', 1)
+                        ->where('status', 'inprogress')
+                        ->whereDate('date', today())
+                        ->first();
+                }
+
+                $tripStatus = 'no_trip_today';
+                $tripId = null;
+
+                if ($activeTrip) {
+                    $tripStatus = 'in_progress';
+                    $tripId = $activeTrip->id;
+                } else {
+                    // Check if trip completed today
+                    if ($transportationPayment->routeVehicle) {
+                        $routeVehicle = $transportationPayment->routeVehicle;
+                        
+                        $completedTrip = RouteVehicleHistory::where('route_id', $routeVehicle->route_id)
+                            ->where('vehicle_id', $routeVehicle->vehicle_id)
+                            ->where('driver_id', $routeVehicle->driver_id)
+                            ->where('helper_id', $routeVehicle->helper_id)
+                            ->where('shift_id', $routeVehicle->shift_id)
+                            ->where('status', 'completed')
+                            ->whereDate('date', today())
+                            ->exists();
+                        
+                        if ($completedTrip) {
+                            $tripStatus = 'completed';
+                        }
+                    }
+                }
+
+                // Get driver details
+                $driver = $transportationPayment->routeVehicle->driver ?? null;
+
+                $wardsData[] = [
+                    'student_id' => $student->id,
+                    'user_id' => $child->id,
+                    'name' => $child->first_name . ' ' . $child->last_name,
+                    'admission_no' => $student->admission_no,
+                    'class' => $student->class_section->class->name ?? 'N/A',
+                    'section' => $student->class_section->section->name ?? 'N/A',
+                    'image' => $child->image,
+                    'transportation_status' => 'active',
+                    'route' => [
+                        'id' => $route->id ?? null,
+                        'name' => $route->name ?? 'N/A',
+                        'description' => $route->description ?? null
+                    ],
+                    'pickup_point' => [
+                        'id' => $pickupPoint->id ?? null,
+                        'name' => $pickupPoint->name ?? 'N/A',
+                        'address' => $pickupPoint->address ?? null,
+                        'latitude' => $pickupPoint->latitude ?? null,
+                        'longitude' => $pickupPoint->longitude ?? null
+                    ],
+                    'pickup_time' => $pickupTime,
+                    'dropoff_time' => $dropoffTime,
+                    'shift' => [
+                        'id' => $shift->id ?? null,
+                        'name' => $shift->name ?? 'N/A',
+                        'start_time' => $shift->start_time ?? null,
+                        'end_time' => $shift->end_time ?? null
+                    ],
+                    'trip_status' => $tripStatus,
+                    'trip_id' => $tripId,
+                    'vehicle_number' => $vehicle->vehicle_number ?? 'N/A',
+                    'vehicle_name' => $vehicle->name ?? 'N/A',
+                    'driver_name' => $driver ? ($driver->first_name . ' ' . $driver->last_name) : 'N/A',
+                    'driver_phone' => $driver->mobile ?? null,
+                    'expiry_date' => $transportationPayment->expiry_date
+                ];
+            }
+
+            return ResponseService::successResponse('My wards fetched successfully', $wardsData);
+
+        } catch (\Throwable $th) {
+            ResponseService::logErrorResponse($th);
+            return ResponseService::errorResponse('Failed to fetch wards data');
+        }
     }
 }

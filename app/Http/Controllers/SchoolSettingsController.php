@@ -556,11 +556,10 @@ class SchoolSettingsController extends Controller
     {
         ResponseService::noFeatureThenRedirect('Website Management');
         ResponseService::noPermissionThenRedirect('school-setting-manage');
-        // $request->validate([
-        //     'SCHOOL_RECAPTCHA_SITE_KEY' => 'required',
-        //     'SCHOOL_RECAPTCHA_SECRET_KEY' => 'required',
-        //     // "SCHOOL_RECAPTCHA_SITE" => 'required'
-        // ]);
+        
+        $request->validate([
+            'traccar_phone' => 'nullable|string|max:20',
+        ]);
 
         try {
 
@@ -574,10 +573,30 @@ class SchoolSettingsController extends Controller
                     "name" => 'SCHOOL_RECAPTCHA_SECRET_KEY',
                     "data" => $request->input('SCHOOL_RECAPTCHA_SECRET_KEY'),
                     "type" => "text"
+                ],
+                [
+                    "name" => 'traccar_phone',
+                    "data" => $request->input('traccar_phone'),
+                    "type" => "text"
                 ]
             );
 
             $this->schoolSettings->upsert($data, ["name"], ["data"]);
+            
+            // Update in main database schools table for direct access
+            if ($request->filled('traccar_phone')) {
+                // Switch to main database temporarily
+                $currentConnection = DB::getDefaultConnection();
+                DB::setDefaultConnection('mysql');
+                
+                School::where('id', Auth::user()->school_id)->update([
+                    'traccar_phone' => $request->input('traccar_phone')
+                ]);
+                
+                // Switch back to school database
+                DB::setDefaultConnection($currentConnection);
+            }
+            
             $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'));
 
             ResponseService::successResponse("Data Stored Successfully");

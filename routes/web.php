@@ -1025,11 +1025,11 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::get('exam-view-reports/{id}', [ReportsController::class, 'exam_view_reports'])->name('reports.exam.exam-view-reports');
 
             // Yearly Results
-            Route::get('yearly-result-show', [ReportsController::class, 'yearlyResultShow'])->name('reports.exam.yearly-result-show');
-            Route::get('yearly-result-show/{id}', [ReportsController::class, 'yearlyResultShow'])->name('reports.exam.yearly-result-show');
+            Route::get('yearly-result-show/{id?}', [ReportsController::class, 'yearlyResultShow'])->name('reports.exam.yearly-result-show');
             Route::get('yearly-result/{student_id}', [ReportsController::class, 'yearlyExamResultPdf'])->name('reports.exam.yearly-result-pdf');
             Route::get('yearly-result-statistics', [ReportsController::class, 'yearlyResultStatistics'])->name('reports.exam.yearly-result-statistics');
             Route::get('yearly-result/bulk-exam-result', [ReportsController::class, 'bulkExamResult'])->name('reports.exam.bulk-exam-result');
+
 
             // Subject Wise Results
             Route::get('subject-wise-result-show', [ReportsController::class, 'subjectWiseResultShow'])->name('reports.exam.subject-wise-result-show');
@@ -1048,10 +1048,10 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
     });
 
     // Vehicle Routes
-    Route::get('vehicles/show', [VehicleController::class, 'show'])->name('vehicles.show');
+    Route::get('vehicles/list', [VehicleController::class, 'show'])->name('vehicles.list');
     Route::get('track-now', [VehicleController::class, 'trackNow'])->name('vehicles.track-now');
     Route::get('track/{code}', [VehicleController::class, 'trackByCode']);
-    Route::delete("vehicles/{id}/deleted", [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+    Route::delete("vehicles/{id}/deleted", [VehicleController::class, 'destroy'])->name('vehicles.force-delete');
     Route::put("vehicles/{id}/restore", [VehicleController::class, 'restore'])->name('vehicles.restore');
     Route::delete("vehicles/{id}/trash", [VehicleController::class, 'trash'])->name('vehicles.trash');
     Route::resource('vehicles', VehicleController::class);
