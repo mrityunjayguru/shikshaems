@@ -168,6 +168,7 @@ class StudentApiController extends Controller
             }
             $token = $auth->createToken($auth->first_name)->plainTextToken;
             $user = $auth->load([
+                'user',
                 'student.class_section' => function ($q) {
                     $q->with('section', 'class', 'medium');
                 },

@@ -28,7 +28,7 @@ class SimpleTripTrackingService
     private function broadcastToWebSocket($tripId, $payload)
     {
         try {
-            // Store in cache file for WebSocket server to read
+            // Store in cache file for API endpoint to read
             $cacheFile = storage_path("app/websocket/trip_{$tripId}.json");
             $dir = dirname($cacheFile);
             
@@ -42,11 +42,40 @@ class SimpleTripTrackingService
                 'timestamp' => time()
             ]));
             
-            // Also broadcast via Laravel event (if configured)
-            broadcast(new TripLocationUpdate($tripId, $payload))->toOthers();
+            // Direct Pusher broadcast (bypass Laravel queue)
+            $this->broadcastToPusher($tripId, $payload);
             
         } catch (\Exception $e) {
             \Log::error("WebSocket broadcast error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Direct Pusher broadcast without queue
+     */
+    private function broadcastToPusher($tripId, $payload)
+    {
+        try {
+            $pusher = new \Pusher\Pusher(
+                config('broadcasting.connections.pusher.key'),
+                config('broadcasting.connections.pusher.secret'),
+                config('broadcasting.connections.pusher.app_id'),
+                [
+                    'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+                    'useTLS' => true
+                ]
+            );
+
+            $pusher->trigger(
+                "trip.{$tripId}",
+                'location.update',
+                $payload
+            );
+
+            \Log::info("📡 Pusher broadcast successful for trip {$tripId}");
+            
+        } catch (\Exception $e) {
+            \Log::error("Pusher broadcast error: " . $e->getMessage());
         }
     }
 
@@ -56,11 +85,15 @@ class SimpleTripTrackingService
     public function processGPSData($tripId, $latitude, $longitude, $speed, $deviceTime, $attributes = [])
     {
         try {
+            \Log::info("🔄 Processing GPS data for trip {$tripId}");
+            \Log::info("📍 Position: Lat {$latitude}, Lng {$longitude}, Speed {$speed} km/h");
+            
             // Use current default connection (which is already switched to school DB)
             $trip = RouteVehicleHistory::with(['route.pickupPoints','vehicle'])
                 ->find($tripId);
 
             if (!$trip || !$trip->route) {
+                \Log::warning("⚠️ Trip {$tripId} not found or has no route");
                 return;
             }
 
@@ -68,8 +101,11 @@ class SimpleTripTrackingService
             $stops = $trip->route->pickupPoints;
 
             if ($stops->isEmpty()) {
+                \Log::warning("⚠️ Trip {$tripId} has no stops");
                 return;
             }
+            
+            \Log::info("📊 Trip {$tripId} has " . $stops->count() . " stops");
 
             // Calculate stop progress
             $result = $this->calculateStopProgress($stops, $latitude, $longitude, $speed);
@@ -96,6 +132,9 @@ class SimpleTripTrackingService
 
             // Broadcast via Socket (using existing WebSocket server)
             $this->broadcastToWebSocket($tripId, $payload);
+            
+            // Broadcast via Pusher
+            $this->broadcastToPusher($tripId, $payload);
 
             \Log::info("📡 ========== LIVE TRACKING BROADCAST ==========");
             \Log::info("🚌 Trip ID: {$tripId}");

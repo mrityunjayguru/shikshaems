@@ -262,14 +262,24 @@ class TraccarListener extends Command
      */
     private function processPositions($school, $positions)
     {
+        // Check if device map exists for this school
+        if (!isset($this->deviceMap[$school->id]) || empty($this->deviceMap[$school->id])) {
+            $this->warn("⚠️ Device map empty for school {$school->id}. Skipping positions.");
+            return;
+        }
+
         // Switch to school database
         $this->switchToSchoolDatabase($school);
-        // Log::info("Position Data for School {$school->id}:", $positions);
+        
+        $this->info("Processing " . count($positions) . " positions for school {$school->id}");
+        $this->info("Device map for school {$school->id}: " . json_encode(array_keys($this->deviceMap[$school->id])));
+        
         foreach ($positions as $position) {
             try {
                 $deviceId = $position['deviceId'] ?? null;
 
                 if (!$deviceId || !isset($this->deviceMap[$school->id][$deviceId])) {
+                    $this->warn("⚠️ Device {$deviceId} not in map for school {$school->id}");
                     continue;
                 }
 
@@ -285,13 +295,18 @@ class TraccarListener extends Command
 
                 $this->info("📍 [{$school->name}] {$deviceInfo['name']} - Lat: {$latitude}, Lng: {$longitude}, Speed: {$speed} km/h");
 
-                // Find GPS device in school database
+                // Find GPS device in MAIN database (not school database)
+                $currentConnection = DB::getDefaultConnection();
+                DB::setDefaultConnection('mysql');
                 $gps = GPS::where('imei_no', $imei)->first();
+                DB::setDefaultConnection($currentConnection);
 
                 if (!$gps) {
-                    $this->warn("⚠️ GPS not found in school DB: {$imei}");
+                    $this->warn("⚠️ GPS not found in main DB: {$imei}");
                     continue;
                 }
+
+                $this->info("✅ GPS Found: IMEI = {$gps->imei_no}, Vehicle = {$gps->assigned_to}");
 
                 // Find active trip
                 $activeTrip = RouteVehicleHistory::where('vehicle_id', $gps->assigned_to)

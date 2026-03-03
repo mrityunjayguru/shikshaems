@@ -39,6 +39,7 @@ class UserDataResource extends JsonResource
         }else{
             return array(
                 'id'                => $this->id,
+                'user_id'     => $this->student->user->id,
                 'first_name'        => $this->first_name,
                 'last_name'         => $this->last_name,
                 'mobile'            => $this->mobile,
