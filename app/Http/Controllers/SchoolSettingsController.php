@@ -589,9 +589,22 @@ class SchoolSettingsController extends Controller
                 $currentConnection = DB::getDefaultConnection();
                 DB::setDefaultConnection('mysql');
                 
-                School::where('id', Auth::user()->school_id)->update([
-                    'traccar_phone' => $request->input('traccar_phone')
-                ]);
+                $school = School::where('id', Auth::user()->school_id)->first();
+                
+                if ($school) {
+                    $school->update([
+                        'traccar_phone' => $request->input('traccar_phone')
+                    ]);
+                    
+                    // Refresh Traccar session with new phone number
+                    $sessionId = $school->refreshTraccarSession();
+                    
+                    if ($sessionId) {
+                        \Log::info("Traccar session refreshed successfully for school {$school->id}. Session ID: {$sessionId}");
+                    } else {
+                        \Log::warning("Failed to refresh Traccar session for school {$school->id}");
+                    }
+                }
                 
                 // Switch back to school database
                 DB::setDefaultConnection($currentConnection);

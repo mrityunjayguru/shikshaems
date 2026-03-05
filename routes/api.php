@@ -124,6 +124,10 @@ Route::group(['prefix' => 'parent'], static function () {
             // Fees
             Route::group(['prefix' => 'fees'], static function () {
                 Route::get('/', [ParentApiController::class, 'getFees']);
+                Route::get('/summary', [ParentApiController::class, 'getFeeSummary']); // Fee Summary
+                Route::get('/payment-details', [ParentApiController::class, 'getFeesForPayment']); // Fee Payment Selection Screen
+                Route::get('/children', [ParentApiController::class, 'getChildrenForFeePayment']); // Select Child for Payment
+                Route::get('/payment-history', [ParentApiController::class, 'getPaymentHistory']); // Payment History
                 Route::post('/compulsory/pay', [ParentApiController::class, 'payCompulsoryFees']);
                 Route::post('/optional/pay', [ParentApiController::class, 'payOptionalFees']);
                 Route::get('/receipt', [ParentApiController::class, 'feesPaidReceiptPDF']); //Fees Receipt
@@ -405,6 +409,7 @@ Route::group(['middleware' => ['APISwitchDatabase',]], static function () {
     // Live Trip Tracking APIs
     Route::get('trip/live-tracking', [TrasportationApiController::class, 'getLiveTracking']);
     Route::get('trip/stops', [TrasportationApiController::class, 'getTripStops']);
+    Route::get('trip/details', [TrasportationApiController::class, 'getTripDetails']); // Trip Tracking Details
     
     // My Wards Transportation API
     Route::get('my-wards', [TrasportationApiController::class, 'getMyWards']);

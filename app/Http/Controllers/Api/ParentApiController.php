@@ -506,9 +506,9 @@ class ParentApiController extends Controller
 
         try {
             $leave = StudentLeave::with('user:id,first_name,last_name,image')
-            ->where('user_id', $request->user_id)
-            ->orderBy('created_at', 'ASC')
-            ->get();
+                ->where('user_id', $request->user_id)
+                ->orderBy('created_at', 'ASC')
+                ->get();
             ResponseService::successResponse("Data Fetched Successfully", $leave);
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
@@ -1572,7 +1572,7 @@ class ParentApiController extends Controller
                     }
                 }
             }
-
+            $fees['student_name'] = $student->full_name;
             ResponseService::successResponse("Fees Fetched Successfully", $fees);
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
@@ -2262,6 +2262,448 @@ class ParentApiController extends Controller
             $support->message = $request->message;
             $support->save();
             ResponseService::successResponse("Support Submitted Successfully");
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function getFeeSummary(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'child_id' => 'required|numeric',
+            'session_year_id' => 'nullable|numeric'
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+
+        try {
+            $student = Auth::user()->guardianRelationChild()->where('id', $request->child_id)->whereHas('user', function ($q) {
+                $q->whereNull('deleted_at');
+            })->first();
+
+            if (empty($student)) {
+                ResponseService::errorResponse("Child's Account is not Active.Contact School Support", NULL, config('constants.RESPONSE_CODE.INACTIVE_CHILD'));
+            }
+
+            $classId = $student->class_section->class_id;
+            $schoolId = $student->user->school_id;
+            $studentId = $student->user_id;
+
+            $currentSessionYear = $this->cache->getDefaultSessionYear($schoolId);
+            $sessionYearId = $request->session_year_id ?? $currentSessionYear->id;
+
+            // Get all fees for the student's class and session year
+            $fees = $this->fees->builder()
+                ->where('class_id', $classId)
+                ->where('session_year_id', $sessionYearId)
+                ->with([
+                    'fees_class_type.fees_type',
+                    'fees_paid' => function ($query) use ($studentId) {
+                        $query->where('student_id', $studentId)
+                            ->with([
+                                'compulsory_fee' => function ($q) {
+                                    $q->where('status', 1);
+                                },
+                                'optional_fee' => function ($q) {
+                                    $q->where('status', 1);
+                                }
+                            ]);
+                    }
+                ])
+                ->get();
+
+            $totalDue = 0;
+            $totalPaid = 0;
+            $totalBalance = 0;
+            $feesHistory = [];
+
+            foreach ($fees as $fee) {
+                $compulsoryFeesAmount = $fee->fees_class_type->where('optional', 0)->sum('amount');
+                $optionalFeesAmount = 0;
+
+                // Check if fees_paid exists for this fee
+                $feesPaid = $fee->fees_paid->first();
+
+                if ($feesPaid) {
+                    // Calculate paid amount from compulsory fees
+                    $compulsoryPaidAmount = $feesPaid->compulsory_fee->sum('amount');
+                    
+                    // Calculate paid amount from optional fees
+                    $optionalPaidAmount = $feesPaid->optional_fee->sum('amount');
+                    
+                    $totalPaidForThisFee = $compulsoryPaidAmount + $optionalPaidAmount;
+                    $totalPaid += $totalPaidForThisFee;
+
+                    // Add to fees history
+                    $compulsoryFees = $feesPaid->compulsory_fee;
+                    $optionalFees = $feesPaid->optional_fee;
+
+                    // Process compulsory fees history
+                    foreach ($compulsoryFees as $compulsory) {
+                        $feesHistory[] = [
+                            'date' => $compulsory->date,
+                            'receipt_no' => 'R-' . $compulsory->id,
+                            'fees_name' => $fee->name,
+                            'fees_type' => 'Compulsory',
+                            'amount' => $compulsory->amount,
+                            'due_charges' => $compulsory->due_charges ?? 0,
+                            'total_paid' => $compulsory->amount + ($compulsory->due_charges ?? 0),
+                            'mode' => $compulsory->mode_name,
+                            'installment_name' => $compulsory->installment_fee->name ?? null
+                        ];
+                    }
+
+                    // Process optional fees history
+                    foreach ($optionalFees as $optional) {
+                        $feesTypeName = $optional->fees_class_type->fees_type->name ?? 'Optional Fee';
+                        $feesHistory[] = [
+                            'date' => $optional->date,
+                            'receipt_no' => 'R-' . $optional->id,
+                            'fees_name' => $fee->name,
+                            'fees_type' => $feesTypeName,
+                            'amount' => $optional->amount,
+                            'due_charges' => 0,
+                            'total_paid' => $optional->amount,
+                            'mode' => $optional->mode_name,
+                            'installment_name' => null
+                        ];
+                    }
+                }
+
+                // Calculate total due (compulsory fees only)
+                $totalDue += $compulsoryFeesAmount;
+            }
+
+            // Calculate balance
+            $totalBalance = $totalDue - $totalPaid;
+
+            // Sort fees history by date (newest first)
+            usort($feesHistory, function ($a, $b) {
+                return strtotime($b['date']) - strtotime($a['date']);
+            });
+
+            $response = [
+                'student_name' => $student->full_name,
+                'class_name' => $student->class_section->class->full_name ?? '',
+                'session_year' => $currentSessionYear->name,
+                'summary' => [
+                    'due' => number_format($totalDue, 2),
+                    'paid' => number_format($totalPaid, 2),
+                    'balance' => number_format($totalBalance, 2)
+                ],
+                'fees_history' => $feesHistory
+            ];
+
+            ResponseService::successResponse("Fee Summary Fetched Successfully", $response);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function getFeesForPayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'child_id' => 'required|numeric',
+            'fees_id' => 'required|numeric'
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+
+        try {
+            $student = Auth::user()->guardianRelationChild()->where('id', $request->child_id)->whereHas('user', function ($q) {
+                $q->whereNull('deleted_at');
+            })->first();
+
+            if (empty($student)) {
+                ResponseService::errorResponse("Child's Account is not Active.Contact School Support", NULL, config('constants.RESPONSE_CODE.INACTIVE_CHILD'));
+            }
+
+            $classId = $student->class_section->class_id;
+            $studentId = $student->user_id;
+
+            // Get specific fee with details
+            $fee = $this->fees->builder()
+                ->where('id', $request->fees_id)
+                ->where('class_id', $classId)
+                ->with([
+                    'fees_class_type.fees_type',
+                    'fees_paid' => function ($query) use ($studentId) {
+                        $query->where('student_id', $studentId)
+                            ->with(['compulsory_fee', 'optional_fee']);
+                    }
+                ])
+                ->first();
+
+            if (!$fee) {
+                ResponseService::errorResponse("Fee not found");
+            }
+
+            // Separate compulsory and optional fees
+            $compulsoryFees = [];
+            $optionalFees = [];
+
+            foreach ($fee->fees_class_type as $feeClassType) {
+                $feeItem = [
+                    'id' => $feeClassType->id,
+                    'name' => $feeClassType->fees_type->name,
+                    'amount' => $feeClassType->amount,
+                    'is_paid' => false
+                ];
+
+                if ($feeClassType->optional == 0) {
+                    // Compulsory fee
+                    // Check if already paid
+                    if ($fee->fees_paid->isNotEmpty()) {
+                        $feesPaid = $fee->fees_paid->first();
+                        $isPaid = $feesPaid->compulsory_fee->where('status', 1)->isNotEmpty();
+                        $feeItem['is_paid'] = $isPaid;
+                    }
+                    $compulsoryFees[] = $feeItem;
+                } else {
+                    // Optional fee
+                    // Check if already paid
+                    if ($fee->fees_paid->isNotEmpty()) {
+                        $feesPaid = $fee->fees_paid->first();
+                        $isPaid = $feesPaid->optional_fee
+                            ->where('fees_class_id', $feeClassType->id)
+                            ->where('status', 1)
+                            ->isNotEmpty();
+                        $feeItem['is_paid'] = $isPaid;
+                    }
+                    $optionalFees[] = $feeItem;
+                }
+            }
+
+            // Calculate totals
+            $compulsoryTotal = collect($compulsoryFees)->where('is_paid', false)->sum('amount');
+            $optionalTotal = collect($optionalFees)->where('is_paid', false)->sum('amount');
+
+            $response = [
+                'student_name' => $student->full_name,
+                'fees_name' => $fee->name,
+                'due_date' => $fee->due_date,
+                'compulsory_fees' => [
+                    'items' => $compulsoryFees,
+                    'total' => $compulsoryTotal
+                ],
+                'optional_fees' => [
+                    'items' => $optionalFees,
+                    'total' => $optionalTotal
+                ],
+                'payable_amount' => $compulsoryTotal,
+                // 'note' => 'Compulsory payments are due by 10th of every month'
+            ];
+
+            ResponseService::successResponse("Fees Details Fetched Successfully", $response);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function getChildrenForFeePayment(Request $request)
+    {
+        try {
+            // Get all children of the logged-in parent
+            $children = Auth::user()->guardianRelationChild()
+                ->whereHas('user', function ($q) {
+                    $q->whereNull('deleted_at');
+                })
+                ->with([
+                    'user:id,first_name,last_name,image,school_id',
+                    'class_section.class:id,name',
+                    'class_section.section:id,name',
+                    'class_section.medium:id,name'
+                ])
+                ->get();
+
+            if ($children->isEmpty()) {
+                ResponseService::errorResponse("No active children found");
+            }
+
+            $childrenData = [];
+
+            foreach ($children as $child) {
+                $studentId = $child->user_id;
+                $classId = $child->class_section->class_id;
+                $schoolId = $child->user->school_id;
+
+                // Get current session year
+                $currentSessionYear = $this->cache->getDefaultSessionYear($schoolId);
+
+                // Get all unpaid fees for this student
+                $fees = $this->fees->builder()
+                    ->where('class_id', $classId)
+                    ->where('session_year_id', $currentSessionYear->id)
+                    ->with([
+                        'fees_class_type',
+                        'fees_paid' => function ($query) use ($studentId) {
+                            $query->where('student_id', $studentId)
+                                ->with(['compulsory_fee', 'optional_fee']);
+                        }
+                    ])
+                    ->get();
+
+                // Calculate total payment due
+                $totalDue = 0;
+
+                foreach ($fees as $fee) {
+                    // Get compulsory fees amount
+                    $compulsoryAmount = $fee->fees_class_type->where('optional', 0)->sum('amount');
+                    
+                    // Check if already paid
+                    $feesPaid = $fee->fees_paid->first();
+                    
+                    if ($feesPaid) {
+                        // Calculate paid amount
+                        $paidAmount = $feesPaid->compulsory_fee->where('status', 1)->sum('amount');
+                        $remainingAmount = $compulsoryAmount - $paidAmount;
+                        
+                        if ($remainingAmount > 0) {
+                            $totalDue += $remainingAmount;
+                        }
+                    } else {
+                        // No payment made yet
+                        $totalDue += $compulsoryAmount;
+                    }
+                }
+
+                // Build class section name
+                $className = $child->class_section->class->name ?? '';
+                $sectionName = $child->class_section->section->name ?? '';
+                $classSectionName = $className . ' ' . $sectionName;
+
+                $childrenData[] = [
+                    'id' => $child->id,
+                    'student_id' => $studentId,
+                    'name' => $child->full_name,
+                    'image' => $child->user->image ?? null,
+                    'class_section' => $classSectionName,
+                    'payment_due' => $totalDue
+                ];
+            }
+
+            $response = [
+                'title' => 'Who are you paying for?',
+                'subtitle' => 'Select the child you wish to pay for, you can select more than one child.',
+                'children' => $childrenData
+            ];
+
+            ResponseService::successResponse("Children List Fetched Successfully", $response);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function getPaymentHistory(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'child_id' => 'required|numeric',
+            'session_year_id' => 'nullable|numeric'
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+
+        try {
+            $student = Auth::user()->guardianRelationChild()->where('id', $request->child_id)->whereHas('user', function ($q) {
+                $q->whereNull('deleted_at');
+            })->first();
+
+            if (empty($student)) {
+                ResponseService::errorResponse("Child's Account is not Active.Contact School Support", NULL, config('constants.RESPONSE_CODE.INACTIVE_CHILD'));
+            }
+
+            $studentId = $student->user_id;
+            $schoolId = $student->user->school_id;
+
+            // Get current session year
+            $currentSessionYear = $this->cache->getDefaultSessionYear($schoolId);
+            $sessionYearId = $request->session_year_id ?? $currentSessionYear->id;
+
+            // Get all fees paid records for this student
+            $feesPaidRecords = $this->feesPaid->builder()
+                ->where('student_id', $studentId)
+                ->where('session_year_id', $sessionYearId)
+                ->with([
+                    'fees:id,name',
+                    'compulsory_fee' => function ($q) {
+                        $q->where('status', 1)->with('installment_fee:id,name');
+                    },
+                    'optional_fee' => function ($q) {
+                        $q->where('status', 1)->with('fees_class_type.fees_type:id,name');
+                    }
+                ])
+                ->orderBy('date', 'desc')
+                ->get();
+
+            $paymentHistory = [];
+
+            foreach ($feesPaidRecords as $feesPaid) {
+                // Process compulsory fees
+                foreach ($feesPaid->compulsory_fee as $compulsory) {
+                    $paymentDate = \Carbon\Carbon::parse($compulsory->date);
+                    
+                    $paymentHistory[] = [
+                        'id' => $compulsory->id,
+                        'month' => $paymentDate->format('F'), // e.g., "April"
+                        'date' => $paymentDate->format('d/m/Y'), // e.g., "16/04/2026"
+                        'receipt_no' => $compulsory->id, // or use a custom receipt number format
+                        'payment_mode' => $compulsory->mode_name, // Cash, Cheque, Online
+                        'paid_amount' => $compulsory->amount,
+                        'due_charges' => $compulsory->due_charges ?? 0,
+                        'total_amount' => $compulsory->amount + ($compulsory->due_charges ?? 0),
+                        'fees_name' => $feesPaid->fees->name ?? 'N/A',
+                        'installment_name' => $compulsory->installment_fee->name ?? null,
+                        'type' => 'Compulsory',
+                        'status' => 'Completed'
+                    ];
+                }
+
+                // Process optional fees
+                foreach ($feesPaid->optional_fee as $optional) {
+                    $paymentDate = \Carbon\Carbon::parse($optional->date);
+                    
+                    $feesTypeName = $optional->fees_class_type->fees_type->name ?? 'Optional Fee';
+                    
+                    $paymentHistory[] = [
+                        'id' => $optional->id,
+                        'month' => $paymentDate->format('F'),
+                        'date' => $paymentDate->format('d/m/Y'),
+                        'receipt_no' => $optional->id,
+                        'payment_mode' => $optional->mode_name,
+                        'paid_amount' => $optional->amount,
+                        'due_charges' => 0,
+                        'total_amount' => $optional->amount,
+                        'fees_name' => $feesPaid->fees->name ?? 'N/A',
+                        'installment_name' => null,
+                        'type' => $feesTypeName,
+                        'status' => 'Completed'
+                    ];
+                }
+            }
+
+            // Sort by date (newest first)
+            usort($paymentHistory, function ($a, $b) {
+                return strtotime(str_replace('/', '-', $b['date'])) - strtotime(str_replace('/', '-', $a['date']));
+            });
+
+            $response = [
+                'student_name' => $student->full_name,
+                'payment_history' => $paymentHistory,
+                'total_payments' => count($paymentHistory),
+                'total_amount_paid' => array_sum(array_column($paymentHistory, 'total_amount'))
+            ];
+
+            ResponseService::successResponse("Payment History Fetched Successfully", $response);
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();

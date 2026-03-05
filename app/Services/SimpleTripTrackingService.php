@@ -110,6 +110,9 @@ class SimpleTripTrackingService
             // Calculate stop progress
             $result = $this->calculateStopProgress($stops, $latitude, $longitude, $speed);
 
+            // Check for proximity notifications (50m = 0.05 km)
+            $this->checkProximityNotifications($tripId, $trip, $stops, $latitude, $longitude);
+
             // Build payload
             $payload = [
                 'trip_id' => $tripId,
@@ -162,6 +165,143 @@ class SimpleTripTrackingService
 
         } catch (\Exception $e) {
             \Log::error("Error processing GPS data: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Check proximity and send notifications when vehicle is within 50m
+     */
+    private function checkProximityNotifications($tripId, $trip, $stops, $currentLat, $currentLng)
+    {
+        $proximityThreshold = 0.05; // 50 meters in km
+        
+        foreach ($stops as $stop) {
+            $distance = $this->calculateDistance(
+                $currentLat,
+                $currentLng,
+                $stop->latitude,
+                $stop->longitude
+            );
+
+            // Check if vehicle is within 50m of this stop
+            if ($distance <= $proximityThreshold) {
+                // Check if notification already sent for this stop today
+                $cacheKey = "proximity_notification_{$tripId}_{$stop->id}_" . date('Y-m-d');
+                
+                if (!\Cache::has($cacheKey)) {
+                    // Send notification to students at this pickup point
+                    $this->sendProximityNotification($trip, $stop, $distance);
+                    
+                    // Cache for 24 hours to avoid duplicate notifications
+                    \Cache::put($cacheKey, true, now()->endOfDay());
+                    
+                    \Log::info("🔔 Proximity notification sent for stop: {$stop->name} (Distance: " . round($distance * 1000, 2) . "m)");
+                }
+            }
+        }
+    }
+
+    /**
+     * Send proximity notification to students/parents
+     */
+    private function sendProximityNotification($trip, $stop, $distance)
+    {
+        try {
+            // Get students assigned to this pickup point
+            $students = \App\Models\TransportationPayment::where('pickup_point_id', $stop->id)
+                ->where('status', 'paid')
+                ->where('expiry_date', '>', now())
+                ->with('user')
+                ->get();
+
+            if ($students->isEmpty()) {
+                \Log::info("⚠️ No students found at stop: {$stop->name}");
+                return;
+            }
+
+            $distanceInMeters = round($distance * 1000, 0);
+            $vehicleNumber = $trip->vehicle->vehicle_number ?? 'School Bus';
+            
+            $title = 'Bus Approaching';
+            $body = "Your bus ({$vehicleNumber}) is {$distanceInMeters}m away from {$stop->name}";
+            $type = 'bus_proximity';
+
+            $totalNotificationsSent = 0;
+            $notificationDetails = [];
+
+            foreach ($students as $transportPayment) {
+                $student = $transportPayment->user;
+                
+                if (!$student) {
+                    continue;
+                }
+
+                // Get parent/guardian IDs
+                $guardianIds = \App\Models\Students::where('user_id', $student->id)
+                    ->pluck('guardian_id')
+                    ->toArray();
+
+                // Send to student
+                $userIds = [$student->id];
+                
+                // Add guardians
+                if (!empty($guardianIds)) {
+                    $userIds = array_merge($userIds, $guardianIds);
+                }
+
+                // Send notification
+                $notificationData = [
+                    'trip_id' => $trip->id,
+                    'stop_id' => $stop->id,
+                    'stop_name' => $stop->name,
+                    'distance_meters' => $distanceInMeters,
+                    'vehicle_number' => $vehicleNumber
+                ];
+
+                try {
+                    send_notification($userIds, $title, $body, $type, $notificationData);
+                    
+                    $totalNotificationsSent += count($userIds);
+                    $notificationDetails[] = [
+                        'student_id' => $student->id,
+                        'student_name' => $student->first_name . ' ' . $student->last_name,
+                        'recipients' => count($userIds),
+                        'guardian_ids' => $guardianIds
+                    ];
+                    
+                } catch (\Exception $e) {
+                    \Log::error("❌ Failed to send notification to student {$student->id}: " . $e->getMessage());
+                }
+            }
+
+            // Success log with details
+            if ($totalNotificationsSent > 0) {
+                \Log::info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                \Log::info("✅ NOTIFICATION SUCCESSFULLY SENT!");
+                \Log::info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                \Log::info("🚌 Trip ID: {$trip->id}");
+                \Log::info("🚏 Stop: {$stop->name}");
+                \Log::info("📏 Distance: {$distanceInMeters}m");
+                \Log::info("🚗 Vehicle: {$vehicleNumber}");
+                \Log::info("📱 Total Recipients: {$totalNotificationsSent}");
+                \Log::info("👥 Students Notified: " . count($notificationDetails));
+                \Log::info("");
+                \Log::info("📋 Notification Details:");
+                foreach ($notificationDetails as $detail) {
+                    \Log::info("   • {$detail['student_name']} (ID: {$detail['student_id']})");
+                    \Log::info("     Recipients: {$detail['recipients']} (Student + " . count($detail['guardian_ids']) . " Guardian(s))");
+                    if (!empty($detail['guardian_ids'])) {
+                        \Log::info("     Guardian IDs: " . implode(', ', $detail['guardian_ids']));
+                    }
+                }
+                \Log::info("");
+                \Log::info("💬 Message: \"{$body}\"");
+                \Log::info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            }
+
+        } catch (\Exception $e) {
+            \Log::error("❌ Error sending proximity notification: " . $e->getMessage());
+            \Log::error("Stack trace: " . $e->getTraceAsString());
         }
     }
 
