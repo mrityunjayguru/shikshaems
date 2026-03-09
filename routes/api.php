@@ -128,8 +128,17 @@ Route::group(['prefix' => 'parent'], static function () {
                 Route::get('/payment-details', [ParentApiController::class, 'getFeesForPayment']); // Fee Payment Selection Screen
                 Route::get('/children', [ParentApiController::class, 'getChildrenForFeePayment']); // Select Child for Payment
                 Route::get('/payment-history', [ParentApiController::class, 'getPaymentHistory']); // Payment History
+                
+                // Multi-Fees Payment API - Pay multiple fees with different fees_id
+                Route::post('/pay', [ParentApiController::class, 'payMultipleFees']);
+                
+                // Unified Payment API - Pay both compulsory and optional fees together
+                // Route::post('/pay', [ParentApiController::class, 'payFees']);
+                
+                // Legacy separate payment APIs (kept for backward compatibility)
                 Route::post('/compulsory/pay', [ParentApiController::class, 'payCompulsoryFees']);
                 Route::post('/optional/pay', [ParentApiController::class, 'payOptionalFees']);
+                
                 Route::get('/receipt', [ParentApiController::class, 'feesPaidReceiptPDF']); //Fees Receipt
             });
 

@@ -1941,17 +1941,24 @@ class ParentApiController extends Controller
             $systemVerticalLogo = $this->systemSetting->builder()->where('name', 'vertical_logo')->first();
             $schoolVerticalLogo = $this->schoolSetting->builder()->where('name', 'vertical_logo')->first();
             $school = $this->cache->getSchoolSettings();
-            //            return view('fees.fees_receipt', compact('systemVerticalLogo', 'school', 'feesPaid', 'student', 'schoolVerticalLogo'));
-            $output = Pdf::loadView('fees.fees_receipt', compact('systemVerticalLogo', 'school', 'feesPaid', 'student', 'schoolVerticalLogo'))->output();
-            $response = array(
-                'error' => false,
+            
+            // Calculate advance amount
+            $advanceAmount = $student->user
+                ->fees_advances()
+                ->sum('amount') ?? 0;
+            
+            //            return view('fees.fees_receipt', compact('systemVerticalLogo', 'school', 'feesPaid', 'student', 'schoolVerticalLogo', 'advanceAmount'));
+            $output = Pdf::loadView('fees.fees_receipt', compact('systemVerticalLogo', 'school', 'feesPaid', 'student', 'schoolVerticalLogo', 'advanceAmount'))->output();
+            
+            $data = [
                 'pdf' => base64_encode($output),
-            );
+            ];
+            
+            ResponseService::successResponse('Fees Receipt Generated Successfully', $data);
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
         }
-        return response()->json($response);
     }
 
     public function getSchoolSettings(Request $request)
@@ -2317,12 +2324,15 @@ class ParentApiController extends Controller
 
             $totalDue = 0;
             $totalPaid = 0;
-            $totalBalance = 0;
+            $totalFees = 0; // Total fees (compulsory + optional)
             $feesHistory = [];
 
             foreach ($fees as $fee) {
                 $compulsoryFeesAmount = $fee->fees_class_type->where('optional', 0)->sum('amount');
-                $optionalFeesAmount = 0;
+                $optionalFeesAmount = $fee->fees_class_type->where('optional', 1)->sum('amount');
+
+                // Total fees for this fee group
+                $totalFees += $compulsoryFeesAmount + $optionalFeesAmount;
 
                 // Check if fees_paid exists for this fee
                 $feesPaid = $fee->fees_paid->first();
@@ -2372,13 +2382,11 @@ class ParentApiController extends Controller
                         ];
                     }
                 }
-
-                // Calculate total due (compulsory fees only)
-                $totalDue += $compulsoryFeesAmount;
             }
 
-            // Calculate balance
-            $totalBalance = $totalDue - $totalPaid;
+            // Calculate due (outstanding) = Total Fees - Paid
+            // If negative or zero, show 0
+            $totalDue = max(0, $totalFees - $totalPaid);
 
             // Sort fees history by date (newest first)
             usort($feesHistory, function ($a, $b) {
@@ -2390,9 +2398,9 @@ class ParentApiController extends Controller
                 'class_name' => $student->class_section->class->full_name ?? '',
                 'session_year' => $currentSessionYear->name,
                 'summary' => [
-                    'due' => number_format($totalDue, 2),
+                    'total_fees' => number_format($totalFees, 2),
                     'paid' => number_format($totalPaid, 2),
-                    'balance' => number_format($totalBalance, 2)
+                    'due' => number_format($totalDue, 2)
                 ],
                 'fees_history' => $feesHistory
             ];
@@ -2552,27 +2560,31 @@ class ParentApiController extends Controller
 
                 // Calculate total payment due
                 $totalDue = 0;
+                $totalFees = 0;
+                $totalPaid = 0;
 
                 foreach ($fees as $fee) {
-                    // Get compulsory fees amount
+                    // Get compulsory and optional fees amount
                     $compulsoryAmount = $fee->fees_class_type->where('optional', 0)->sum('amount');
+                    $optionalAmount = $fee->fees_class_type->where('optional', 1)->sum('amount');
+                    
+                    // Total fees for this fee group
+                    $totalFees += $compulsoryAmount + $optionalAmount;
                     
                     // Check if already paid
                     $feesPaid = $fee->fees_paid->first();
                     
                     if ($feesPaid) {
-                        // Calculate paid amount
-                        $paidAmount = $feesPaid->compulsory_fee->where('status', 1)->sum('amount');
-                        $remainingAmount = $compulsoryAmount - $paidAmount;
-                        
-                        if ($remainingAmount > 0) {
-                            $totalDue += $remainingAmount;
-                        }
-                    } else {
-                        // No payment made yet
-                        $totalDue += $compulsoryAmount;
+                        // Calculate paid amount (compulsory + optional)
+                        $compulsoryPaid = $feesPaid->compulsory_fee->where('status', 1)->sum('amount');
+                        $optionalPaid = $feesPaid->optional_fee->where('status', 1)->sum('amount');
+                        $totalPaid += $compulsoryPaid + $optionalPaid;
                     }
                 }
+                
+                // Due = Total Fees - Paid
+                // If negative or zero, show 0
+                $totalDue = max(0, $totalFees - $totalPaid);
 
                 // Build class section name
                 $className = $child->class_section->class->name ?? '';
@@ -2590,8 +2602,8 @@ class ParentApiController extends Controller
             }
 
             $response = [
-                'title' => 'Who are you paying for?',
-                'subtitle' => 'Select the child you wish to pay for, you can select more than one child.',
+                // 'title' => 'Who are you paying for?',
+                // 'subtitle' => 'Select the child you wish to pay for, you can select more than one child.',
                 'children' => $childrenData
             ];
 
@@ -2632,7 +2644,7 @@ class ParentApiController extends Controller
             // Get all fees paid records for this student
             $feesPaidRecords = $this->feesPaid->builder()
                 ->where('student_id', $studentId)
-                ->where('session_year_id', $sessionYearId)
+                // ->where('session_year_id', $sessionYearId)
                 ->with([
                     'fees:id,name',
                     'compulsory_fee' => function ($q) {
@@ -2705,6 +2717,684 @@ class ParentApiController extends Controller
 
             ResponseService::successResponse("Payment History Fetched Successfully", $response);
         } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * Unified Payment API - Pay both compulsory and optional fees together
+     * POST /api/parent/fees/pay
+     */
+    public function payFees(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'child_id' => 'required|integer',
+            'fees_id' => 'required|integer',
+            'compulsory_ids' => 'nullable|array',
+            'compulsory_ids.*' => 'integer',
+            'installment_ids' => 'nullable|array',
+            'installment_ids.*' => 'integer',
+            'advance' => 'nullable|numeric',
+            'optional_ids' => 'nullable|array',
+            'optional_ids.*' => 'integer',
+            'payment_method' => 'required|in:Stripe,Razorpay,Flutterwave,Paystack',
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Check if at least one fee type is selected
+            $hasCompulsory = !empty($request->compulsory_ids) && count($request->compulsory_ids) > 0;
+            $hasOptional = !empty($request->optional_ids) && count($request->optional_ids) > 0;
+
+            if (!$hasCompulsory && !$hasOptional) {
+                ResponseService::errorResponse("Please select at least one fee to pay");
+            }
+
+            // Check payment gateway
+            $paymentConfigurations = $this->paymentConfigurations->builder()
+                ->where(['status' => 1, 'payment_method' => $request->payment_method])
+                ->first();
+
+            if (empty($paymentConfigurations)) {
+                ResponseService::errorResponse("Payment is not Enabled", [], config('constants.RESPONSE_CODE.ENABLE_PAYMENT_GATEWAY'));
+            }
+
+            // Get student data
+            $parentId = Auth::user()->id;
+            $studentData = Auth::user()->guardianRelationChild()
+                ->where('id', $request->child_id)
+                ->whereHas('user', function ($q) {
+                    $q->whereNull('deleted_at');
+                })
+                ->first();
+
+            if (empty($studentData)) {
+                ResponseService::errorResponse("Child's Account is not Active. Contact School Support", NULL, config('constants.RESPONSE_CODE.INACTIVE_CHILD'));
+            }
+
+            $schoolId = $studentData->user->school_id;
+            $sessionYear = $this->cache->getDefaultSessionYear($schoolId);
+            $classId = $studentData->class_section->class_id;
+
+            // Get fees data
+            $fees = $this->fees->builder()
+                ->where('id', $request->fees_id)
+                ->with([
+                    'fees_class_type',
+                    'fees_class_type.fees_type',
+                    'installments.compulsory_fees' => function ($query) use ($studentData) {
+                        $query->where(['student_id' => $studentData->user_id]);
+                    },
+                    'fees_paid' => function ($query) use ($studentData) {
+                        $query->where(['student_id' => $studentData->user_id])
+                            ->with('compulsory_fee', 'optional_fee');
+                    }
+                ])
+                ->firstOrFail();
+
+            $totalAmount = 0;
+            $compulsoryAmount = 0;
+            $optionalAmount = 0;
+            $installmentDetails = [];
+            $optionalFeeDetails = [];
+            $compulsoryFeeDetails = [];
+            $dueChargesAmount = 0;
+            $advanceAmount = $request->advance ?? 0;
+
+            // Process Compulsory Fees
+            if ($hasCompulsory) {
+                // Compulsory fees work differently - they are paid as a total, not individual items
+                // The compulsory_ids represent the fees_class_type items to show in UI, 
+                // but payment is based on total_compulsory_fees
+                
+                $compulsory_fees = $studentData->user->compulsory_fees()
+                    ->whereHas('fees_paid', function ($q) use ($request) {
+                        $q->where('fees_id', $request->fees_id);
+                    })
+                    ->get();
+
+                $fees->append(['total_compulsory_fees']);
+
+                if (!empty($fees->fees_paid) && !empty($fees->fees_paid->is_fully_paid)) {
+                    ResponseService::errorResponse("Compulsory Fees Already Paid", "", config('constants.RESPONSE_CODE.FEE_ALREADY_PAID'));
+                }
+
+                // Get selected compulsory fees for display purposes
+                $compulsoryFeesData = $fees->fees_class_type()
+                    ->where('optional', 0)
+                    ->whereIn('id', $request->compulsory_ids)
+                    ->get();
+
+                if ($compulsoryFeesData->isEmpty()) {
+                    ResponseService::errorResponse("No Compulsory Fees Found");
+                }
+
+                // Calculate selected compulsory fees amount
+                foreach ($compulsoryFeesData as $row) {
+                    $compulsoryAmount += $row->amount;
+                    $compulsoryFeeDetails[] = [
+                        'id' => $row->id,
+                        'amount' => $row->amount,
+                        'name' => $row->fees_type->name ?? 'Compulsory Fee'
+                    ];
+                }
+
+                $installmentIds = $request->installment_ids ?? [];
+
+                // Handle installments if provided
+                if (!empty($installmentIds) && count($installmentIds) > 0) {
+                    $validInstallmentIDS = array_intersect($fees->installments->pluck('id')->toArray(), $installmentIds);
+
+                    if (empty($validInstallmentIDS)) {
+                        ResponseService::errorResponse('Invalid Installment ID');
+                    }
+
+                    // Calculate installment-based payment
+                    $totalInstallments = count($fees->installments);
+                    $remainingAmount = $compulsoryAmount; // Use selected amount, not total
+
+                    if (count($compulsory_fees) > 0) {
+                        $validInstallmentIDS = array_diff($validInstallmentIDS, $compulsory_fees->pluck('installment_id')->toArray());
+                        foreach ($compulsory_fees as $paidInstallment) {
+                            if (!empty($paidInstallment->installment_id)) {
+                                --$totalInstallments;
+                                $remainingAmount -= $paidInstallment->amount;
+                            }
+                        }
+                    }
+
+                    $installmentAmount = $remainingAmount / $totalInstallments;
+                    $compulsoryAmount = 0; // Reset to calculate with installments
+
+                    foreach ($validInstallmentIDS as $key => $installment_id) {
+                        $installment = $fees->installments->first(function ($data) use ($installment_id) {
+                            return $data->id == $installment_id;
+                        });
+
+                        $installmentDueCharges = 0;
+                        if (new DateTime(date('Y-m-d')) > new DateTime($installment['due_date'])) {
+                            if ($installment->due_charges_type == "percentage") {
+                                $installmentDueCharges = ($installmentAmount * $installment['due_charges']) / 100;
+                            } else if ($installment->due_charges_type == "fixed") {
+                                $installmentDueCharges = $installment->due_charges;
+                            }
+                            $compulsoryAmount += $installmentAmount + $installmentDueCharges;
+                            $dueChargesAmount += $installmentDueCharges;
+                        } else {
+                            $compulsoryAmount += $installmentAmount;
+                        }
+
+                        $remainingAmount -= $installmentAmount;
+                        $installmentDetails[$key] = [
+                            'id' => $installment_id,
+                            'amount' => $installmentAmount,
+                            'dueChargesAmount' => $installmentDueCharges,
+                        ];
+                    }
+
+                    if ($advanceAmount > $remainingAmount) {
+                        ResponseService::errorResponse("Advance Amount cannot be greater than: " . $remainingAmount);
+                    }
+                } else {
+                    // Full Payment - check for due charges
+                    if (new DateTime(date('Y-m-d')) > new DateTime($fees->due_date)) {
+                        $dueChargesAmount = $fees->due_charges_amount;
+                        $compulsoryAmount += $dueChargesAmount;
+                    }
+                }
+
+                // Apply advance if specified
+                if ($advanceAmount > 0 && $advanceAmount < $compulsoryAmount) {
+                    $compulsoryAmount = $advanceAmount;
+                }
+
+                $totalAmount += $compulsoryAmount;
+            }
+
+            // Process Optional Fees
+            if ($hasOptional) {
+                $optional_fees = $studentData->user->optional_fees()
+                    ->whereIn('fees_class_id', $request->optional_ids)
+                    ->whereHas('fees_paid', function ($q) use ($request) {
+                        $q->where('fees_id', $request->fees_id);
+                    })
+                    ->get();
+
+                if (count($optional_fees) > 0) {
+                    ResponseService::errorResponse("Please select only unpaid optional fees");
+                }
+
+                $optionalFeesData = $fees->fees_class_type()
+                    ->where('optional', 1)
+                    ->whereIn('id', $request->optional_ids)
+                    ->get();
+
+                if ($optionalFeesData->isEmpty()) {
+                    ResponseService::errorResponse("No Optional Fees Found");
+                }
+
+                foreach ($optionalFeesData as $row) {
+                    $optionalAmount += $row->amount;
+                    $optionalFeeDetails[] = [
+                        'id' => $row->id,
+                        'amount' => $row->amount
+                    ];
+                }
+
+                $totalAmount += $optionalAmount;
+            }
+
+            if ($totalAmount <= 0) {
+                ResponseService::errorResponse("Total amount must be greater than 0");
+            }
+
+            // Create Payment Transaction
+            $paymentTransactionData = $this->paymentTransaction->create([
+                'user_id' => $parentId,
+                'amount' => $totalAmount,
+                'payment_gateway' => $request->payment_method,
+                'payment_status' => 'Pending',
+                'school_id' => $schoolId,
+                'order_id' => null
+            ]);
+
+            // Prepare metadata for payment gateway
+            $metadata = [
+                'user_id' => Auth::user()->id,
+                'fees_id' => $request->fees_id,
+                'student_id' => $studentData->user_id,
+                'parent_id' => $parentId,
+                'session_year_id' => $sessionYear->id,
+                'payment_transaction_id' => $paymentTransactionData->id,
+                'total_amount' => $totalAmount,
+                'school_id' => $schoolId,
+                'class_id' => $classId,
+                'type' => 'fees',
+                'name' => Auth::user()->full_name,
+                'email' => Auth::user()->email,
+                'mobile' => Auth::user()->mobile
+            ];
+
+            // Add compulsory fees metadata
+            if ($hasCompulsory) {
+                $metadata['fees_type'] = $hasOptional ? 'mixed' : 'compulsory';
+                $metadata['compulsory_amount'] = $compulsoryAmount;
+                $metadata['compulsory_fees_ids'] = json_encode($compulsoryFeeDetails, JSON_THROW_ON_ERROR);
+                $metadata['installment'] = json_encode($installmentDetails, JSON_THROW_ON_ERROR);
+                $metadata['advance_amount'] = $advanceAmount;
+                $metadata['dueChargesAmount'] = $dueChargesAmount;
+            }
+
+            // Add optional fees metadata
+            if ($hasOptional) {
+                $metadata['fees_type'] = $hasCompulsory ? 'mixed' : 'optional';
+                $metadata['optional_amount'] = $optionalAmount;
+                $metadata['optional_fees_id'] = json_encode($optionalFeeDetails, JSON_THROW_ON_ERROR);
+            }
+
+            // Create payment intent
+            $paymentIntent = PaymentService::create($request->payment_method, $schoolId)
+                ->createPaymentIntent(round($totalAmount, 2), $metadata);
+
+            // Handle different payment gateways
+            if ($request->payment_method == "Flutterwave" || $request->payment_method == "Paystack") {
+                $this->paymentTransaction->update($paymentTransactionData->id, [
+                    'order_id' => $paymentIntent['order_id'] ?? null,
+                    'school_id' => $schoolId
+                ]);
+                $paymentTransactionData = $this->paymentTransaction->findById($paymentTransactionData->id);
+                DB::commit();
+
+                \Log::info("Unified Payment Intent:", ['payment_intent' => $paymentIntent]);
+
+                if ($request->payment_method == "Flutterwave") {
+                    ResponseService::successResponse("Payment Initiated Successfully", [
+                        "payment_link" => $paymentIntent['payment_link'],
+                        "breakdown" => [
+                            'compulsory_amount' => $compulsoryAmount,
+                            'optional_amount' => $optionalAmount,
+                            'total_amount' => $totalAmount
+                        ]
+                    ]);
+                } else {
+                    ResponseService::successResponse("Payment Initiated Successfully", [
+                        "payment_link" => $paymentIntent['data']['authorization_url'],
+                        "breakdown" => [
+                            'compulsory_amount' => $compulsoryAmount,
+                            'optional_amount' => $optionalAmount,
+                            'total_amount' => $totalAmount
+                        ]
+                    ]);
+                }
+            } else {
+                $this->paymentTransaction->update($paymentTransactionData->id, [
+                    'order_id' => $paymentIntent->id,
+                    'school_id' => $schoolId
+                ]);
+
+                $paymentTransactionData = $this->paymentTransaction->findById($paymentTransactionData->id);
+
+                $paymentGatewayDetails = array(
+                    ...$paymentIntent->toArray(),
+                    'payment_transaction_id' => $paymentTransactionData->id,
+                );
+
+                DB::commit();
+
+                ResponseService::successResponse("Payment Initiated Successfully", [
+                    "payment_intent" => $paymentGatewayDetails,
+                    "payment_transaction" => $paymentTransactionData,
+                    "breakdown" => [
+                        'compulsory_amount' => $compulsoryAmount,
+                        'optional_amount' => $optionalAmount,
+                        'total_amount' => $totalAmount
+                    ]
+                ]);
+            }
+        } catch (Throwable $e) {
+            DB::rollBack();
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * Multi-Fees Payment API - Pay multiple fees with different fees_id in single transaction
+     * POST /api/parent/fees/pay-multiple
+     */
+    public function payMultipleFees(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'child_id' => 'required|integer',
+            'payments' => 'required|array|min:1',
+            'payments.*.fees_id' => 'required|integer',
+            'payments.*.compulsory_ids' => 'nullable|array',
+            'payments.*.compulsory_ids.*' => 'integer',
+            'payments.*.optional_ids' => 'nullable|array',
+            'payments.*.optional_ids.*' => 'integer',
+            'payments.*.installment_ids' => 'nullable|array',
+            'payments.*.installment_ids.*' => 'integer',
+            'payments.*.advance' => 'nullable|numeric',
+            'payment_method' => 'required|in:Stripe,Razorpay,Flutterwave,Paystack',
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Check payment gateway
+            $paymentConfigurations = $this->paymentConfigurations->builder()
+                ->where(['status' => 1, 'payment_method' => $request->payment_method])
+                ->first();
+
+            if (empty($paymentConfigurations)) {
+                ResponseService::errorResponse("Payment is not Enabled", [], config('constants.RESPONSE_CODE.ENABLE_PAYMENT_GATEWAY'));
+            }
+
+            // Get student data
+            $parentId = Auth::user()->id;
+            $studentData = Auth::user()->guardianRelationChild()
+                ->where('id', $request->child_id)
+                ->whereHas('user', function ($q) {
+                    $q->whereNull('deleted_at');
+                })
+                ->first();
+
+            if (empty($studentData)) {
+                ResponseService::errorResponse("Child's Account is not Active. Contact School Support", NULL, config('constants.RESPONSE_CODE.INACTIVE_CHILD'));
+            }
+
+            $schoolId = $studentData->user->school_id;
+            $sessionYear = $this->cache->getDefaultSessionYear($schoolId);
+            $classId = $studentData->class_section->class_id;
+
+            $grandTotal = 0;
+            $feesBreakdown = [];
+
+            // Process each fee payment
+            foreach ($request->payments as $paymentItem) {
+                $feesId = $paymentItem['fees_id'];
+                $compulsoryIds = $paymentItem['compulsory_ids'] ?? [];
+                $optionalIds = $paymentItem['optional_ids'] ?? [];
+                $installmentIds = $paymentItem['installment_ids'] ?? [];
+                $advance = $paymentItem['advance'] ?? 0;
+
+                $hasCompulsory = !empty($compulsoryIds) && count($compulsoryIds) > 0;
+                $hasOptional = !empty($optionalIds) && count($optionalIds) > 0;
+
+                if (!$hasCompulsory && !$hasOptional) {
+                    continue; // Skip if nothing selected
+                }
+
+                // Get fees data
+                $fees = $this->fees->builder()
+                    ->where('id', $feesId)
+                    ->with([
+                        'fees_class_type',
+                        'fees_class_type.fees_type',
+                        'installments.compulsory_fees' => function ($query) use ($studentData) {
+                            $query->where(['student_id' => $studentData->user_id]);
+                        },
+                        'fees_paid' => function ($query) use ($studentData) {
+                            $query->where(['student_id' => $studentData->user_id])
+                                ->with('compulsory_fee', 'optional_fee');
+                        }
+                    ])
+                    ->first();
+
+                if (!$fees) {
+                    ResponseService::errorResponse("Fees not found with ID: {$feesId}");
+                }
+
+                $compulsoryAmount = 0;
+                $optionalAmount = 0;
+                $compulsoryFeeDetails = [];
+                $optionalFeeDetails = [];
+                $installmentDetails = [];
+                $dueChargesAmount = 0;
+
+                // Process Compulsory Fees
+                if ($hasCompulsory) {
+                    $compulsory_fees = $studentData->user->compulsory_fees()
+                        ->whereHas('fees_paid', function ($q) use ($feesId) {
+                            $q->where('fees_id', $feesId);
+                        })
+                        ->get();
+
+                    $fees->append(['total_compulsory_fees']);
+
+                    if (!empty($fees->fees_paid) && !empty($fees->fees_paid->is_fully_paid)) {
+                        ResponseService::errorResponse("Compulsory Fees Already Paid for fees ID: {$feesId}");
+                    }
+
+                    $compulsoryFeesData = $fees->fees_class_type()
+                        ->where('optional', 0)
+                        ->whereIn('id', $compulsoryIds)
+                        ->get();
+
+                    if ($compulsoryFeesData->isEmpty()) {
+                        ResponseService::errorResponse("No Compulsory Fees Found for fees ID: {$feesId}");
+                    }
+
+                    foreach ($compulsoryFeesData as $row) {
+                        $compulsoryAmount += $row->amount;
+                        $compulsoryFeeDetails[] = [
+                            'id' => $row->id,
+                            'amount' => $row->amount,
+                            'name' => $row->fees_type->name ?? 'Compulsory Fee',
+                            'fees_id' => $feesId
+                        ];
+                    }
+
+                    // Handle installments
+                    if (!empty($installmentIds) && count($installmentIds) > 0) {
+                        $validInstallmentIDS = array_intersect($fees->installments->pluck('id')->toArray(), $installmentIds);
+
+                        if (empty($validInstallmentIDS)) {
+                            ResponseService::errorResponse('Invalid Installment ID for fees ID: ' . $feesId);
+                        }
+
+                        $totalInstallments = count($fees->installments);
+                        $remainingAmount = $compulsoryAmount;
+
+                        if (count($compulsory_fees) > 0) {
+                            $validInstallmentIDS = array_diff($validInstallmentIDS, $compulsory_fees->pluck('installment_id')->toArray());
+                            foreach ($compulsory_fees as $paidInstallment) {
+                                if (!empty($paidInstallment->installment_id)) {
+                                    --$totalInstallments;
+                                    $remainingAmount -= $paidInstallment->amount;
+                                }
+                            }
+                        }
+
+                        $installmentAmount = $remainingAmount / $totalInstallments;
+                        $compulsoryAmount = 0;
+
+                        foreach ($validInstallmentIDS as $key => $installment_id) {
+                            $installment = $fees->installments->first(function ($data) use ($installment_id) {
+                                return $data->id == $installment_id;
+                            });
+
+                            $installmentDueCharges = 0;
+                            if (new DateTime(date('Y-m-d')) > new DateTime($installment['due_date'])) {
+                                if ($installment->due_charges_type == "percentage") {
+                                    $installmentDueCharges = ($installmentAmount * $installment['due_charges']) / 100;
+                                } else if ($installment->due_charges_type == "fixed") {
+                                    $installmentDueCharges = $installment->due_charges;
+                                }
+                                $compulsoryAmount += $installmentAmount + $installmentDueCharges;
+                                $dueChargesAmount += $installmentDueCharges;
+                            } else {
+                                $compulsoryAmount += $installmentAmount;
+                            }
+
+                            $remainingAmount -= $installmentAmount;
+                            $installmentDetails[] = [
+                                'id' => $installment_id,
+                                'amount' => $installmentAmount,
+                                'dueChargesAmount' => $installmentDueCharges,
+                                'fees_id' => $feesId
+                            ];
+                        }
+
+                        if ($advance > $remainingAmount) {
+                            ResponseService::errorResponse("Advance Amount cannot be greater than: {$remainingAmount} for fees ID: {$feesId}");
+                        }
+                    } else {
+                        if (new DateTime(date('Y-m-d')) > new DateTime($fees->due_date)) {
+                            $dueChargesAmount = $fees->due_charges_amount;
+                            $compulsoryAmount += $dueChargesAmount;
+                        }
+                    }
+
+                    if ($advance > 0 && $advance < $compulsoryAmount) {
+                        $compulsoryAmount = $advance;
+                    }
+                }
+
+                // Process Optional Fees
+                if ($hasOptional) {
+                    $optional_fees = $studentData->user->optional_fees()
+                        ->whereIn('fees_class_id', $optionalIds)
+                        ->whereHas('fees_paid', function ($q) use ($feesId) {
+                            $q->where('fees_id', $feesId);
+                        })
+                        ->get();
+
+                    if ($optional_fees->isNotEmpty()) {
+                        ResponseService::errorResponse("Some optional fees are already paid for fees ID: {$feesId}");
+                    }
+
+                    $optionalFeesData = $fees->fees_class_type()
+                        ->where('optional', 1)
+                        ->whereIn('id', $optionalIds)
+                        ->get();
+
+                    if ($optionalFeesData->isEmpty()) {
+                        ResponseService::errorResponse("No Optional Fees Found for fees ID: {$feesId}");
+                    }
+
+                    foreach ($optionalFeesData as $row) {
+                        $optionalAmount += $row->amount;
+                        $optionalFeeDetails[] = [
+                            'id' => $row->id,
+                            'amount' => $row->amount,
+                            'name' => $row->fees_type->name ?? 'Optional Fee',
+                            'fees_id' => $feesId
+                        ];
+                    }
+                }
+
+                $feeTotal = $compulsoryAmount + $optionalAmount;
+                $grandTotal += $feeTotal;
+
+                $feesBreakdown[] = [
+                    'fees_id' => $feesId,
+                    'fees_name' => $fees->name,
+                    'compulsory_amount' => $compulsoryAmount,
+                    'optional_amount' => $optionalAmount,
+                    'total' => $feeTotal,
+                    'compulsory_details' => $compulsoryFeeDetails,
+                    'optional_details' => $optionalFeeDetails,
+                    'installment_details' => $installmentDetails,
+                    'due_charges' => $dueChargesAmount,
+                    'advance' => $advance
+                ];
+            }
+
+            if ($grandTotal <= 0) {
+                ResponseService::errorResponse("Total amount must be greater than 0");
+            }
+
+            // Create Payment Transaction
+            $paymentTransactionData = $this->paymentTransaction->create([
+                'user_id' => $parentId,
+                'amount' => $grandTotal,
+                'payment_gateway' => $request->payment_method,
+                'payment_status' => 'Pending',
+                'school_id' => $schoolId,
+                'order_id' => null
+            ]);
+
+            // Prepare metadata
+            $metadata = [
+                'user_id' => Auth::user()->id,
+                'student_id' => $studentData->user_id,
+                'parent_id' => $parentId,
+                'session_year_id' => $sessionYear->id,
+                'payment_transaction_id' => $paymentTransactionData->id,
+                'total_amount' => $grandTotal,
+                'school_id' => $schoolId,
+                'class_id' => $classId,
+                'type' => 'fees',
+                'fees_type' => 'multiple',
+                'multiple_fees' => json_encode($feesBreakdown, JSON_THROW_ON_ERROR),
+                'name' => Auth::user()->full_name,
+                'email' => Auth::user()->email,
+                'mobile' => Auth::user()->mobile
+            ];
+
+            // Create payment intent
+            $paymentIntent = PaymentService::create($request->payment_method, $schoolId)
+                ->createPaymentIntent(round($grandTotal, 2), $metadata);
+
+            // Handle different payment gateways
+            if ($request->payment_method == "Flutterwave" || $request->payment_method == "Paystack") {
+                $this->paymentTransaction->update($paymentTransactionData->id, [
+                    'order_id' => $paymentIntent['order_id'] ?? null,
+                    'school_id' => $schoolId
+                ]);
+                $paymentTransactionData = $this->paymentTransaction->findById($paymentTransactionData->id);
+                DB::commit();
+
+                \Log::info("Multi-Fees Payment Intent:", ['payment_intent' => $paymentIntent]);
+
+                if ($request->payment_method == "Flutterwave") {
+                    ResponseService::successResponse("Payment Initiated Successfully", [
+                        "payment_link" => $paymentIntent['payment_link'],
+                        "breakdown" => $feesBreakdown,
+                        "grand_total" => $grandTotal
+                    ]);
+                } else {
+                    ResponseService::successResponse("Payment Initiated Successfully", [
+                        "payment_link" => $paymentIntent['data']['authorization_url'],
+                        "breakdown" => $feesBreakdown,
+                        "grand_total" => $grandTotal
+                    ]);
+                }
+            } else {
+                $this->paymentTransaction->update($paymentTransactionData->id, [
+                    'order_id' => $paymentIntent->id,
+                    'school_id' => $schoolId
+                ]);
+
+                $paymentTransactionData = $this->paymentTransaction->findById($paymentTransactionData->id);
+
+                $paymentGatewayDetails = array(
+                    ...$paymentIntent->toArray(),
+                    'payment_transaction_id' => $paymentTransactionData->id,
+                );
+
+                DB::commit();
+
+                ResponseService::successResponse("Payment Initiated Successfully", [
+                    "payment_intent" => $paymentGatewayDetails,
+                    "payment_transaction" => $paymentTransactionData,
+                    "breakdown" => $feesBreakdown,
+                    "grand_total" => $grandTotal
+                ]);
+            }
+        } catch (Throwable $e) {
+            DB::rollBack();
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
         }

@@ -114,6 +114,9 @@ class NotificationController extends Controller
 
             if ($request->has('user_id')) {
                 $notifyUser = explode(',', $request->user_id);
+                // Remove duplicates
+                $notifyUser = array_unique($notifyUser);
+                $notifyUser = array_values($notifyUser); // Re-index array
             }
 
             $customData = [];

@@ -1000,8 +1000,7 @@ class FeesController extends Controller
 
             $advanceAmount = $student->user
                 ->fees_advances()
-                ->whereNull('used_at')
-                ->sum('amount');
+                ->sum('amount') ?? 0;
 
             // dd($feesPaid);
             $pdf = Pdf::loadView('fees.fees_receipt', compact('school', 'feesPaid', 'student','advanceAmount'));
@@ -1520,7 +1519,7 @@ class FeesController extends Controller
                             'amount' => $feesClassType['amount'],
                             'fees_paid_id' => $feesPaidResult->id,
                             'date' => date('Y-m-d', strtotime($request->date)),
-                            'status' => "Success",
+                            'status' => 1, // 1 = succeed, 2 = pending
                             'created_at' => now(),
                             'updated_at' => now()
                         );

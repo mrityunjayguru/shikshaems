@@ -6,7 +6,13 @@ use Google\Client;
 
 function send_notification($user, $title, $body, $type, $customData = [])
 {
+    // Ensure unique user IDs
+    $user = array_unique($user);
+    
     $FcmTokens = UserDevices::where('fcm_id', '!=', '')->whereIn('user_id', $user)->get()->pluck('fcm_id');
+    
+    // Remove duplicate FCM tokens
+    $FcmTokens = $FcmTokens->unique()->values();
 
     $cache = app(CachingService::class);
 

@@ -108,7 +108,7 @@ class SimpleTripTrackingService
             \Log::info("📊 Trip {$tripId} has " . $stops->count() . " stops");
 
             // Calculate stop progress
-            $result = $this->calculateStopProgress($stops, $latitude, $longitude, $speed);
+            $result = $this->calculateStopProgress($stops, $latitude, $longitude, $speed, $trip->last_pickup_point_id);
 
             // Check for proximity notifications (50m = 0.05 km)
             $this->checkProximityNotifications($tripId, $trip, $stops, $latitude, $longitude);
@@ -306,9 +306,9 @@ class SimpleTripTrackingService
     }
 
     /**
-     * Calculate stop progress, distances, and ETA
+     * Calculate stop progress, distances, and ETA based on sequential order
      */
-    private function calculateStopProgress($stops, $currentLat, $currentLng, $currentSpeed)
+    private function calculateStopProgress($stops, $currentLat, $currentLng, $currentSpeed, $lastPickupPointId = null)
     {
         $result = [
             'current_stop' => null,
@@ -318,12 +318,21 @@ class SimpleTripTrackingService
             'stops_status' => []
         ];
 
-        $nearestStop = null;
-        $nearestDistance = PHP_FLOAT_MAX;
-        $nearestIndex = -1;
+        // Sort stops by order column (ascending)
+        $sortedStops = $stops->sortBy(function($stop) {
+            return $stop->pivot->order ?? 0;
+        })->values();
 
-        // Find nearest stop
-        foreach ($stops as $index => $stop) {
+        if ($sortedStops->isEmpty()) {
+            return $result;
+        }
+
+        // Find which stop we're currently at
+        $currentStopIndex = null;
+        $atStopDistance = null;
+
+        // Check if bus is at any stop (within 100m threshold)
+        foreach ($sortedStops as $index => $stop) {
             $distance = $this->calculateDistance(
                 $currentLat,
                 $currentLng,
@@ -331,61 +340,80 @@ class SimpleTripTrackingService
                 $stop->longitude
             );
 
-            if ($distance < $nearestDistance) {
-                $nearestDistance = $distance;
-                $nearestStop = $stop;
-                $nearestIndex = $index;
+            if ($distance <= $this->stopProximityThreshold) {
+                // Bus is at this stop
+                $currentStopIndex = $index;
+                $atStopDistance = $distance;
+                break;
             }
         }
 
-        // Determine current and next stop
-        if ($nearestDistance <= $this->stopProximityThreshold) {
-            // Bus is at this stop
-            $result['current_stop'] = [
-                'id' => $nearestStop->id,
-                'name' => $nearestStop->name,
-                'distance_km' => round($nearestDistance, 2)
-            ];
-
-            // Next stop
-            if ($nearestIndex + 1 < count($stops)) {
-                $nextStop = $stops[$nearestIndex + 1];
+        // If not at any stop, determine next stop based on last visited stop
+        if ($currentStopIndex === null) {
+            if ($lastPickupPointId) {
+                // Find the index of last visited stop
+                $lastStopIndex = $sortedStops->search(function($stop) use ($lastPickupPointId) {
+                    return $stop->id == $lastPickupPointId;
+                });
                 
-                $distanceToNext = $this->calculateDistance(
-                    $currentLat,
-                    $currentLng,
-                    $nextStop->latitude,
-                    $nextStop->longitude
-                );
-
-                $avgSpeed = $currentSpeed > 0 ? $currentSpeed : 30; // Default 30 km/h
-                $eta = round(($distanceToNext / $avgSpeed) * 60); // minutes
-
-                $result['next_stop'] = [
-                    'id' => $nextStop->id,
-                    'name' => $nextStop->name,
-                    'latitude' => $nextStop->latitude,
-                    'longitude' => $nextStop->longitude
-                ];
-                $result['distance_to_next'] = round($distanceToNext, 2);
-                $result['eta_minutes'] = $eta;
+                if ($lastStopIndex !== false) {
+                    // Next stop should be after the last visited stop
+                    $currentStopIndex = $lastStopIndex;
+                } else {
+                    // Last stop not found, start from beginning
+                    $currentStopIndex = -1;
+                }
+            } else {
+                // No last stop recorded, start from beginning
+                $currentStopIndex = -1;
             }
-        } else {
-            // Bus is between stops - heading to nearest
-            $result['next_stop'] = [
-                'id' => $nearestStop->id,
-                'name' => $nearestStop->name,
-                'latitude' => $nearestStop->latitude,
-                'longitude' => $nearestStop->longitude
-            ];
-            $result['distance_to_next'] = round($nearestDistance, 2);
-
-            $avgSpeed = $currentSpeed > 0 ? $currentSpeed : 30;
-            $result['eta_minutes'] = round(($nearestDistance / $avgSpeed) * 60);
         }
 
-        // Build stops status
-        foreach ($stops as $index => $stop) {
+        // Set current stop if at a stop
+        if ($currentStopIndex !== null && $currentStopIndex >= 0 && $atStopDistance !== null && $atStopDistance <= $this->stopProximityThreshold) {
+            $currentStop = $sortedStops[$currentStopIndex];
+            $result['current_stop'] = [
+                'id' => $currentStop->id,
+                'name' => $currentStop->name,
+                'distance_km' => round($atStopDistance, 2),
+                'order' => $currentStop->pivot->order ?? $currentStopIndex + 1
+            ];
+            
+            // Mark this stop as last visited (will be updated in processGPSData)
+            $result['update_last_stop'] = $currentStop->id;
+        }
+
+        // Determine next stop (always the next one in sequence)
+        // If currentStopIndex is -1 (before first stop), next is 0
+        // If at a stop, next is currentStopIndex + 1
+        $nextStopIndex = $currentStopIndex + 1;
+        
+        if ($nextStopIndex < count($sortedStops)) {
+            $nextStop = $sortedStops[$nextStopIndex];
+            
+            $distanceToNext = $this->calculateDistance(
+                $currentLat,
+                $currentLng,
+                $nextStop->latitude,
+                $nextStop->longitude
+            );
+
+            $avgSpeed = $currentSpeed > 0 ? $currentSpeed : 30; // Default 30 km/h
+            $eta = round(($distanceToNext / $avgSpeed) * 60); // minutes
+
+            $result['next_stop'] = [
+                'id' => $nextStop->id,
+                'name' => $nextStop->name,
+                'latitude' => $nextStop->latitude,
+                'longitude' => $nextStop->longitude,
+                'order' => $nextStop->pivot->order ?? $nextStopIndex + 1
+            ];
+            $result['distance_to_next'] = round($distanceToNext, 2);
+            $result['eta_minutes'] = $eta;
+        }
+
+        // Build stops status based on sequential order
+        foreach ($sortedStops as $index => $stop) {
             $distanceFromBus = $this->calculateDistance(
                 $currentLat,
                 $currentLng,
@@ -393,13 +421,23 @@ class SimpleTripTrackingService
                 $stop->longitude
             );
 
+            // Determine status based on sequential order
             $status = 'pending';
-            if ($index < $nearestIndex) {
-                $status = 'completed';
-            } elseif ($index == $nearestIndex && $nearestDistance <= $this->stopProximityThreshold) {
-                $status = 'current';
-            } elseif ($index == $nearestIndex) {
-                $status = 'approaching';
+            
+            if ($currentStopIndex >= 0) {
+                // We're at a stop or past it
+                if ($index < $currentStopIndex) {
+                    $status = 'completed';
+                } elseif ($index == $currentStopIndex && $atStopDistance !== null && $atStopDistance <= $this->stopProximityThreshold) {
+                    $status = 'current';
+                } elseif ($index == $nextStopIndex) {
+                    $status = 'next';
+                }
+            } else {
+                // currentStopIndex is -1, meaning we haven't reached first stop yet
+                if ($index == 0) {
+                    $status = 'next';
+                }
             }
 
             $result['stops_status'][] = [
@@ -409,7 +447,7 @@ class SimpleTripTrackingService
                 'longitude' => $stop->longitude,
                 'status' => $status,
                 'distance_km' => round($distanceFromBus, 2),
-                'order' => $stop->pivot->order ?? $index
+                'order' => $stop->pivot->order ?? $index + 1
             ];
         }
 
