@@ -1909,7 +1909,7 @@ class ParentApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'child_id' => 'required|integer',
-            'fees_id' => 'required|integer'
+            'payment_transaction_id' => 'required|integer'
         ]);
 
         if ($validator->fails()) {
@@ -1924,20 +1924,150 @@ class ParentApiController extends Controller
             if (empty($student)) {
                 ResponseService::errorResponse("Child's Account is not Active.Contact School Support", NULL, config('constants.RESPONSE_CODE.INACTIVE_CHILD'));
             }
-            $feesPaid = $this->feesPaid->builder()->where(['fees_id' => $request->fees_id, 'student_id' => $student->user_id])
+            
+            // Generate combined receipt for this transaction
+            return $this->generateCombinedReceipt($student, $request->payment_transaction_id);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e);
+            ResponseService::errorResponse();
+        }
+    }
+    
+    /**
+     * Preview receipt in browser (for testing)
+     * GET /api/parent/fees/receipt-preview?child_id=5&payment_transaction_id=50
+     */
+    public function feesPaidReceiptPreview(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'child_id' => 'required|integer',
+            'payment_transaction_id' => 'required|integer'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 400);
+        }
+
+        try {
+            $student = Auth::user()->guardianRelationChild()->where('id', $request->child_id)->whereHas('user', function ($q) {
+                $q->whereNull('deleted_at');
+            })->with('user:id,first_name,last_name', 'class_section.class.stream', 'class_section.section', 'class_section.medium')->first();
+
+            if (empty($student)) {
+                return response()->json(['error' => "Child's Account is not Active"], 400);
+            }
+            
+            // Get payment transaction
+            $paymentTransaction = $this->paymentTransaction->builder()
+                ->where('id', $request->payment_transaction_id)
+                ->where('user_id', Auth::user()->id)
+                ->first();
+            
+            if (!$paymentTransaction) {
+                return response()->json(['error' => "Payment transaction not found"], 404);
+            }
+            
+            // Get all fees_paid records for this transaction
+            $feesPaidRecords = $this->feesPaid->builder()
+                ->where('student_id', $student->user_id)
+                ->whereHas('compulsory_fee', function ($q) use ($request) {
+                    $q->where('payment_transaction_id', $request->payment_transaction_id);
+                })
+                ->orWhereHas('optional_fee', function ($q) use ($request) {
+                    $q->where('payment_transaction_id', $request->payment_transaction_id);
+                })
                 ->with([
                     'fees' => function ($q) {
                         $q->with('class:id,medium_id,name', 'class.medium', 'fees_class_type.fees_type');
                     },
-                    'compulsory_fee.installment_fee:id,name',
-                    'optional_fee' => function ($q) {
-                        $q->with([
+                    'compulsory_fee' => function ($q) use ($request) {
+                        $q->where('payment_transaction_id', $request->payment_transaction_id)
+                          ->with('installment_fee:id,name');
+                    },
+                    'optional_fee' => function ($q) use ($request) {
+                        $q->where('payment_transaction_id', $request->payment_transaction_id)
+                          ->with([
                             'fees_class_type' => function ($q) {
                                 $q->select('id', 'fees_type_id')->with('fees_type:id,name');
                             }
                         ]);
                     },
-                ])->first();
+                ])
+                ->get();
+            
+            if ($feesPaidRecords->isEmpty()) {
+                return response()->json(['error' => "No payment records found"], 404);
+            }
+            
+            $systemVerticalLogo = $this->systemSetting->builder()->where('name', 'vertical_logo')->first();
+            $schoolVerticalLogo = $this->schoolSetting->builder()->where('name', 'vertical_logo')->first();
+            $school = $this->cache->getSchoolSettings();
+            
+            $advanceAmount = $student->user->fees_advances()->sum('amount') ?? 0;
+            
+            // Return HTML view directly for preview
+            return view('fees.fees_receipt_combined', compact(
+                'systemVerticalLogo', 
+                'school', 
+                'feesPaidRecords', 
+                'paymentTransaction',
+                'student', 
+                'schoolVerticalLogo', 
+                'advanceAmount'
+            ));
+        } catch (Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * Generate combined receipt for multiple fees paid in single transaction
+     */
+    private function generateCombinedReceipt($student, $paymentTransactionId)
+    {
+        try {
+            // Get payment transaction
+            $paymentTransaction = $this->paymentTransaction->builder()
+                ->where('id', $paymentTransactionId)
+                ->where('user_id', Auth::user()->id)
+                ->first();
+            
+            if (!$paymentTransaction) {
+                ResponseService::errorResponse("Payment transaction not found", NULL, 404);
+            }
+            
+            // Get all fees_paid records for this transaction
+            $feesPaidRecords = $this->feesPaid->builder()
+                ->where('student_id', $student->user_id)
+                ->whereHas('compulsory_fee', function ($q) use ($paymentTransactionId) {
+                    $q->where('payment_transaction_id', $paymentTransactionId);
+                })
+                ->orWhereHas('optional_fee', function ($q) use ($paymentTransactionId) {
+                    $q->where('payment_transaction_id', $paymentTransactionId);
+                })
+                ->with([
+                    'fees' => function ($q) {
+                        $q->with('class:id,medium_id,name', 'class.medium', 'fees_class_type.fees_type');
+                    },
+                    'compulsory_fee' => function ($q) use ($paymentTransactionId) {
+                        $q->where('payment_transaction_id', $paymentTransactionId)
+                          ->with('installment_fee:id,name');
+                    },
+                    'optional_fee' => function ($q) use ($paymentTransactionId) {
+                        $q->where('payment_transaction_id', $paymentTransactionId)
+                          ->with([
+                            'fees_class_type' => function ($q) {
+                                $q->select('id', 'fees_type_id')->with('fees_type:id,name');
+                            }
+                        ]);
+                    },
+                ])
+                ->get();
+            
+            if ($feesPaidRecords->isEmpty()) {
+                ResponseService::errorResponse("No payment records found for this transaction", NULL, 404);
+            }
+            
             $systemVerticalLogo = $this->systemSetting->builder()->where('name', 'vertical_logo')->first();
             $schoolVerticalLogo = $this->schoolSetting->builder()->where('name', 'vertical_logo')->first();
             $school = $this->cache->getSchoolSettings();
@@ -1947,8 +2077,16 @@ class ParentApiController extends Controller
                 ->fees_advances()
                 ->sum('amount') ?? 0;
             
-            //            return view('fees.fees_receipt', compact('systemVerticalLogo', 'school', 'feesPaid', 'student', 'schoolVerticalLogo', 'advanceAmount'));
-            $output = Pdf::loadView('fees.fees_receipt', compact('systemVerticalLogo', 'school', 'feesPaid', 'student', 'schoolVerticalLogo', 'advanceAmount'))->output();
+            // Generate combined receipt
+            $output = Pdf::loadView('fees.fees_receipt_combined', compact(
+                'systemVerticalLogo', 
+                'school', 
+                'feesPaidRecords', 
+                'paymentTransaction',
+                'student', 
+                'schoolVerticalLogo', 
+                'advanceAmount'
+            ))->output();
             
             $data = [
                 'pdf' => base64_encode($output),
@@ -2576,15 +2714,40 @@ class ParentApiController extends Controller
                     
                     if ($feesPaid) {
                         // Calculate paid amount (compulsory + optional)
-                        $compulsoryPaid = $feesPaid->compulsory_fee->where('status', 1)->sum('amount');
-                        $optionalPaid = $feesPaid->optional_fee->where('status', 1)->sum('amount');
+                        // Only count successful payments (status = 1)
+                        $compulsoryPaid = $feesPaid->compulsory_fee()
+                            ->where('status', 1)
+                            ->sum('amount');
+                        $optionalPaid = $feesPaid->optional_fee()
+                            ->where('status', 1)
+                            ->sum('amount');
+                        
                         $totalPaid += $compulsoryPaid + $optionalPaid;
+                        
+                        \Log::info("Fees Paid Calculation", [
+                            'fee_id' => $fee->id,
+                            'fee_name' => $fee->name,
+                            'compulsory_amount' => $compulsoryAmount,
+                            'optional_amount' => $optionalAmount,
+                            'compulsory_paid' => $compulsoryPaid,
+                            'optional_paid' => $optionalPaid,
+                            'total_for_this_fee' => $compulsoryAmount + $optionalAmount,
+                            'paid_for_this_fee' => $compulsoryPaid + $optionalPaid
+                        ]);
                     }
                 }
                 
                 // Due = Total Fees - Paid
                 // If negative or zero, show 0
                 $totalDue = max(0, $totalFees - $totalPaid);
+                
+                \Log::info("Final Calculation for Student", [
+                    'student_id' => $studentId,
+                    'student_name' => $child->full_name,
+                    'total_fees' => $totalFees,
+                    'total_paid' => $totalPaid,
+                    'payment_due' => $totalDue
+                ]);
 
                 // Build class section name
                 $className = $child->class_section->class->name ?? '';
@@ -2644,7 +2807,6 @@ class ParentApiController extends Controller
             // Get all fees paid records for this student
             $feesPaidRecords = $this->feesPaid->builder()
                 ->where('student_id', $studentId)
-                // ->where('session_year_id', $sessionYearId)
                 ->with([
                     'fees:id,name',
                     'compulsory_fee' => function ($q) {
@@ -2657,51 +2819,8 @@ class ParentApiController extends Controller
                 ->orderBy('date', 'desc')
                 ->get();
 
-            $paymentHistory = [];
-
-            foreach ($feesPaidRecords as $feesPaid) {
-                // Process compulsory fees
-                foreach ($feesPaid->compulsory_fee as $compulsory) {
-                    $paymentDate = \Carbon\Carbon::parse($compulsory->date);
-                    
-                    $paymentHistory[] = [
-                        'id' => $compulsory->id,
-                        'month' => $paymentDate->format('F'), // e.g., "April"
-                        'date' => $paymentDate->format('d/m/Y'), // e.g., "16/04/2026"
-                        'receipt_no' => $compulsory->id, // or use a custom receipt number format
-                        'payment_mode' => $compulsory->mode_name, // Cash, Cheque, Online
-                        'paid_amount' => $compulsory->amount,
-                        'due_charges' => $compulsory->due_charges ?? 0,
-                        'total_amount' => $compulsory->amount + ($compulsory->due_charges ?? 0),
-                        'fees_name' => $feesPaid->fees->name ?? 'N/A',
-                        'installment_name' => $compulsory->installment_fee->name ?? null,
-                        'type' => 'Compulsory',
-                        'status' => 'Completed'
-                    ];
-                }
-
-                // Process optional fees
-                foreach ($feesPaid->optional_fee as $optional) {
-                    $paymentDate = \Carbon\Carbon::parse($optional->date);
-                    
-                    $feesTypeName = $optional->fees_class_type->fees_type->name ?? 'Optional Fee';
-                    
-                    $paymentHistory[] = [
-                        'id' => $optional->id,
-                        'month' => $paymentDate->format('F'),
-                        'date' => $paymentDate->format('d/m/Y'),
-                        'receipt_no' => $optional->id,
-                        'payment_mode' => $optional->mode_name,
-                        'paid_amount' => $optional->amount,
-                        'due_charges' => 0,
-                        'total_amount' => $optional->amount,
-                        'fees_name' => $feesPaid->fees->name ?? 'N/A',
-                        'installment_name' => null,
-                        'type' => $feesTypeName,
-                        'status' => 'Completed'
-                    ];
-                }
-            }
+            // Group by payment_transaction_id
+            $paymentHistory = $this->getGroupedPaymentHistory($feesPaidRecords, $student);
 
             // Sort by date (newest first)
             usort($paymentHistory, function ($a, $b) {
@@ -2720,6 +2839,123 @@ class ParentApiController extends Controller
             ResponseService::logErrorResponse($e);
             ResponseService::errorResponse();
         }
+    }
+
+    /**
+     * Get grouped payment history by transaction
+     */
+    private function getGroupedPaymentHistory($feesPaidRecords, $student)
+    {
+        $transactions = [];
+
+        foreach ($feesPaidRecords as $feesPaid) {
+            // Process compulsory fees
+            foreach ($feesPaid->compulsory_fee as $compulsory) {
+                $txnId = $compulsory->payment_transaction_id;
+                
+                if (!isset($transactions[$txnId])) {
+                    $paymentDate = \Carbon\Carbon::parse($compulsory->date);
+                    $transactions[$txnId] = [
+                        'payment_transaction_id' => $txnId,
+                        'month' => $paymentDate->format('F'),
+                        'date' => $paymentDate->format('d/m/Y'),
+                        'receipt_no' => $txnId,
+                        'payment_mode' => $compulsory->mode_name,
+                        'paid_amount' => 0,
+                        'due_charges' => 0,
+                        'total_amount' => 0,
+                        'fees' => [],
+                        'items' => [], // Detailed breakdown
+                        'status' => 'Completed'
+                    ];
+                }
+                
+                // Add fee to transaction
+                $feeKey = $feesPaid->fees_id;
+                if (!isset($transactions[$txnId]['fees'][$feeKey])) {
+                    $transactions[$txnId]['fees'][$feeKey] = [
+                        'fees_id' => $feesPaid->fees_id,
+                        'fees_name' => $feesPaid->fees->name ?? 'N/A',
+                        'amount' => 0,
+                        'due_charges' => 0
+                    ];
+                }
+                
+                $transactions[$txnId]['fees'][$feeKey]['amount'] += $compulsory->amount;
+                $transactions[$txnId]['fees'][$feeKey]['due_charges'] += $compulsory->due_charges ?? 0;
+                $transactions[$txnId]['paid_amount'] += $compulsory->amount;
+                $transactions[$txnId]['due_charges'] += $compulsory->due_charges ?? 0;
+                $transactions[$txnId]['total_amount'] += $compulsory->amount + ($compulsory->due_charges ?? 0);
+                
+                // Add detailed item
+                $transactions[$txnId]['items'][] = [
+                    'fees_id' => $feesPaid->fees_id,
+                    'fees_name' => $feesPaid->fees->name ?? 'N/A',
+                    'type' => 'Compulsory',
+                    'description' => $compulsory->installment_fee->name ?? 'Compulsory Fee',
+                    'amount' => $compulsory->amount,
+                    'due_charges' => $compulsory->due_charges ?? 0
+                ];
+            }
+
+            // Process optional fees
+            foreach ($feesPaid->optional_fee as $optional) {
+                $txnId = $optional->payment_transaction_id;
+                
+                if (!isset($transactions[$txnId])) {
+                    $paymentDate = \Carbon\Carbon::parse($optional->date);
+                    $transactions[$txnId] = [
+                        'payment_transaction_id' => $txnId,
+                        'month' => $paymentDate->format('F'),
+                        'date' => $paymentDate->format('d/m/Y'),
+                        'receipt_no' => $txnId,
+                        'payment_mode' => $optional->mode_name,
+                        'paid_amount' => 0,
+                        'due_charges' => 0,
+                        'total_amount' => 0,
+                        'fees' => [],
+                        'items' => [],
+                        'status' => 'Completed'
+                    ];
+                }
+                
+                // Add fee to transaction
+                $feeKey = $feesPaid->fees_id;
+                if (!isset($transactions[$txnId]['fees'][$feeKey])) {
+                    $transactions[$txnId]['fees'][$feeKey] = [
+                        'fees_id' => $feesPaid->fees_id,
+                        'fees_name' => $feesPaid->fees->name ?? 'N/A',
+                        'amount' => 0,
+                        'due_charges' => 0
+                    ];
+                }
+                
+                $transactions[$txnId]['fees'][$feeKey]['amount'] += $optional->amount;
+                $transactions[$txnId]['paid_amount'] += $optional->amount;
+                $transactions[$txnId]['total_amount'] += $optional->amount;
+                
+                // Add detailed item
+                $feesTypeName = $optional->fees_class_type->fees_type->name ?? 'Optional Fee';
+                $transactions[$txnId]['items'][] = [
+                    'fees_id' => $feesPaid->fees_id,
+                    'fees_name' => $feesPaid->fees->name ?? 'N/A',
+                    'type' => 'Optional',
+                    'description' => $feesTypeName,
+                    'amount' => $optional->amount,
+                    'due_charges' => 0
+                ];
+            }
+        }
+
+        // Convert to array and format fees list
+        $paymentHistory = [];
+        foreach ($transactions as $transaction) {
+            $transaction['fees'] = array_values($transaction['fees']);
+            $transaction['fees_count'] = count($transaction['fees']);
+            $paymentHistory[] = $transaction;
+        }
+
+        return $paymentHistory;
     }
 
     /**

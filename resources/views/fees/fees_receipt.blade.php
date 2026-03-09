@@ -182,7 +182,7 @@
         {{-- <div class="row info-row">
             <div class="col-md-6">
                 <strong>Receipt Date:</strong> {{ date('d M Y h:i A') }}<br>
-                <strong>Receipt No:</strong> {{ $feesPaid->id }}<br>
+                <strong>Receipt No:</strong> {{ $feesPaid->id ?? 'N/A' }}<br>
                 <strong>Name:</strong> {{ $student->user->full_name }}<br>
                 <strong>Admission No:</strong> {{ $student->admission_no ?? '' }}<br>
                 <strong>Class & Section:</strong> {{ $student->class_section->full_name }}
@@ -208,7 +208,7 @@
         <table width="100%" class="info-row">
             <tr>
                 <td width="50%" valign="top">
-                    <strong>Receipt No:</strong> {{ $feesPaid->id }}<br>
+                    <strong>Receipt No:</strong> {{ $feesPaid->id ?? 'N/A' }}<br>
                     <strong>Name:</strong> {{ $student->user->full_name }}<br>
                     <strong>Admission No:</strong> {{ $student->admission_no ?? '' }}<br>
                     <strong>Class & Section:</strong> {{ $student->class_section->full_name }}
@@ -329,7 +329,7 @@
                         {{-- <strong>Payment Mode:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br> --}}
                         {{-- <strong>Bank:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br> --}}
                         <strong>Transaction ID:</strong> {{ $feesPaid->transaction_id ?? '-' }}<br>
-                        <strong>Date:</strong> {{ $feesPaid->date ?? '-' }}<br>
+                        <strong>Date:</strong> {{ $feesPaid->date ?? date('Y-m-d') }}<br>
                     </td>
                 </tr>
             </tbody>
@@ -346,8 +346,8 @@
         </div>
 
         <div class="footer-note">
-            The fee is to be deposited on or before {{ $feesPaid->fees->due_date }} .
-            After {{ $feesPaid->fees->due_date }} fine of Rs. {{ $feesPaid->fees->due_charges_amount }}- per day.
+            The fee is to be deposited on or before {{ $feesPaid->fees->due_date ?? 'N/A' }} .
+            After {{ $feesPaid->fees->due_date ?? 'N/A' }} fine of Rs. {{ $feesPaid->fees->due_charges_amount ?? 0 }}- per day.
         </div>
 
     </div>

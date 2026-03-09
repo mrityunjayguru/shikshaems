@@ -303,6 +303,7 @@ class WebhookController extends Controller
     {
         $webhookBody = file_get_contents('php://input');
         Log::info(PHP_EOL . "----------------------------------------------------------------------------------------------------------------------");
+        Log::info("=== NEW RAZORPAY WEBHOOK RECEIVED ===");
         try {
             // Parse webhook data
             $data = json_decode($webhookBody);
@@ -367,16 +368,8 @@ class WebhookController extends Controller
             Log::info("Transaction Status:", ['status' => $status]);
 
             if ($status === 'captured' || $status === 'authorized') {
-                $result = $this->handleRazorpaySuccess($paymentTransaction, $webhookData, $metadata);
-
-                // Send success notification
-                $user = User::find($metadata->parent_id ?? $paymentTransaction->user_id);
-                if ($user) {
-                    $body = 'Payment successful. Amount: ' . ($webhookData->amount / 100);
-                    send_notification([$user->id], 'Payment Successful', $body, 'payment', ['is_payment_success' => true]);
-                }
-
-                return $result;
+                // handleRazorpaySuccess will send notification only if payment wasn't already processed
+                return $this->handleRazorpaySuccess($paymentTransaction, $webhookData, $metadata);
             } else if ($status === 'failed') {
                 return $this->handleRazorpayFailed($paymentTransaction, $webhookData, $metadata);
             }
@@ -917,20 +910,37 @@ class WebhookController extends Controller
 
     private function handleRazorpaySuccess($paymentTransaction, $webhookData, $metadata)
     {
-        // Check if already processed (use payment_status field)
-        if ($paymentTransaction->payment_status === "succeed") {
-            Log::info("Transaction already processed successfully - ID: {$paymentTransaction->id}");
-            return response()->json(['status' => 'success', 'message' => 'Transaction already processed']);
-        }
-
+        Log::info("=== handleRazorpaySuccess called ===", [
+            'transaction_id' => $paymentTransaction->id,
+            'current_status' => $paymentTransaction->payment_status,
+            'order_id' => $webhookData->order_id ?? 'N/A',
+            'payment_id' => $webhookData->id ?? 'N/A'
+        ]);
+        
+        // Use database locking to prevent race conditions from multiple webhook calls
         DB::beginTransaction();
+        
         try {
+            // Lock the row for update to prevent concurrent processing
+            $lockedTransaction = PaymentTransaction::where('id', $paymentTransaction->id)
+                ->lockForUpdate()
+                ->first();
+            
+            // Check if already processed (use payment_status field)
+            if ($lockedTransaction->payment_status === "succeed") {
+                DB::rollBack();
+                Log::info("❌ Transaction already processed successfully - ID: {$lockedTransaction->id} - SKIPPING");
+                return response()->json(['status' => 'success', 'message' => 'Transaction already processed']);
+            }
+
             // Update payment transaction status FIRST to prevent race conditions
-            $paymentTransaction->payment_status = "succeed";
-            $paymentTransaction->save();
+            $lockedTransaction->payment_status = "succeed";
+            $lockedTransaction->save();
             
             // Commit immediately to lock the status and prevent duplicate processing
             DB::commit();
+            
+            Log::info("✓ First time processing - will send notification");
             
             // Start new transaction for fee processing
             DB::beginTransaction();
@@ -1007,16 +1017,33 @@ class WebhookController extends Controller
                 }
             }
             DB::commit();
-            // Send success notification
-            $user = User::find($metadata->parent_id);
+            
+            // Send success notification only once after successful processing
+            $user = User::find($metadata->parent_id ?? $paymentTransaction->user_id);
             if ($user) {
-                $body = 'Amount: ' . $amount;
+                $body = 'Payment successful. Amount: ₹' . $amount;
+                Log::info("📧 SENDING NOTIFICATION to user: {$user->id}", [
+                    'transaction_id' => $paymentTransaction->id,
+                    'amount' => $amount,
+                    'order_id' => $webhookData->order_id ?? 'N/A'
+                ]);
                 send_notification([$user->id], 'Fees Payment Successful', $body, 'payment', ['is_payment_success' => 'true']);
+                Log::info("✓ Notification sent successfully");
+            } else {
+                Log::warning("⚠️ User not found - notification not sent", [
+                    'parent_id' => $metadata->parent_id ?? 'N/A',
+                    'user_id' => $paymentTransaction->user_id ?? 'N/A'
+                ]);
             }
 
             return response()->json(['status' => 'success'], 200);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("Error in fee processing:", [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
             throw $e;
         }
     }
