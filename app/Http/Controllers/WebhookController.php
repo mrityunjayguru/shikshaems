@@ -1052,6 +1052,32 @@ class WebhookController extends Controller
     {
         DB::beginTransaction();
         try {
+            Log::info("🔴 FAILED PAYMENT HANDLER STARTED", [
+                'transaction_id' => $paymentTransaction->id,
+                'current_status' => $paymentTransaction->payment_status,
+                'order_id' => $webhookData->order_id ?? 'N/A'
+            ]);
+
+            // Lock the payment transaction row to prevent race conditions
+            $paymentTransaction = PaymentTransaction::where('id', $paymentTransaction->id)
+                ->lockForUpdate()
+                ->first();
+
+            // Idempotency check - if already failed, skip processing
+            if ($paymentTransaction->payment_status === "failed") {
+                DB::commit();
+                Log::info("⚠️ DUPLICATE FAILED WEBHOOK - Already processed, skipping", [
+                    'transaction_id' => $paymentTransaction->id,
+                    'status' => $paymentTransaction->payment_status
+                ]);
+                return response()->json(['status' => 'already_processed'], 200);
+            }
+
+            Log::info("🔄 Processing failed payment", [
+                'transaction_id' => $paymentTransaction->id,
+                'fees_type' => $metadata->fees_type ?? 'N/A'
+            ]);
+
             $paymentTransaction->payment_status = "failed";
             $paymentTransaction->save();
 
@@ -1070,16 +1096,36 @@ class WebhookController extends Controller
                         ->update(['status' => "failed"]);
                 }
             }
+            
             DB::commit();
-            // Send failure notification
+            
+            // Send failure notification ONCE after successful status update
             $user = User::find($metadata->parent_id);
             if ($user) {
-                $body = 'Amount: ' . ((int) $webhookData->amount / 100);
+                $amount = ((int) $webhookData->amount / 100);
+                $body = 'Payment failed. Amount: ₹' . $amount;
+                Log::info("📧 SENDING FAILED NOTIFICATION to user: {$user->id}", [
+                    'transaction_id' => $paymentTransaction->id,
+                    'amount' => $amount,
+                    'order_id' => $webhookData->order_id ?? 'N/A'
+                ]);
                 send_notification([$user->id], 'Fees Payment Failed', $body, 'payment', ['is_payment_success' => 'false']);
+                Log::info("✓ Failed notification sent successfully");
+            } else {
+                Log::warning("⚠️ User not found - failed notification not sent", [
+                    'parent_id' => $metadata->parent_id ?? 'N/A'
+                ]);
             }
+            
             return response()->json(['status' => 'failed'], 400);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("❌ Error in failed payment processing:", [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'transaction_id' => $paymentTransaction->id ?? 'N/A'
+            ]);
             throw $e;
         }
     }

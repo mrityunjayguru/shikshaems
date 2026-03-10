@@ -2819,13 +2819,8 @@ class ParentApiController extends Controller
                 ->orderBy('date', 'desc')
                 ->get();
 
-            // Group by payment_transaction_id
+            // Group by payment_transaction_id (already sorted newest first)
             $paymentHistory = $this->getGroupedPaymentHistory($feesPaidRecords, $student);
-
-            // Sort by date (newest first)
-            usort($paymentHistory, function ($a, $b) {
-                return strtotime(str_replace('/', '-', $b['date'])) - strtotime(str_replace('/', '-', $a['date']));
-            });
 
             $response = [
                 'student_name' => $student->full_name,
@@ -2954,6 +2949,11 @@ class ParentApiController extends Controller
             $transaction['fees_count'] = count($transaction['fees']);
             $paymentHistory[] = $transaction;
         }
+
+        // Sort by payment_transaction_id (newest first - higher ID = newer)
+        usort($paymentHistory, function ($a, $b) {
+            return $b['payment_transaction_id'] - $a['payment_transaction_id'];
+        });
 
         return $paymentHistory;
     }
