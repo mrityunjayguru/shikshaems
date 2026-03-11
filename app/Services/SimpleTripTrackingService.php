@@ -110,6 +110,13 @@ class SimpleTripTrackingService
             // Calculate stop progress
             $result = $this->calculateStopProgress($stops, $latitude, $longitude, $speed, $trip->last_pickup_point_id);
 
+            // Update last pickup point if needed
+            if (isset($result['update_last_stop']) && $result['update_last_stop'] != $trip->last_pickup_point_id) {
+                \Log::info("🔄 Updating last pickup point from {$trip->last_pickup_point_id} to {$result['update_last_stop']}");
+                $trip->last_pickup_point_id = $result['update_last_stop'];
+                $trip->save();
+            }
+
             // Check for proximity notifications (50m = 0.05 km)
             $this->checkProximityNotifications($tripId, $trip, $stops, $latitude, $longitude);
 
@@ -175,6 +182,10 @@ class SimpleTripTrackingService
     {
         $proximityThreshold = 0.05; // 50 meters in km
         
+        \Log::info("🔍 Checking proximity notifications for trip {$tripId}");
+        \Log::info("📍 Current position: Lat {$currentLat}, Lng {$currentLng}");
+        \Log::info("🎯 Proximity threshold: " . ($proximityThreshold * 1000) . "m");
+        
         foreach ($stops as $stop) {
             $distance = $this->calculateDistance(
                 $currentLat,
@@ -183,22 +194,22 @@ class SimpleTripTrackingService
                 $stop->longitude
             );
 
+            $distanceInMeters = round($distance * 1000, 2);
+            \Log::info("📏 Distance to {$stop->name}: {$distanceInMeters}m");
+
             // Check if vehicle is within 50m of this stop
             if ($distance <= $proximityThreshold) {
-                // Check if notification already sent for this stop today
-                $cacheKey = "proximity_notification_{$tripId}_{$stop->id}_" . date('Y-m-d');
+                \Log::info("✅ Bus is within 50m of {$stop->name}!");
+                \Log::info("📤 Sending proximity notification for {$stop->name}...");
                 
-                if (!\Cache::has($cacheKey)) {
-                    // Send notification to students at this pickup point
-                    $this->sendProximityNotification($trip, $stop, $distance);
-                    
-                    // Cache for 24 hours to avoid duplicate notifications
-                    \Cache::put($cacheKey, true, now()->endOfDay());
-                    
-                    \Log::info("🔔 Proximity notification sent for stop: {$stop->name} (Distance: " . round($distance * 1000, 2) . "m)");
-                }
+                // Send notification to students at this pickup point
+                $this->sendProximityNotification($trip, $stop, $distance);
+                
+                \Log::info("🔔 Proximity notification sent for stop: {$stop->name} (Distance: {$distanceInMeters}m)");
             }
         }
+        
+        \Log::info("✅ Proximity check completed");
     }
 
     /**
@@ -327,67 +338,57 @@ class SimpleTripTrackingService
             return $result;
         }
 
-        // Find which stop we're currently at
-        $currentStopIndex = null;
-        $atStopDistance = null;
+        // Find the last completed stop index
+        $lastCompletedStopIndex = -1; // -1 means no stop completed yet
+        
+        if ($lastPickupPointId) {
+            // Find the index of last completed stop
+            $lastStopIndex = $sortedStops->search(function($stop) use ($lastPickupPointId) {
+                return $stop->id == $lastPickupPointId;
+            });
+            
+            if ($lastStopIndex !== false) {
+                $lastCompletedStopIndex = $lastStopIndex;
+                \Log::info("📍 Last completed stop index: {$lastCompletedStopIndex} (Stop ID: {$lastPickupPointId})");
+            }
+        }
 
-        // Check if bus is at any stop (within 100m threshold)
-        foreach ($sortedStops as $index => $stop) {
-            $distance = $this->calculateDistance(
+        // The next stop to visit is always after the last completed stop
+        $nextStopIndex = $lastCompletedStopIndex + 1;
+        
+        // Check if bus is at the next stop (within 100m) to mark it as completed
+        if ($nextStopIndex < count($sortedStops)) {
+            $nextStop = $sortedStops[$nextStopIndex];
+            
+            $distanceToNextStop = $this->calculateDistance(
                 $currentLat,
                 $currentLng,
-                $stop->latitude,
-                $stop->longitude
+                $nextStop->latitude,
+                $nextStop->longitude
             );
 
-            if ($distance <= $this->stopProximityThreshold) {
-                // Bus is at this stop
-                $currentStopIndex = $index;
-                $atStopDistance = $distance;
-                break;
-            }
-        }
-
-        // If not at any stop, determine next stop based on last visited stop
-        if ($currentStopIndex === null) {
-            if ($lastPickupPointId) {
-                // Find the index of last visited stop
-                $lastStopIndex = $sortedStops->search(function($stop) use ($lastPickupPointId) {
-                    return $stop->id == $lastPickupPointId;
-                });
+            // If bus is within 100m of next stop, mark it as completed
+            if ($distanceToNextStop <= $this->stopProximityThreshold) {
+                \Log::info("✅ Bus reached stop: {$nextStop->name} (Distance: " . round($distanceToNextStop * 1000, 2) . "m)");
                 
-                if ($lastStopIndex !== false) {
-                    // Next stop should be after the last visited stop
-                    $currentStopIndex = $lastStopIndex;
-                } else {
-                    // Last stop not found, start from beginning
-                    $currentStopIndex = -1;
-                }
-            } else {
-                // No last stop recorded, start from beginning
-                $currentStopIndex = -1;
+                $lastCompletedStopIndex = $nextStopIndex;
+                
+                $result['current_stop'] = [
+                    'id' => $nextStop->id,
+                    'name' => $nextStop->name,
+                    'distance_km' => round($distanceToNextStop, 2),
+                    'order' => $nextStop->pivot->order ?? $nextStopIndex + 1
+                ];
+                
+                // Mark this stop as last visited (will be updated in processGPSData)
+                $result['update_last_stop'] = $nextStop->id;
+                
+                // Move to the next stop in sequence
+                $nextStopIndex = $lastCompletedStopIndex + 1;
             }
         }
 
-        // Set current stop if at a stop
-        if ($currentStopIndex !== null && $currentStopIndex >= 0 && $atStopDistance !== null && $atStopDistance <= $this->stopProximityThreshold) {
-            $currentStop = $sortedStops[$currentStopIndex];
-            $result['current_stop'] = [
-                'id' => $currentStop->id,
-                'name' => $currentStop->name,
-                'distance_km' => round($atStopDistance, 2),
-                'order' => $currentStop->pivot->order ?? $currentStopIndex + 1
-            ];
-            
-            // Mark this stop as last visited (will be updated in processGPSData)
-            $result['update_last_stop'] = $currentStop->id;
-        }
-
-        // Determine next stop (always the next one in sequence)
-        // If currentStopIndex is -1 (before first stop), next is 0
-        // If at a stop, next is currentStopIndex + 1
-        $nextStopIndex = $currentStopIndex + 1;
-        
+        // Determine the actual next stop (after last completed)
         if ($nextStopIndex < count($sortedStops)) {
             $nextStop = $sortedStops[$nextStopIndex];
             
@@ -410,9 +411,14 @@ class SimpleTripTrackingService
             ];
             $result['distance_to_next'] = round($distanceToNext, 2);
             $result['eta_minutes'] = $eta;
+            
+            \Log::info("➡️  Next stop: {$nextStop->name} (Distance: " . round($distanceToNext, 2) . " km, ETA: {$eta} min)");
+        } else {
+            \Log::info("🏁 All stops completed!");
         }
 
         // Build stops status based on sequential order
+        // Completed stops stay completed, regardless of bus position
         foreach ($sortedStops as $index => $stop) {
             $distanceFromBus = $this->calculateDistance(
                 $currentLat,
@@ -424,20 +430,12 @@ class SimpleTripTrackingService
             // Determine status based on sequential order
             $status = 'pending';
             
-            if ($currentStopIndex >= 0) {
-                // We're at a stop or past it
-                if ($index < $currentStopIndex) {
-                    $status = 'completed';
-                } elseif ($index == $currentStopIndex && $atStopDistance !== null && $atStopDistance <= $this->stopProximityThreshold) {
-                    $status = 'current';
-                } elseif ($index == $nextStopIndex) {
-                    $status = 'next';
-                }
-            } else {
-                // currentStopIndex is -1, meaning we haven't reached first stop yet
-                if ($index == 0) {
-                    $status = 'next';
-                }
+            if ($index <= $lastCompletedStopIndex) {
+                // This stop has been completed - it STAYS completed permanently
+                $status = 'completed';
+            } elseif ($index == $nextStopIndex) {
+                // This is the next stop to visit
+                $status = 'next';
             }
 
             $result['stops_status'][] = [

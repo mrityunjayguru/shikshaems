@@ -2956,7 +2956,7 @@ class TrasportationApiController extends Controller
             // Get student's assigned pickup point (if user is parent/student)
             $studentPickupPoint = null;
             $studentStopETA = null;
-
+                // dd(Auth::user());
             if (Auth::user()->hasRole('Guardian')) {
                 // Get student's transportation payment to find their pickup point
                 $query = Auth::user()->guardianRelationChild();
@@ -3039,7 +3039,7 @@ class TrasportationApiController extends Controller
             // Find next stop (first upcoming stop)
             $nextStop = collect($stops)->firstWhere('status', 'upcoming');
             $myStop = collect($stops)->firstWhere('is_student_stop', true);
-
+            $school = School::where('id', Auth::user()->school_id)->first();
             // Build response
             $response = [
                 'trip_id' => $trip->id,
@@ -3089,7 +3089,9 @@ class TrasportationApiController extends Controller
                 'start_time' => $trip->start_time,
                 'end_time' => $trip->end_time,
                 'actual_start_time' => $trip->actual_start_time,
-                'actual_end_time' => $trip->actual_end_time
+                'actual_end_time' => $trip->actual_end_time,
+                'school_lat' => $school->latitude,
+                'school_long' => $school->longitude,
             ];
 
             ResponseService::successResponse("Trip Details Fetched Successfully", $response);

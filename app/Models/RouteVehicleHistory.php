@@ -14,6 +14,7 @@ class RouteVehicleHistory extends Model
         'driver_id',
         'helper_id',
         'shift_id',
+        'last_pickup_point_id',
         'status',
         'created_at',
         'updated_at',
