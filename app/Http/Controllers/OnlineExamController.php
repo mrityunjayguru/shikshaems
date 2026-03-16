@@ -237,7 +237,7 @@ class OnlineExamController extends Controller
                     ];
                 });
         }
-
+        // dd($subjects);
         return response()->json($subjects);
     }
 

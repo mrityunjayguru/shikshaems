@@ -2514,37 +2514,64 @@ class TeacherApiController extends Controller
             }
 
             $exam_data_db = $sql->orderBy('id', 'DESC')->get();
+            $exam_data = [];
             foreach ($exam_data_db as $data) {
-                $startDate = date('Y-m-d', strtotime($data->timetable->min('date')));
-                $endDate = date('Y-m-d', strtotime($data->timetable->max('date')));
+                // Calculate start and end dates from timetable if not set
+                $startDate = $data->start_date;
+                $endDate = $data->end_date;
+                
+                if (count($data->timetable)) {
+                    $timetableStartDate = $data->timetable->min('date');
+                    $timetableEndDate = $data->timetable->max('date');
+                    
+                    // Use timetable dates if exam dates are null
+                    if (!$startDate && $timetableStartDate) {
+                        $startDate = date('Y-m-d', strtotime($timetableStartDate));
+                    }
+                    if (!$endDate && $timetableEndDate) {
+                        $endDate = date('Y-m-d', strtotime($timetableEndDate));
+                    }
+                }
 
                 $currentTime = Carbon::now();
-                $current_date = date($currentTime->toDateString());
-                $current_time = Carbon::now();
+                $current_date = $currentTime->toDateString();
+                
                 //  0- Upcoming, 1-On Going, 2-Completed, 3-All Details
                 $exam_status = "3";
-                if ($current_date == $data->start_date && $current_date == $data->end_date) {
-                    if (count($data->timetable)) {
-                        $exam_end_time = $startDate;
-                        $exam_start_time = $endDate;
+                
+                // Only calculate status if we have valid dates
+                if ($startDate && $endDate) {
+                    // Convert dates to Carbon for proper comparison
+                    $startDateCarbon = Carbon::parse($startDate);
+                    $endDateCarbon = Carbon::parse($endDate);
+                    $currentDateCarbon = Carbon::parse($current_date);
+                    
+                    if ($currentDateCarbon->isSameDay($startDateCarbon) && $currentDateCarbon->isSameDay($endDateCarbon)) {
+                        // Single day exam - check time
+                        if (count($data->timetable)) {
+                            $firstTimetable = $data->timetable->first();
+                            $lastTimetable = $data->timetable->last();
+                            
+                            $exam_start_time = Carbon::parse($startDate . ' ' . $firstTimetable->start_time);
+                            $exam_end_time = Carbon::parse($endDate . ' ' . $lastTimetable->end_time);
 
-                        if ($current_time->lt($exam_start_time)) {
-                            $exam_status = "1";
-                        } elseif ($current_time->gt($exam_end_time)) {
-                            $exam_status = "2";
-                        } else {
-                            $exam_status = "0";
+                            if ($currentTime->lt($exam_start_time)) {
+                                $exam_status = "0"; // Upcoming
+                            } elseif ($currentTime->gt($exam_end_time)) {
+                                $exam_status = "2"; // Completed
+                            } else {
+                                $exam_status = "1"; // On Going
+                            }
                         }
-                    }
-                } else {
-                    if ($current_date >= $data->start_date && $current_date <= $data->end_date) {
-                        $exam_status = "1";
-                    } else if ($current_date < $data->start_date) {
-                        $exam_status = "2";
-                    } else if ($current_date >= $data->end_date) {
-                        $exam_status = "1";
                     } else {
-                        $exam_status = null;
+                        // Multi-day exam
+                        if ($currentDateCarbon->between($startDateCarbon, $endDateCarbon, true)) {
+                            $exam_status = "1"; // On Going
+                        } else if ($currentDateCarbon->lt($startDateCarbon)) {
+                            $exam_status = "0"; // Upcoming
+                        } else if ($currentDateCarbon->gt($endDateCarbon)) {
+                            $exam_status = "2"; // Completed
+                        }
                     }
                 }
 
@@ -2607,8 +2634,8 @@ class TeacherApiController extends Controller
                             'description'        => $data->description,
                             'publish'            => $data->publish,
                             'session_year'       => $data->session_year->name,
-                            'exam_starting_date' => $data->start_date,
-                            'exam_ending_date'   => $data->end_date,
+                            'exam_starting_date' => $startDate,
+                            'exam_ending_date'   => $endDate,
                             'exam_status'        => $exam_status,
                             'class_name'        => $data->class_name,
                             'timetable'         => $timetable_data,
@@ -2621,8 +2648,8 @@ class TeacherApiController extends Controller
                                 'description'        => $data->description,
                                 'publish'            => $data->publish,
                                 'session_year'       => $data->session_year->name,
-                                'exam_starting_date' => $data->start_date,
-                                'exam_ending_date'   => $data->end_date,
+                                'exam_starting_date' => $startDate,
+                                'exam_ending_date'   => $endDate,
                                 'exam_status'        => $exam_status,
                                 'class_name'        => $data->class_name,
                                 'timetable'         => $timetable_data,
@@ -2635,8 +2662,8 @@ class TeacherApiController extends Controller
                             'description'        => $data->description,
                             'publish'            => $data->publish,
                             'session_year'       => $data->session_year->name,
-                            'exam_starting_date' => $data->start_date,
-                            'exam_ending_date'   => $data->end_date,
+                            'exam_starting_date' => $startDate,
+                            'exam_ending_date'   => $endDate,
                             'exam_status'        => $exam_status,
                             'class_name'        => $data->class_name,
                             'timetable'         => $timetable_data,
@@ -2648,8 +2675,8 @@ class TeacherApiController extends Controller
                             'description'        => $data->description,
                             'publish'            => $data->publish,
                             'session_year'       => $data->session_year->name,
-                            'exam_starting_date' => $data->start_date,
-                            'exam_ending_date'   => $data->end_date,
+                            'exam_starting_date' => $startDate,
+                            'exam_ending_date'   => $endDate,
                             'exam_status'        => $exam_status,
                             'class_name'        => $data->class_name,
                             'timetable'         => $timetable_data,
@@ -2662,8 +2689,8 @@ class TeacherApiController extends Controller
                         'description'        => $data->description,
                         'publish'            => $data->publish,
                         'session_year'       => $data->session_year->name,
-                        'exam_starting_date' => $data->start_date,
-                        'exam_ending_date'   => $data->end_date,
+                        'exam_starting_date' => $startDate,
+                        'exam_ending_date'   => $endDate,
                         'exam_status'        => $exam_status,
                         'class_name'        => $data->class_name,
                         'timetable'         => $timetable_data,

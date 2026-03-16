@@ -47,7 +47,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use JetBrains\PhpStorm\NoReturn;
 use Throwable;
-use Carbon;
+use Carbon\Carbon;
 
 class ParentApiController extends Controller
 {
@@ -507,7 +507,7 @@ class ParentApiController extends Controller
         try {
             $leave = StudentLeave::with('user:id,first_name,last_name,image')
                 ->where('user_id', $request->user_id)
-                ->orderBy('created_at', 'ASC')
+                ->orderBy('created_at', 'desc')
                 ->get();
             ResponseService::successResponse("Data Fetched Successfully", $leave);
         } catch (Throwable $e) {

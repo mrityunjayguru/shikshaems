@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Throwable;
 
-class GuardianController extends Controller {
+class GuardianController extends Controller
+{
     protected UserInterface $user;
     private ClassSchoolInterface $class;
     private SectionInterface $section;
@@ -26,7 +27,8 @@ class GuardianController extends Controller {
     private SessionYearsTrackingsService $sessionYearsTrackingsService;
     private CachingService $cache;
 
-    public function __construct(UserInterface $user, ClassSchoolInterface $class, SectionInterface $section, ClassSectionInterface $classSection, SessionYearsTrackingsService $sessionYearsTrackingsService, CachingService $cache) {
+    public function __construct(UserInterface $user, ClassSchoolInterface $class, SectionInterface $section, ClassSectionInterface $classSection, SessionYearsTrackingsService $sessionYearsTrackingsService, CachingService $cache)
+    {
         $this->user = $user;
         $this->class = $class;
         $this->section = $section;
@@ -35,17 +37,19 @@ class GuardianController extends Controller {
         $this->cache = $cache;
     }
 
-    public function index() {
+    public function index()
+    {
         ResponseService::noPermissionThenRedirect('guardian-list');
         $classes = $this->class->all(['id', 'name', 'medium_id'], ['stream', 'medium']);
         $sections = $this->section->builder()->orderBy('name', 'ASC')->get();
 
         $class_sections = $this->classSection->all(['*'], ['class', 'class.stream', 'section', 'medium']);
         // $childs = 
-        return view('guardian.index', compact('classes','class_sections'));
+        return view('guardian.index', compact('classes', 'class_sections'));
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         ResponseService::noPermissionThenRedirect('guardian-create');
         $request->validate([
             'first_name' => 'required',
@@ -74,7 +78,8 @@ class GuardianController extends Controller {
         }
     }
 
-    public function show(Request $request) {
+    public function show(Request $request)
+    {
         // dd($request->all());
         ResponseService::noPermissionThenRedirect('guardian-list');
         $offset = request('offset', 0);
@@ -83,26 +88,24 @@ class GuardianController extends Controller {
         $order = request('order', 'DESC');
 
         $sql = $this->user->guardian()->with([
-                'child.user',         
-                'child.class_section',
-                'child.class_section.class',
-                'child.class_section.section'
-            ]);
+            'child.user',
+            'child.class_section',
+            'child.class_section.class',
+            'child.class_section.section'
+        ]);
 
-        if($request->class_id && $request->class_id != 'all')
-        {
+        if ($request->class_id && $request->class_id != 'all') {
             $sql->whereHas('child.class_section', function ($q) use ($request) {
                 $q->where('class_id', $request->class_id);
             });
         }
 
-        if($request->class_section_id && $request->class_section_id != 'all')
-        {
+        if ($request->class_section_id && $request->class_section_id != 'all') {
             $sql->whereHas('child', function ($q) use ($request) {
                 $q->where('class_section_id', $request->class_section_id);
             });
         }
-       
+
         $sql = $sql->owner();
 
         if (!empty($_GET['search'])) {
@@ -128,11 +131,11 @@ class GuardianController extends Controller {
         $no = 1;
         foreach ($res as $row) {
             $operate = BootstrapTableService::editButton(route('guardian.update', $row->id));
-            $wardsOperate = '<a class="btn-view" title="Wards Info" style="padding: 0.65rem 0.5rem;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M15.5799 11.9999C15.5799 13.9799 13.9799 15.5799 11.9999 15.5799C10.0199 15.5799 8.41992 13.9799 8.41992 11.9999C8.41992 10.0199 10.0199 8.41992 11.9999 8.41992C13.9799 8.41992 15.5799 10.0199 15.5799 11.9999Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M12.0001 20.27C15.5301 20.27 18.8201 18.19 21.1101 14.59C22.0101 13.18 22.0101 10.81 21.1101 9.39997C18.8201 5.79997 15.5301 3.71997 12.0001 3.71997C8.47009 3.71997 5.18009 5.79997 2.89009 9.39997C1.99009 10.81 1.99009 13.18 2.89009 14.59C5.18009 18.19 8.47009 20.27 12.0001 20.27Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-</a> ';
+            $wardsOperate = '<a class="btn-view btn_wards_info" title="Wards Info" style="padding: 0.65rem 0.5rem;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15.5799 11.9999C15.5799 13.9799 13.9799 15.5799 11.9999 15.5799C10.0199 15.5799 8.41992 13.9799 8.41992 11.9999C8.41992 10.0199 10.0199 8.41992 11.9999 8.41992C13.9799 8.41992 15.5799 10.0199 15.5799 11.9999Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12.0001 20.27C15.5301 20.27 18.8201 18.19 21.1101 14.59C22.0101 13.18 22.0101 10.81 21.1101 9.39997C18.8201 5.79997 15.5301 3.71997 12.0001 3.71997C8.47009 3.71997 5.18009 5.79997 2.89009 9.39997C1.99009 10.81 1.99009 13.18 2.89009 14.59C5.18009 18.19 8.47009 20.27 12.0001 20.27Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </a> ';
             $tempRow = $row->toArray();
             $tempRow['no'] = $no++;
             $tempRow['operate'] = $operate;
@@ -144,7 +147,8 @@ class GuardianController extends Controller {
         return response()->json($bulkData);
     }
 
-    public function update(Request $request) {
+    public function update(Request $request)
+    {
         ResponseService::noPermissionThenSendJson('guardian-edit');
         $request->validate([
             'edit_id'    => 'required',
@@ -156,7 +160,7 @@ class GuardianController extends Controller {
             'image'      => 'nullable|image|mimes:jpeg,png,jpg,svg,gif,webp',
         ]);
         try {
-            $data = $request->except('_token', 'edit_id', '_method','reset_password');
+            $data = $request->except('_token', 'edit_id', '_method', 'reset_password');
             $guardian = $this->user->guardian()->where('id', $request->edit_id)->firstOrFail();
             if (!empty($request->image)) {
                 if ($guardian->image) {
@@ -178,7 +182,8 @@ class GuardianController extends Controller {
         }
     }
 
-    public function search(Request $request) {
+    public function search(Request $request)
+    {
         ResponseService::noAnyPermissionThenSendJson(['student-create', 'student-edit']);
         $parent = $this->user->guardian()->where(function ($query) use ($request) {
             $query->where('email', 'like', '%' . $request->email . '%')

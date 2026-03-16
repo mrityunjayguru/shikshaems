@@ -135,9 +135,9 @@ class ClassSchool extends Model {
         if ($this->relationLoaded('shift')) {
             $name .= isset($this->shift->name) ? ' (' . $this->shift->name . ') ' : '';
         }
-        if ($this->relationLoaded('medium') && $this->medium) {
-            $name .= ' - ' . $this->medium->name;
-        }
+        // if ($this->relationLoaded('medium') && $this->medium) {
+        //     $name .= ' - ' . $this->medium->name;
+        // }
         return $name;
     }
 

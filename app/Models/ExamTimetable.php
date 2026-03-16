@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\DateFormatTrait;
 
-class ExamTimetable extends Model {
+class ExamTimetable extends Model
+{
     use HasFactory;
     use Compoships;
     use DateFormatTrait;
-    
+
     protected $fillable = [
         'exam_id',
         'class_id',
@@ -28,7 +29,7 @@ class ExamTimetable extends Model {
         'updated_at',
     ];
 
-    protected $hidden = ['created_at','updated_at'];
+    protected $hidden = ['created_at', 'updated_at'];
     protected $appends = ['subject_with_name'];
 
     protected $timeOnly = ['start_time', 'end_time'];
@@ -36,28 +37,34 @@ class ExamTimetable extends Model {
     protected $dateOnly = ['date'];
 
 
-    public function class_subject() {
+    public function class_subject()
+    {
         return $this->belongsTo(ClassSubject::class, 'class_subject_id');
     }
 
-    public function exam() {
+    public function exam()
+    {
         return $this->belongsTo(Exam::class, 'exam_id')->withTrashed();
     }
 
-    public function class() {
+    public function class()
+    {
         return $this->belongsTo(ClassSchool::class, 'class_id')->withTrashed();
     }
 
-    public function session_year() {
+    public function session_year()
+    {
         return $this->belongsTo(SessionYear::class, 'session_year_id')->withTrashed();
     }
 
-    public function exam_marks() {
+    public function exam_marks()
+    {
         return $this->hasMany(ExamMarks::class, 'exam_timetable_id');
     }
 
-    public function scopeOwner($query) {
-        if(Auth::user()) {
+    public function scopeOwner($query)
+    {
+        if (Auth::user()) {
             if (Auth::user()->hasRole('Super Admin')) {
                 return $query;
             }
@@ -70,26 +77,35 @@ class ExamTimetable extends Model {
                 $studentAuth = Auth::user()->student;
                 $studentAuth->selectedStudentSubjects();
                 $class_subject_ids = $studentAuth->selectedStudentSubjects()->pluck('class_subject_id');
-                return $query->whereIn('class_subject_id',$class_subject_ids)->where('school_id', Auth::user()->school_id);
+                return $query->whereIn('class_subject_id', $class_subject_ids)->where('school_id', Auth::user()->school_id);
             }
 
             if (Auth::user()->hasRole('Guardian')) {
                 $childId = request('child_id');
-                $studentAuth = Students::where('id',$childId)->first();
+                $studentAuth = Students::where('id', $childId)->first();
                 $class_subject_ids = $studentAuth->selectedStudentSubjects()->pluck('class_subject_id');
-                return $query->whereIn('class_subject_id',$class_subject_ids)->where('school_id', $studentAuth->school_id);
+                return $query->whereIn('class_subject_id', $class_subject_ids)->where('school_id', $studentAuth->school_id);
             }
         }
 
         return $query;
     }
 
-    public function getSubjectWithNameAttribute() {
-        if ($this->relationLoaded('class_subject')) {
-            if ($this->class_subject) {
-                return $this->class_subject->subject->name . ' - ' . $this->class_subject->subject->type;    
+    public function getSubjectWithNameAttribute()
+    {
+        // Try to get class_subject relationship
+        $classSubject = $this->class_subject;
+        
+        if ($classSubject && $classSubject->subject) {
+            $name = $classSubject->subject->name;
+
+            if (!empty($classSubject->subject->type) && $classSubject->subject->type !== 'None') {
+                $name .= ' - ' . $classSubject->subject->type;
             }
+
+            return $name;
         }
+
         return null;
     }
 
@@ -112,10 +128,9 @@ class ExamTimetable extends Model {
     {
         return $this->formatTimeOnly($value);
     }
-    
+
     public function getDateAttribute($value)
     {
         return $this->formatDateOnly($value);
     }
-
 }

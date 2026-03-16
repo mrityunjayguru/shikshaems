@@ -50,7 +50,7 @@ class AddSuperAdminSeeder extends Seeder {
             ["name" => "email_verified", "data" => 0, "type" => "boolean"],
             ["name" => "subscription_alert", "data" => 7, "type" => "integer"],
             ["name" => "currency_code", "data" => "USD", "type" => "string"],
-            ["name" => "currency_symbol", "data" => "$", "type" => "string"],
+            ["name" => "currency_symbol", "data" => "₹", "type" => "string"],
             ["name" => "additional_billing_days", "data" => "5", "type" => "integer"],
             ["name" => "system_name", "data" => "ShikshaEMS - School Management System", "type" => "string"],
             ["name" => "address", "data" => "#262-263, Time Square Empire, SH 42 Mirjapar highway, Bhuj - Kutch 370001 Gujarat India.", "type" => "string"],

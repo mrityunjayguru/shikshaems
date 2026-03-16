@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\DateFormatTrait;
 
-class Timetable extends Model {
+class Timetable extends Model
+{
     use DateFormatTrait;
-    
+
     protected $fillable = [
         "subject_teacher_id",
         "class_section_id",
@@ -25,26 +26,31 @@ class Timetable extends Model {
     ];
 
     protected $appends = ['title'];
-    protected $hidden = ['created_at','updated_at'];
+    protected $hidden = ['created_at', 'updated_at'];
 
 
-    public function subject_teacher() {
+    public function subject_teacher()
+    {
         return $this->belongsTo(SubjectTeacher::class);
     }
 
-    public function class_section() {
+    public function class_section()
+    {
         return $this->belongsTo(ClassSection::class)->withTrashed();
     }
 
-    public function subject() {
+    public function subject()
+    {
         return $this->belongsTo(Subject::class)->withTrashed();
     }
 
-    public function teacher() {
+    public function teacher()
+    {
         return $this->hasOneThrough(User::class, SubjectTeacher::class, 'id', 'id', 'subject_teacher_id', 'teacher_id')->withTrashed();
     }
 
-    public function scopeOwner($query) {
+    public function scopeOwner($query)
+    {
         if (Auth::user()) {
             $user = Auth::user();
             if ($user->hasRole('School Admin')) {
@@ -58,10 +64,10 @@ class Timetable extends Model {
             if (Auth::user()->hasRole('Student')) {
                 return $query->where('school_id', Auth::user()->school_id);
             }
-    //        if ($user->hasRole('Teacher')) {
-    //            $teacher_id = $user->teacher()->pluck('id');
-    //            return $query->whereIn('teacher_id', $teacher_id);
-    //        }
+            //        if ($user->hasRole('Teacher')) {
+            //            $teacher_id = $user->teacher()->pluck('id');
+            //            return $query->whereIn('teacher_id', $teacher_id);
+            //        }
             if (Auth::user()->school_id) {
                 return $this->where('school_id', $user->school_id);
             }
@@ -69,14 +75,24 @@ class Timetable extends Model {
         return $query;
     }
 
-    public function getTitleAttribute() {
+    public function getTitleAttribute()
+    {
         if ($this->type === "Lecture") {
             if ($this->relationLoaded('subject') && $this->relationLoaded('teacher')) {
+
                 if (!isset($this->subject->name) && !isset($this->teacher->full_name)) {
                     return $this->note;
                 }
+
                 $teacherName = $this->teacher->full_name ?? '';
-                return $this->subject->name . ' ( ' .$this->subject->type . ' ) ' . ' - ' . $teacherName;
+
+                $name = $this->subject->name;
+
+                if (!empty($this->subject->type) && $this->subject->type !== 'None') {
+                    $name .= ' (' . $this->subject->type . ')';
+                }
+
+                return $name . ' - ' . $teacherName;
             }
 
             if ($this->relationLoaded('subject')) {
@@ -92,10 +108,11 @@ class Timetable extends Model {
         return $this->note;
     }
 
-    public function scopeCurrentSemesterData($query){
+    public function scopeCurrentSemesterData($query)
+    {
         $currentSemester = app(SemesterInterface::class)->default();
-        if($currentSemester){
-            $query->where(function ($query) use($currentSemester){
+        if ($currentSemester) {
+            $query->where(function ($query) use ($currentSemester) {
                 $query->where('timetables.semester_id', $currentSemester->id)->orWhereNull('timetables.semester_id');
             });
         }

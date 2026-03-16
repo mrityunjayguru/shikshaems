@@ -14,7 +14,7 @@ class ClassSubject extends Model
 {
     use HasFactory, SoftDeletes, DateFormatTrait;
 
-    protected $fillable = ['class_id', 'subject_id', 'type', 'semester_id' ,'elective_subject_group_id', 'school_id'];
+    protected $fillable = ['class_id', 'subject_id', 'type', 'semester_id', 'elective_subject_group_id', 'school_id'];
 
     protected $appends = ['subject_with_name'];
 
@@ -63,22 +63,22 @@ class ClassSubject extends Model
             $teacherId = Auth::user()->id;
             return $query->whereHas('subject_teacher', function ($query) use ($teacherId) {
                 $query->where('teacher_id', $teacherId);
-            })->where('school_id',Auth::user()->school_id);
+            })->where('school_id', Auth::user()->school_id);
         }
-        return $query->where('school_id',Auth::user()->school_id);
+        return $query->where('school_id', Auth::user()->school_id);
     }
 
     public function scopeOwner($query)
     {
-        if(Auth::user()) {
+        if (Auth::user()) {
             if (Auth::user()->hasRole('Super Admin')) {
                 return $query;
             }
-    
+
             if (Auth::user()->hasRole('School Admin')) {
                 return $query->where('school_id', Auth::user()->school_id);
             }
-    
+
             if (Auth::user()->hasRole('Student')) {
                 return $query->where('school_id', Auth::user()->school_id);
             }
@@ -90,23 +90,34 @@ class ClassSubject extends Model
         return $query;
     }
 
-    public function subjectTeachers() {
+    public function subjectTeachers()
+    {
         return $this->hasMany(SubjectTeacher::class, 'class_subject_id')->with('teacher');
     }
 
-    public function scopeCurrentSemesterData($query){
+    public function scopeCurrentSemesterData($query)
+    {
         $currentSemester = app(SemesterInterface::class)->default();
-        if($currentSemester){
-            $query->where(function ($query) use($currentSemester){
+        if ($currentSemester) {
+            $query->where(function ($query) use ($currentSemester) {
                 $query->where('semester_id', $currentSemester->id)->orWhereNull('semester_id');
             });
         }
     }
 
-    public function getSubjectWithNameAttribute() {
-        if ($this->relationLoaded('subject')) {
-            return $this->subject->name . ' - ' . $this->subject->type;
+    public function getSubjectWithNameAttribute()
+    {
+        if ($this->relationLoaded('subject') && $this->subject) {
+
+            $name = $this->subject->name;
+
+            if ($this->subject->type && $this->subject->type != 'None') {
+                $name .= ' - ' . $this->subject->type;
+            }
+
+            return $name;
         }
+
         return null;
     }
 

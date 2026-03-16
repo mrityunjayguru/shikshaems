@@ -87,9 +87,9 @@ class ChatHistoryController extends Controller
         $query = $this->user->builder()
             ->with('staff', 'roles', 'support_school.school');
 
-        if (!empty($role)) {
-            $query->whereHas('roles', function ($q) use ($role) {
-                $q->where('name', $role);
+        if ($role == 'Staff') {
+            $query->whereHas('roles', function ($q) {
+                $q->whereNotIn('name', ['Teacher', 'Guardian', 'Student','School Admin']);
             });
         }
 
@@ -153,7 +153,7 @@ class ChatHistoryController extends Controller
                 $q->where('class_section_id', $class_section_id);
             });
         }
-    // dd($query->get());
+        // dd($query->get());
 
         // 🔹 OTHER ROLES → ignore class filter
         $users = $query->get()->map(fn($user) => [

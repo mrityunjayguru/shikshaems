@@ -1238,8 +1238,26 @@ class ExamController extends Controller
 
                 if ($row->has_timetable) {
                     foreach ($row->timetable as $timetable) {
-                        $subject = $timetable->subject_with_name;
                         $subjectId = $timetable->class_subject_id;
+                        
+                        // Get subject directly - handle soft deletes
+                        $subject = null;
+                        if ($timetable->class_subject_id) {
+                            $classSubject = \App\Models\ClassSubject::withTrashed()
+                                ->with(['subject' => function($q) {
+                                    $q->withTrashed();
+                                }])
+                                ->find($timetable->class_subject_id);
+                            
+                            if ($classSubject && $classSubject->subject) {
+                                $subject = $classSubject->subject->name;
+                                
+                                // Add subject type if exists
+                                if ($classSubject->subject->type && $classSubject->subject->type !== 'None') {
+                                    $subject .= ' - ' . $classSubject->subject->type;
+                                }
+                            }
+                        }
 
                         if (isset($processedSubjects[$subjectId])) {
                             continue;

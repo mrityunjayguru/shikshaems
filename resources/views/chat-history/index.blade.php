@@ -238,7 +238,7 @@
             $('#role').change(function() {
 
                 let role = $(this).val();
-                console.log(role);
+                // console.log(role);
 
                 $('#user_id').html('<option value="">All</option>');
                 $('#class_section_id').html('<option value="">Select Class Section</option>');
@@ -290,7 +290,8 @@
 
 
             function loadUsersByRole(role) {
-
+                    console.log(role);
+                    
                 $.get("{{ url('get-users-by-role') }}", {
                     role
                 }, function(users) {
