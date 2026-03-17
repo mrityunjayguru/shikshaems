@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TimetableCollection;
 use App\Http\Resources\UserDataResource;
 use App\Models\AssignmentSubmission;
+use App\Models\ClassSection;
 use App\Models\OnlineExamCommon;
 use App\Models\School;
 use App\Models\Students;
@@ -168,7 +169,6 @@ class StudentApiController extends Controller
             }
             $token = $auth->createToken($auth->first_name)->plainTextToken;
             $user = $auth->load([
-                'user',
                 'student.class_section' => function ($q) {
                     $q->with('section', 'class', 'medium');
                 },
@@ -968,6 +968,7 @@ class StudentApiController extends Controller
 
             $data = array(
                 'id' => $studentData->id,
+                'student_id' => $studentData->student->id,
                 'first_name' => $studentData->first_name,
                 'last_name' => $studentData->last_name,
                 'mobile' => $studentData->mobile,
@@ -1845,6 +1846,78 @@ class StudentApiController extends Controller
             ResponseService::successResponse('Data added Successfully');
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function updateLocation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'latitude'  => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        if ($validator->fails()) {
+            ResponseService::validationError($validator->errors()->first());
+        }
+
+        try {
+            $student = Auth::user()->student;
+
+            if (!$student) {
+                ResponseService::errorResponse("Student record not found");
+            }
+
+            $student->latitude  = $request->latitude;
+            $student->longitude = $request->longitude;
+            $student->save();
+
+            ResponseService::successResponse('Location Updated Successfully', [
+                'latitude'  => $student->latitude,
+                'longitude' => $student->longitude,
+            ]);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e, "StudentApiController -> updateLocation Method");
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function getTeachers(Request $request)
+    {
+        try {
+            $student = Auth::user()->student;
+
+            if (!$student) {
+                ResponseService::errorResponse("Student record not found");
+            }
+
+            $classSectionId = $student->class_section_id;
+
+            // Class Teacher
+            $classSection = ClassSection::with([
+                'class_teacher.teacher:id,first_name,last_name,image'
+            ])->where('id', $classSectionId)->first();
+
+            $classTeacherUser = $classSection->class_teacher?->teacher;
+            $classTeacherName = $classTeacherUser
+                ? $classTeacherUser->first_name . ' ' . $classTeacherUser->last_name
+                : null;
+
+            // Subject Teachers
+            $subjectTeachersQuery = $this->subjectTeacher->builder()
+                ->with(['teacher:id,first_name,last_name,image', 'subject:id,name,type'])
+                ->where('class_section_id', $classSectionId);
+
+            if ($request->filled('subject_id')) {
+                $subjectTeachersQuery->where('subject_id', $request->subject_id);
+            }
+
+            ResponseService::successResponse('Data Fetched Successfully', [
+                'class_teacher' => $classTeacherName,
+                'subject_teachers' => $subjectTeachersQuery->get()
+            ]);
+        } catch (Throwable $e) {
+            ResponseService::logErrorResponse($e, "StudentApiController -> getTeachers Method");
             ResponseService::errorResponse();
         }
     }

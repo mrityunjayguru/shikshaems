@@ -1723,3 +1723,7 @@
 #79 C:\\xampp\\htdocs\\shikshaems\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\resources\\server.php(16): require_once('C:\\\\xampp\\\\htdocs...')
 #80 {main}
 "} 
+[2026-03-16 17:23:53] local.INFO: Switched to database: shikshaems_7_saraswatishishumandir  
+[2026-03-16 17:23:53] local.INFO: User authenticated successfully. {"user_id":9,"email":"hi@mrityunjaygautam.com"} 
+[2026-03-17 12:17:40] local.INFO: Switched to database: shikshaems_7_saraswatishishumandir  
+[2026-03-17 12:17:40] local.INFO: User authenticated successfully. {"user_id":9,"email":"hi@mrityunjaygautam.com"} 

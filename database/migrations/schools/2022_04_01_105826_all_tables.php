@@ -206,6 +206,8 @@ return new class extends Migration
             $table->foreignId('school_id')->references('id')->on('schools')->onDelete('cascade');
             $table->foreignId('guardian_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreignId('session_year_id')->references('id')->on('session_years')->onDelete('cascade');
+            $table->text('latitude')->nullable();
+            $table->text('longitude')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

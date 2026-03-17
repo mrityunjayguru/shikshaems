@@ -46,9 +46,9 @@
                                         class="form-control remove-number-increment" required>
                                 </div>
                                 <div class="form-group col-sm-12 col-md-4">
-                                    <label for="email">{{__('email') }} <span class="text-danger">*</span></label>
+                                    <label for="email">{{__('email') }}</label>
                                     <input type="email" name="email" id="email" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="format: Example@example.com" placeholder="{{__('email')}}"
-                                        class="form-control" required>
+                                        class="form-control">
                                 </div>
                                 <div class="form-group col-sm-12 col-md-4">
                                     <label>{{ __('image') }} <span class="text-info text-small">(308px*338px)</span></label>

@@ -869,9 +869,11 @@ class OnlineExamController extends Controller
         ResponseService::noPermissionThenRedirect('online-exam-create');
         $request->validate([
             'exam_id' => 'required',
+            'assign_questions' => 'required|array|min:1',
             'assign_questions.*.question_id' => 'required',
             'assign_questions.*.marks' => 'required|numeric'
         ], [
+            'assign_questions.required' => trans('Please select at least one question'),
             'assign_questions.*.marks.required' => trans('marks_are_required')
         ]);
 
@@ -879,7 +881,7 @@ class OnlineExamController extends Controller
             DB::beginTransaction();
 
             $onlineExamQuestionChoiceData = array();
-            foreach ($request->assign_questions as $question) {
+            foreach ($request->assign_questions ?? [] as $question) {
                 $onlineExamQuestionChoiceData[] = array(
                     'id' => $question['edit_id'] ?? null,
                     'online_exam_id' => $request->exam_id,

@@ -88,6 +88,12 @@ Route::group(['prefix' => 'student'], static function () {
         // student diaries
         // Route::get('/diaries', [StudentApiController::class, 'getStudentDiaries']);
         Route::get('/diary-details', [StudentApiController::class, 'showStudentDiaryDetail']);
+
+        // Teachers
+        Route::get('teachers', [StudentApiController::class, 'getTeachers']);
+
+        // Location
+        Route::post('update-location', [StudentApiController::class, 'updateLocation']);
     });
 });
 
