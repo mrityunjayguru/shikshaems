@@ -291,6 +291,8 @@
                             
                             if (response.length > 0) {
                                 $.each(response, function(index, subject) {
+                                    console.log(subject);
+                                    
                                     subjectSelect.append('<option value="' + subject.subject_id + '" data-class-subject-id="' + subject.id + '">' + subject.subject_with_name + '</option>');
                                 });
                             } else {

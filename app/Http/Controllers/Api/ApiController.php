@@ -397,14 +397,46 @@ class ApiController extends Controller
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
         }
+        
         try {
             $paymentTransaction = app(PaymentTransactionInterface::class)->builder()->where('id', $request->id)->first();
             if (empty($paymentTransaction)) {
                 ResponseService::errorResponse("No Data Found");
             }
-            $data = PaymentService::create($paymentTransaction->payment_gateway, $paymentTransaction->school_id)->retrievePaymentIntent($paymentTransaction->order_id);
-
-            $data = PaymentService::formatPaymentIntent($paymentTransaction->payment_gateway, $data);
+            
+            // If payment is still pending, return transaction status without calling Razorpay
+            if ($paymentTransaction->payment_status === 'pending' || $paymentTransaction->payment_status === 'Pending') {
+                $data = [
+                    'id' => $paymentTransaction->order_id,
+                    'amount' => $paymentTransaction->amount * 100, // Convert to paise
+                    'amount_paid' => 0,
+                    'amount_due' => $paymentTransaction->amount * 100,
+                    'currency' => 'INR',
+                    'status' => 'created',
+                    'payment_status' => 'pending'
+                ];
+                ResponseService::successResponse("Payment is pending", $data, ['payment_transaction' => $paymentTransaction]);
+                return;
+            }
+            
+            // For completed/failed payments, retrieve from payment gateway
+            try {
+                $data = PaymentService::create($paymentTransaction->payment_gateway, $paymentTransaction->school_id)->retrievePaymentIntent($paymentTransaction->order_id);
+                $data = PaymentService::formatPaymentIntent($paymentTransaction->payment_gateway, $data);
+            } catch (\Exception $e) {
+                // If Razorpay API fails, return local transaction data
+                \Log::warning("Failed to retrieve from payment gateway, returning local data: " . $e->getMessage());
+                
+                $data = [
+                    'id' => $paymentTransaction->order_id,
+                    'amount' => $paymentTransaction->amount * 100,
+                    'amount_paid' => $paymentTransaction->payment_status === 'succeed' ? $paymentTransaction->amount * 100 : 0,
+                    'amount_due' => $paymentTransaction->payment_status === 'succeed' ? 0 : $paymentTransaction->amount * 100,
+                    'currency' => 'INR',
+                    'status' => $paymentTransaction->payment_status === 'succeed' ? 'paid' : ($paymentTransaction->payment_status === 'failed' ? 'failed' : 'created'),
+                    'payment_status' => $paymentTransaction->payment_status
+                ];
+            }
 
             // Success
             ResponseService::successResponse("Payment Details Fetched", $data, ['payment_transaction' => $paymentTransaction]);

@@ -1243,8 +1243,13 @@ class StaffApiController extends Controller
             $schoolVerticalLogo = $this->schoolSettings->builder()->where('name', 'vertical_logo')->first();
             $school = $this->cache->getSchoolSettings();
 
-            //            return view('fees.fees_receipt', compact('systemLogo', 'school', 'feesPaid', 'student'));
-            $pdf = Pdf::loadView('fees.fees_receipt', compact('systemVerticalLogo', 'school', 'feesPaid', 'student', 'schoolVerticalLogo'))->output();
+            // Calculate advance amount
+            $advanceAmount = $student->user
+                ->fees_advances()
+                ->sum('amount') ?? 0;
+
+            //            return view('fees.fees_receipt', compact('systemLogo', 'school', 'feesPaid', 'student', 'advanceAmount'));
+            $pdf = Pdf::loadView('fees.fees_receipt', compact('systemVerticalLogo', 'school', 'feesPaid', 'student', 'schoolVerticalLogo', 'advanceAmount'))->output();
 
             return $response = array(
                 'error' => false,

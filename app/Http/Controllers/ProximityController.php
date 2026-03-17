@@ -34,8 +34,9 @@ class ProximityController extends Controller
             // $proximity->notification_proximity = $request->notification_proximity;
             // $proximity->save();
 
-            $proximity = Proximity::findOrFail($request->id);
-            $proximity->update($request->except('_token'));
+            $proximity = Proximity::firstOrNew(['id' => $request->id]);
+            $proximity->fill($request->except('_token'));
+            $proximity->save();
 
             ResponseService::successResponse('Data Updated Successfully');
         } catch (Throwable $e) {

@@ -173,7 +173,7 @@
                         <div class="col-md-3">
                             <div class="card h-100">
                                 <div class="card-body">
-                                    <h6 class="text-warning mb-3">Location</h6>
+                                    <h6 class="text-warning mb-3">Home Address</h6>
 
                                     <p id="student_address">
                                         Address :- {{ $student->user->current_address ?? 'N/A' }}

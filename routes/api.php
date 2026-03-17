@@ -88,6 +88,12 @@ Route::group(['prefix' => 'student'], static function () {
         // student diaries
         // Route::get('/diaries', [StudentApiController::class, 'getStudentDiaries']);
         Route::get('/diary-details', [StudentApiController::class, 'showStudentDiaryDetail']);
+
+        // Teachers
+        Route::get('teachers', [StudentApiController::class, 'getTeachers']);
+
+        // Location
+        Route::post('update-location', [StudentApiController::class, 'updateLocation']);
     });
 });
 
@@ -124,8 +130,21 @@ Route::group(['prefix' => 'parent'], static function () {
             // Fees
             Route::group(['prefix' => 'fees'], static function () {
                 Route::get('/', [ParentApiController::class, 'getFees']);
+                Route::get('/summary', [ParentApiController::class, 'getFeeSummary']); // Fee Summary
+                Route::get('/payment-details', [ParentApiController::class, 'getFeesForPayment']); // Fee Payment Selection Screen
+                Route::get('/children', [ParentApiController::class, 'getChildrenForFeePayment']); // Select Child for Payment
+                Route::get('/payment-history', [ParentApiController::class, 'getPaymentHistory']); // Payment History
+
+                // Multi-Fees Payment API - Pay multiple fees with different fees_id
+                Route::post('/pay', [ParentApiController::class, 'payMultipleFees']);
+
+                // Unified Payment API - Pay both compulsory and optional fees together
+                // Route::post('/pay', [ParentApiController::class, 'payFees']);
+
+                // Legacy separate payment APIs (kept for backward compatibility)
                 Route::post('/compulsory/pay', [ParentApiController::class, 'payCompulsoryFees']);
                 Route::post('/optional/pay', [ParentApiController::class, 'payOptionalFees']);
+
                 Route::get('/receipt', [ParentApiController::class, 'feesPaidReceiptPDF']); //Fees Receipt
             });
 
@@ -151,7 +170,7 @@ Route::group(['prefix' => 'parent'], static function () {
             // student diaries
             //Route::get('/diaries', [ParentApiController::class, 'getStudentDiaries']);
             Route::get('/diary-details', [ParentApiController::class, 'showStudentDiaryDetail']);
-            
+
             //class and subject teachers
             Route::post('teachers-list', [TeacherApiController::class, 'getTeachersForChild']);
 
@@ -401,21 +420,23 @@ Route::group(['middleware' => ['APISwitchDatabase',]], static function () {
     Route::get('syllabus', [ApiController::class, 'getSyllabus']);
 
     Route::post('track-vehicles', [TrasportationApiController::class, 'trackVehicles']);
-    
+
     // Live Trip Tracking APIs
     Route::get('trip/live-tracking', [TrasportationApiController::class, 'getLiveTracking']);
     Route::get('trip/stops', [TrasportationApiController::class, 'getTripStops']);
-    
+    Route::get('trip/details', [TrasportationApiController::class, 'getTripDetails']); // Trip Tracking Details
+
     // My Wards Transportation API
     Route::get('my-wards', [TrasportationApiController::class, 'getMyWards']);
 });
+Route::get('/receipt-preview', [ParentApiController::class, 'feesPaidReceiptPreview']); //Fees Receipt Preview (for testing)
 
 // Get all cached trips (for debugging)
-Route::get('test-cached-trips', function() {
+Route::get('test-cached-trips', function () {
     try {
         // Try to get all trip cache keys
         $trips = [];
-        
+
         // Check for trips 1-50 (adjust range as needed)
         for ($i = 1; $i <= 50; $i++) {
             $tripCache = \Illuminate\Support\Facades\Cache::get("trip_{$i}");
@@ -428,7 +449,7 @@ Route::get('test-cached-trips', function() {
                 ];
             }
         }
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Found ' . count($trips) . ' cached trips',
@@ -443,12 +464,12 @@ Route::get('test-cached-trips', function() {
 });
 
 // Get all schools (for debugging)
-Route::get('test-schools', function() {
+Route::get('test-schools', function () {
     try {
         $schools = \App\Models\School::select('id', 'name', 'database_name', 'traccar_phone')
             ->where('status', 1)
             ->get();
-        
+
         return response()->json([
             'success' => true,
             'schools' => $schools,
@@ -463,11 +484,11 @@ Route::get('test-schools', function() {
 });
 
 // Test Broadcast Endpoint (for testing Pusher) - Fetches live data from API
-Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\Illuminate\Http\Request $request, $tripId, $schoolId = null) {
+Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function (\Illuminate\Http\Request $request, $tripId, $schoolId = null) {
     try {
         // Get school_id from URL parameter, request body, or query string
         $schoolId = $schoolId ?? $request->input('school_id') ?? $request->query('school_id');
-        
+
         if (!$schoolId) {
             return response()->json([
                 'success' => false,
@@ -477,7 +498,7 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
         }
 
         // Get school details from main database
-        $school = \App\Models\School::find($schoolId);   
+        $school = \App\Models\School::find($schoolId);
         if (!$school) {
             return response()->json([
                 'success' => false,
@@ -521,7 +542,7 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
 
         // Get GPS device from main database using vehicle's gps_id
         $gps = \App\Models\GPS::where('assigned_to', $trip->vehicle->id)->first();
-        
+
         if (!$gps || !$gps->imei_no) {
             return response()->json([
                 'success' => false,
@@ -531,7 +552,7 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
 
         // Get Traccar phone from school
         $traccarPhone = $school->traccar_phone ?? env('TRACCAR_PHONE');
-        
+
         if (!$traccarPhone) {
             return response()->json([
                 'success' => false,
@@ -556,7 +577,7 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
         }
 
         $sessionId = $authResponse->json()['jsessionid'] ?? null;
-        
+
         if (!$sessionId) {
             return response()->json([
                 'success' => false,
@@ -566,7 +587,7 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
 
         // Get device ID from Traccar using IMEI
         $devicesUrl = "{$traccarBaseUrl}/api/devices";
-        
+
         $devicesCh = curl_init($devicesUrl);
         curl_setopt($devicesCh, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($devicesCh, CURLOPT_HTTPHEADER, [
@@ -574,11 +595,11 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
             'Content-Type: application/json'
         ]);
         curl_setopt($devicesCh, CURLOPT_SSL_VERIFYPEER, false);
-        
+
         $devicesResponse = curl_exec($devicesCh);
         $httpCode = curl_getinfo($devicesCh, CURLINFO_HTTP_CODE);
         curl_close($devicesCh);
-        
+
         if ($httpCode !== 200) {
             return response()->json([
                 'success' => false,
@@ -586,9 +607,9 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
                 'response' => $devicesResponse
             ], 500);
         }
-        
+
         $devices = json_decode($devicesResponse, true);
-        
+
         if (!$devices || !is_array($devices)) {
             return response()->json([
                 'success' => false,
@@ -597,35 +618,35 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
                 'decoded' => $devices
             ], 500);
         }
-        
+
         $traccarDevice = null;
-        
+
         // Debug: collect all device info
         $availableDevices = [];
         foreach ($devices as $device) {
             $deviceImei = $device['uniqueId'] ?? '';
             $deviceName = $device['name'] ?? '';
             $deviceId = $device['id'] ?? '';
-            
+
             $availableDevices[] = [
                 'id' => $deviceId,
                 'name' => $deviceName,
                 'uniqueId' => $deviceImei
             ];
-            
+
             // Try exact match and trimmed match on IMEI
             if ($deviceImei && ($deviceImei === $gps->imei_no || trim($deviceImei) === trim($gps->imei_no))) {
                 $traccarDevice = $device;
                 break;
             }
-            
+
             // Also try matching by name if IMEI is empty
             if (!$deviceImei && $deviceName && strpos($deviceName, $gps->imei_no) !== false) {
                 $traccarDevice = $device;
                 break;
             }
         }
-        
+
         if (!$traccarDevice) {
             return response()->json([
                 'success' => false,
@@ -648,7 +669,7 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
             'Content-Type: application/json'
         ]);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -662,7 +683,7 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
         }
 
         $positions = json_decode($response, true);
-        
+
         if (empty($positions)) {
             return response()->json([
                 'success' => false,
@@ -699,7 +720,6 @@ Route::match(['GET', 'POST'], 'test-broadcast/{tripId}/{schoolId?}', function(\I
                 'device_time' => $deviceTime
             ]
         ]);
-
     } catch (\Exception $e) {
         \Illuminate\Support\Facades\Log::error('Test broadcast error: ' . $e->getMessage());
         return response()->json([

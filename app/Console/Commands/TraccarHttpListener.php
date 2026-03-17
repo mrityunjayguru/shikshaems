@@ -156,15 +156,24 @@ class TraccarHttpListener extends Command
             try {
                 $this->switchToSchoolDatabase($school);
                 
-                $hasActiveTrips = RouteVehicleHistory::where('tracking', 1)
-                    ->where('status', 'inprogress')
-                    ->whereDate('date', today())
+                // Check for active trips with flexible status matching
+                $hasActiveTrips = RouteVehicleHistory::whereDate('date', today())
+                    ->where(function($query) {
+                        $query->where('status', 'inprogress')
+                              ->orWhere('status', 'in_progress')
+                              ->orWhere('status', 'in-progress')
+                              ->orWhere('status', 'started');
+                    })
                     ->exists();
 
                 if ($hasActiveTrips) {
-                    $tripCount = RouteVehicleHistory::where('tracking', 1)
-                        ->where('status', 'inprogress')
-                        ->whereDate('date', today())
+                    $tripCount = RouteVehicleHistory::whereDate('date', today())
+                        ->where(function($query) {
+                            $query->where('status', 'inprogress')
+                                  ->orWhere('status', 'in_progress')
+                                  ->orWhere('status', 'in-progress')
+                                  ->orWhere('status', 'started');
+                        })
                         ->count();
                     $this->info("✅ School {$school->name} (ID: {$school->id}) has {$tripCount} active trip(s)");
                     $schoolIds[] = $school->id;
@@ -243,14 +252,19 @@ class TraccarHttpListener extends Command
                     continue;
                 }
 
-                // Find active trip
+                // Find active trip - more flexible matching
                 $activeTrip = RouteVehicleHistory::where('vehicle_id', $gps->assigned_to)
-                    ->where('tracking', 1)
-                    ->where('status', 'inprogress')
                     ->whereDate('date', today())
+                    ->where(function($query) {
+                        $query->where('status', 'inprogress')
+                              ->orWhere('status', 'in_progress')
+                              ->orWhere('status', 'in-progress')
+                              ->orWhere('status', 'started');
+                    })
                     ->first();
 
                 if (!$activeTrip) {
+                    $this->info("⏭️  No active trip found for vehicle {$gps->assigned_to}");
                     continue;
                 }
 

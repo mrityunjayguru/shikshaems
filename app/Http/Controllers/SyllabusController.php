@@ -160,6 +160,41 @@ class SyllabusController extends Controller
         return response()->json($syllabus);
     }
 
+    // public function update(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'class_id' => 'required',
+    //         'subject_id' => 'required',
+    //         'syllabus_contents.*.title' => 'required',
+    //         'syllabus_contents.*.description' => 'required',
+    //     ]);
+
+    //     DB::transaction(function () use ($request, $id) {
+
+    //         $syllabus = Syllabus::findOrFail($id);
+    //         $syllabus->update([
+    //             'class_id' => $request->class_id,
+    //             'subject_id' => $request->subject_id,
+    //         ]);
+
+    //         // Remove old contents
+    //         SyllabusContent::where('syllabus_id', $id)->delete();
+
+    //         // Insert updated contents
+    //         foreach ($request->syllabus_contents as $content) {
+    //             SyllabusContent::create([
+    //                 'syllabus_id' => $id,
+    //                 'title' => $content['title'],
+    //                 'description' => $content['description'],
+    //             ]);
+    //         }
+    //     });
+
+    //     // return redirect()->route('syllabus.index')
+    //     //     ->with('success', 'Syllabus updated successfully');
+    //     ResponseService::successResponse('Syllabus updated Successfully');
+    // }
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -168,31 +203,54 @@ class SyllabusController extends Controller
             'syllabus_contents.*.title' => 'required',
             'syllabus_contents.*.description' => 'required',
         ]);
+        // dd($request->syllabus_contents);
 
         DB::transaction(function () use ($request, $id) {
 
             $syllabus = Syllabus::findOrFail($id);
+
             $syllabus->update([
                 'class_id' => $request->class_id,
                 'subject_id' => $request->subject_id,
             ]);
 
-            // Remove old contents
-            SyllabusContent::where('syllabus_id', $id)->delete();
+            $existingIds = [];
 
-            // Insert updated contents
             foreach ($request->syllabus_contents as $content) {
-                SyllabusContent::create([
-                    'syllabus_id' => $id,
-                    'title' => $content['title'],
-                    'description' => $content['description'],
-                ]);
+
+                if (!empty($content['id'])) {
+
+                    // Update existing row
+                    $syllabusContent = SyllabusContent::find($content['id']);
+                    if ($syllabusContent) {
+                        $syllabusContent->update([
+                            'title' => $content['title'],
+                            'description' => $content['description'],
+                        ]);
+
+                        $existingIds[] = $content['id'];
+                    }
+                } else {
+
+                    // Create new row
+                    $new = SyllabusContent::create([
+                        'syllabus_id' => $id,
+                        'title' => $content['title'],
+                        'description' => $content['description'],
+                    ]);
+
+                    $existingIds[] = $new->id;
+                }
             }
+
+            // Delete removed rows
+            SyllabusContent::where('syllabus_id', $id)
+                ->whereNotIn('id', $existingIds)
+                ->delete();
         });
 
-        // return redirect()->route('syllabus.index')
-        //     ->with('success', 'Syllabus updated successfully');
         ResponseService::successResponse('Syllabus updated Successfully');
+        return redirect()->route('syllabus.index');
     }
 
     public function destroy($id)

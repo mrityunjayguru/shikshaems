@@ -1,227 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="UTF-8">
+    <title>Fees Receipt</title>
     <style>
-        /* * {
-            font-family: Mulish, sans-serif;
-        } */
-        * {
-            font-family: DejaVu Sans, sans-serif;
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #333;
         }
-    </style>
-    <style>
-        /* body {
-            background: #f5f5f5;
-        } */
 
         .receipt-container {
-            max-width: 800px;
-            margin: 30px auto;
-            background: #fff;
-            border: 2px solid #000;
+            max-width: 700px;
+            margin: auto;
             padding: 20px;
-            font-size: 13px;
-            color: #000;
+            border: 1px solid #ccc;
         }
 
-        .receipt-header {
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-        }
-
-        .receipt-title {
+        .header {
             text-align: center;
-            margin: 15px 0;
-        }
-
-        .receipt-title span {
-            border: 1px solid #000;
-            padding: 5px 15px;
-            font-weight: bold;
-        }
-
-        .info-row {
-            border-bottom: 1px solid #000;
+            border-bottom: 2px solid #444;
             padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header img {
+            height: 60px;
             margin-bottom: 8px;
+        }
+
+        .header h2 {
+            margin: 5px 0;
+        }
+
+        .header small {
+            color: #555;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 15px;
         }
 
-        /* table th,
-        table td {
-            border-bottom: 1px solid #000;
-            padding: 6px;
-        } */
+        table,
+        th,
+        td {
+            border: 1px solid #999;
+        }
 
-        table th {
+        th,
+        td {
+            padding: 8px;
             text-align: left;
         }
 
-        .text-right {
-            text-align: right;
+        th {
+            background: #f4f4f4;
         }
 
-        .footer-note {
-            border-top: 1px solid #000;
-            margin-top: 10px;
-            padding-top: 8px;
-            font-size: 12px;
+        .summary {
+            margin-top: 20px;
+            border-top: 2px solid #444;
+            padding-top: 10px;
+            font-size: 14px;
+        }
+
+        .footer {
             text-align: center;
-        }
-
-        .signature {
-            text-align: right;
-            margin-top: 30px;
-            font-weight: bold;
-        }
-
-        table.receipt-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .receipt-table th {
-            border-bottom: 1px solid #000;
-            padding: 6px;
-            text-align: left;
-            font-weight: bold;
-        }
-
-        .receipt-table td {
-            padding: 6px;
-            vertical-align: top;
-        }
-
-        .receipt-table .amount {
-            text-align: right;
-            white-space: nowrap;
-        }
-
-        .receipt-table .total-row td {
-            border-top: 1px solid #000;
-            font-weight: bold;
-        }
-
-        .small-text {
+            margin-top: 25px;
             font-size: 12px;
+            color: #777;
         }
     </style>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Fees Receipt || {{ config('app.name') }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.0/css/bootstrap.min.css"
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
+
     <div class="receipt-container">
-
-        {{-- HEADER --}}
-        {{-- <div class="receipt-header">
-            <div class="row align-items-center text-center">
-
-                <div class="col-md-4">
-                    @if ($school['horizontal_logo'] ?? '')
-                        <img src="{{ public_path('storage/' . $school['horizontal_logo']) }}" style="height:60px;">
-                    @else
-                        <img src="{{ public_path('assets/horizontal-logo2.svg') }}" style="height:60px;">
-                    @endif
-                </div>
-
-                <div class="col-md-4">
-                    <strong style="font-size:18px">{{ $school['school_name'] }}</strong><br>
-                    <small>{{ $school['school_address'] }}</small><br>
-                    <small>(Affiliated to CBSE, School Code: XXXXX)</small>
-                </div>
-
-                <div class="col-md-4">
-                    <strong>Contact</strong><br>
-                    {{ $school['phone'] ?? '+91 XXXXX XXXXX' }}
-                </div>
-
-            </div>
-        </div> --}}
-        <table width="100%" class="gap-3">
-            <tr>
-                <td width="25%">
-                    @if ($school['horizontal_logo'] ?? '')
-                        <img src="{{ public_path('storage/' . $school['horizontal_logo']) }}"
-                            style="height:30px; margin-bottom:2px;">
-                    @endif
-                </td>
-
-                <td width="50%" align="center">
-                    <strong style="font-size:18px;">{{ $school['school_name'] }}</strong><br>
-                    <small>{{ $school['school_address'] }}</small><br>
-                    <small>(Affiliated to CBSE, School Code: {{ $school['school_code'] ?? 'XXXXX' }})</small>
-                </td>
-
-                <td width="25%" align="right">
-                    <strong>Contact</strong><br>
-                    {{ $school['school_phone'] ?? '+91 XXXXX XXXXX' }}
-                </td>
-            </tr>
-        </table>
-
-
-        {{-- TITLE --}}
-        <div class="receipt-title">
-            <span>FEE RECEIPT</span>
+        <!-- Receipt Header -->
+        <div class="header">
+            @if ($school['horizontal_logo'] ?? '')
+                <img src="{{ public_path('storage/') . $school['horizontal_logo'] }}" alt="School Logo">
+            @else
+                <img src="{{ public_path('assets/horizontal-logo2.svg') }}" alt="School Logo">
+            @endif
+            <h2>{{ $school['school_name'] ?? '' }}</h2>
+            <small>{{ $school['school_address'] ?? '' }}</small><br>
+            <h3>Fees Receipt</h3>
         </div>
 
-        {{-- RECEIPT META --}}
-        {{-- <div class="row info-row">
-            <div class="col-md-6">
-                <strong>Receipt Date:</strong> {{ date('d M Y h:i A') }}<br>
-                <strong>Receipt No:</strong> {{ $feesPaid->id }}<br>
-                <strong>Name:</strong> {{ $student->user->full_name }}<br>
-                <strong>Admission No:</strong> {{ $student->admission_no ?? '' }}<br>
-                <strong>Class & Section:</strong> {{ $student->class_section->full_name }}
-            </div>
-
-            <div class="col-md-6">
-                <strong>Payment Mode:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br>
-                <strong>Transaction ID:</strong> {{ $feesPaid->transaction_id ?? '-' }}<br>
-                <strong>Month:</strong> January
-            </div>
-        </div> --}}
-        <table width="100%" class="info-row">
+        <!-- Student Details -->
+        <table>
             <tr>
-                <td width="50%" valign="top">
-                    <strong>Receipt Date:</strong> {{ date('d M Y h:i A') }}
-                </td>
-
-                <td width="50%" valign="top">
-                    <strong>Fee for the month of:</strong> January
-                </td>
+                <th>Receipt No.</th>
+                <td>{{ $feesPaid->id ?? 'N/A' }}</td>
+                <th>Date</th>
+                <td>{{ date('d-m-Y h:i A') }}</td>
             </tr>
-        </table>
-        <table width="100%" class="info-row">
             <tr>
-                <td width="50%" valign="top">
-                    <strong>Receipt No:</strong> {{ $feesPaid->id }}<br>
-                    <strong>Name:</strong> {{ $student->user->full_name }}<br>
-                    <strong>Admission No:</strong> {{ $student->admission_no ?? '' }}<br>
-                    <strong>Class & Section:</strong> {{ $student->class_section->full_name }}
-                </td>
-
-                <td width="50%" valign="top">
-                    <strong>Contact:</strong> {{ $student->user->mobile ?? $student->guardian->mobile }}<br>
-                    <strong>Guardian Name:</strong>
-                    {{ $student->guardian->first_name . ' ' . $student->guardian->last_name ?? 'N/A' }}<br>
-                    <strong>Address:</strong> {{ $student->user->current_address ?? 'N/A' }}<br>
-                    {{-- <strong>Payment Mode:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br>
-                    <strong>Transaction ID:</strong> {{ $feesPaid->transaction_id ?? '-' }}<br> --}}
-                </td>
+                <th>Student Name</th>
+                <td>{{ $student->user->full_name }}</td>
+                <th>Admission No.</th>
+                <td>{{ $student->admission_no ?? '' }}</td>
+            </tr>
+            <tr>
+                <th>Class</th>
+                <td>{{ $student->class_section->class->name }}</td>
+                <th>Section</th>
+                <td>{{ $student->class_section->section->name ?? '' }}</td>
+            </tr>
+            <tr>
+                <th>Contact</th>
+                <td>{{ $student->user->mobile ?? $student->guardian->mobile }}</td>
+                <th>Guardian Name</th>
+                <td>{{ $student->guardian->first_name . ' ' . $student->guardian->last_name ?? 'N/A' }}</td>
             </tr>
         </table>
 
@@ -329,7 +225,7 @@
                         {{-- <strong>Payment Mode:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br> --}}
                         {{-- <strong>Bank:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br> --}}
                         <strong>Transaction ID:</strong> {{ $feesPaid->transaction_id ?? '-' }}<br>
-                        <strong>Date:</strong> {{ $feesPaid->date ?? '-' }}<br>
+                        <strong>Date:</strong> {{ $feesPaid->date ?? date('Y-m-d') }}<br>
                     </td>
                 </tr>
             </tbody>
@@ -346,8 +242,8 @@
         </div>
 
         <div class="footer-note">
-            The fee is to be deposited on or before {{ $feesPaid->fees->due_date }} .
-            After {{ $feesPaid->fees->due_date }} fine of Rs. {{ $feesPaid->fees->due_charges_amount }}- per day.
+            The fee is to be deposited on or before {{ $feesPaid->fees->due_date ?? 'N/A' }} .
+            After {{ $feesPaid->fees->due_date ?? 'N/A' }} fine of Rs. {{ $feesPaid->fees->due_charges_amount ?? 0 }}- per day.
         </div>
 
     </div>

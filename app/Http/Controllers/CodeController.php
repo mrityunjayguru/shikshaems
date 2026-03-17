@@ -148,7 +148,7 @@ class CodeController extends Controller
 
         try {
             // Validate Ticket
-            $data = Code::where(['status' => '1'])->where('code', $request->code)->first();
+            $data = Code::where('code', $request->code)->first();
             // dd($data);
             if (empty($data)) {
                 ResponseService::errorResponse('Invalid Tracking code');

@@ -963,7 +963,7 @@ function SubjectTeachersDetailFormatter(value, row) {
             html += `<thead>
                         <tr>
                             <th scope="col"></th>
-                            <th scope="col" class="text-center"><h3><u>` + semester.semester_name + `</u></h3></th>
+                            <th scope="col" class="text-center"><h6><u>` + semester.semester_name + `</u></h6></th>
                             <th></th>
                         </tr>
                     </thead>

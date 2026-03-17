@@ -31,7 +31,9 @@ class Students extends Model
         'application_type',
         'application_status',
         'join_session_year_id',
-        'leave_session_year_id'
+        'leave_session_year_id',
+        'latitude',
+        'longitude'
     ];
     protected $appends = ['first_name', 'last_name', 'full_name'];
 

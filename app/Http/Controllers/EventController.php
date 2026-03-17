@@ -56,6 +56,8 @@ class EventController extends Controller
             $event = new Events();
             $event->title = $request->title;
             $event->desc = $request->description ?? null;
+            $event->start_time = $request->start_time ?? null;
+            $event->end_time = $request->end_time ?? null;
             $event->date = Carbon::createFromFormat('d-m-Y', $request->date)->format('Y-m-d');
             $event->save();
 
@@ -158,6 +160,8 @@ class EventController extends Controller
             // dd($event);
             $event->title = $request->title;
             $event->desc = $request->description ?? null;
+            $event->start_time = $request->edit_start_time ?? null;
+            $event->end_time = $request->edit_end_time ?? null;
             $event->date = Carbon::parse($request->date)->format('Y-m-d');
             $event->save();
 

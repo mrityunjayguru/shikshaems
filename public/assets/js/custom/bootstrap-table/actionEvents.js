@@ -1550,6 +1550,9 @@ window.eventEvents = {
         $('.modal-title').html(window.trans["edit_event"]);
         $('#id').val(row.id);
         $('#edit-date').val(moment(row.date, momentFormat).format(momentFormat));
+        $('#edit_start_time').val(row.start_time);
+        $('#edit_end_time').val(row.end_time);
+        $('#edit-title').val(row.title);
         $('#edit-title').val(row.title);
         $('#edit-description').val(row.desc);
     },
@@ -2262,14 +2265,13 @@ window.subscriptionEvents = {
 
 window.tableDescriptionEvents = {
     'click .bootstrap-table-description': function (e, value, row) {
-        console.log(row.name);
+        // console.log(row.name);
         $('.modal-title').html(row.name);
         $('.modal-title').html(row.title);
         $('.description-data').html(row.instructions);
-        $('.description-data').html(row.description);
+        $('.description-data').html(row.description ?? row.desc);
         $('.description-data').html(row.reason);
         $('.description-data').html(row.message);
-
 
         if (row.student) {
             $('.modal-title').html('<h3>' + window.trans['student'] + '</h3>');

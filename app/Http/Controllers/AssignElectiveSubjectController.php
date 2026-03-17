@@ -211,7 +211,6 @@ class AssignElectiveSubjectController extends Controller
                 ]);
                 throw $e;
             }
-
         } catch (\Exception $e) {
             return ResponseService::logErrorResponse($e, 'AssignElectiveSubjectController -> store method');
         }
@@ -301,8 +300,18 @@ class AssignElectiveSubjectController extends Controller
                     return $subject->class_subject && $subject->class_subject->type === 'Elective';
                 });
 
+                // $tempRow['elective_subjects'] = $electiveSubjects->map(function ($subject) {
+                //     return $subject->class_subject->subject->name . ' (' . $subject->class_subject->subject->type != 'None' ? $subject->class_subject->subject->type : '' . ')' ?? '';
+                // })->filter()->implode(', ');
+
                 $tempRow['elective_subjects'] = $electiveSubjects->map(function ($subject) {
-                    return $subject->class_subject->subject->name . ' (' . $subject->class_subject->subject->type . ')' ?? '';
+
+                    $name = $subject->class_subject->subject->name ?? '';
+                    $type = $subject->class_subject->subject->type ?? '';
+
+                    return $type !== 'None' && $type !== ''
+                        ? $name . ' (' . $type . ')'
+                        : $name;
                 })->filter()->implode(', ');
 
                 // Get total required subjects from elective subject groups
@@ -320,7 +329,6 @@ class AssignElectiveSubjectController extends Controller
                 'total' => $total,
                 'rows' => $rows
             ]);
-
         } catch (\Exception $e) {
             return ResponseService::logErrorResponse($e, 'AssignElectiveSubjectController -> show method');
         }
@@ -393,6 +401,4 @@ class AssignElectiveSubjectController extends Controller
             ResponseService::errorResponse();
         }
     }
-
 }
-

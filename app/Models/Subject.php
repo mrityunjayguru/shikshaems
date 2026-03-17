@@ -77,7 +77,7 @@ class Subject extends Model {
             $name .= $this->name;
         }
 
-        if (!empty($this->type)) {
+        if (!empty($this->type) && $this->type != 'None') {
             $name .= ' - ' . trans($this->type);
         }
 

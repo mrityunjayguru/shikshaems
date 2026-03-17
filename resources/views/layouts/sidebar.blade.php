@@ -264,16 +264,18 @@
                             <li class="nav-item"><a href="{{ route('students.upload-profile') }}"
                                     class="nav-link">{{ __('upload_profile_images') }}</a></li>
                         @endcan
-                        <li class="nav-item">
-                            <a href="{{ route('students.category.index') }}" class="nav-link">
-                                {{ __('Student Categories') }} </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a href="{{ route('students.house.index') }}" class="nav-link"> {{ __('Student House') }}
-                            </a>
-                        </li>
-
+                        @can('student-edit')
+                            <li class="nav-item">
+                                <a href="{{ route('students.category.index') }}" class="nav-link">
+                                    {{ __('Student Categories') }} </a>
+                            </li>
+                        @endcan
+                        @can('student-edit')
+                            <li class="nav-item">
+                                <a href="{{ route('students.house.index') }}" class="nav-link"> {{ __('Student House') }}
+                                </a>
+                            </li>
+                        @endcan
                         <li class="nav-item">
                             <a href="{{ route('students.birthdays.index') }}" class="nav-link"> {{ __('birthdays') }}
                             </a>
@@ -1867,8 +1869,8 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#student-leave-management" aria-expanded="false"
                     aria-controls="student-leave-management-menu" {{-- data-access="@hasFeatureAccess('Student Leave Management') --}} ">
-                    <svg width=" 22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d=" M8.77249 11.4216L5.97665 14.2175" stroke="currentColor" stroke-width="1.5"
+                        <svg width=" 22" height="22" class="mr-2" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d=" M8.77249 11.4216L5.97665 14.2175" stroke="currentColor" stroke-width="1.5"
                     stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
                 <path d="M6.00418 11.4492L8.80001 14.2451" stroke="currentColor" stroke-width="1.5"
                     stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
@@ -1895,11 +1897,11 @@
                     <ul class="nav flex-column sub-menu">
 
                         {{-- @can('approve-leave') --}}
-                            <li class="nav-item">
-                                <a href="{{ route('student-leave.index') }}" class="nav-link" {{-- data-name="{{ Auth::user()->getRoleNames()[0] }}" --}}
-                                    {{-- data-access="@hasFeatureAccess('Student Leave Management') --}}>{{ __('Student') }} {{ __('leave') }}</a>
-                            </li>
-                            {{-- <li class="nav-item">
+                        <li class="nav-item">
+                            <a href="{{ route('student-leave.index') }}" class="nav-link" {{-- data-name="{{ Auth::user()->getRoleNames()[0] }}" --}}
+                                {{-- data-access="@hasFeatureAccess('Student Leave Management') --}}>{{ __('Student') }} {{ __('leave') }}</a>
+                        </li>
+                        {{-- <li class="nav-item">
                                     <a href="{{ url('leave/report') }}" class="nav-link"
                                         data-name="{{ Auth::user()->getRoleNames()[0] }}"
                                         data-access="@hasFeatureAccess('Staff Leave Management')">{{ __('leave_report') }}</a>

@@ -938,17 +938,32 @@ class FeesController extends Controller
                 // }
 
                 if ($row->fees_paid) {
-                    // $tempRow['paid_amount'] = $row->compulsory_fees_sum_amount + $row->compulsory_fees_sum_due_charges;
-                    $tempRow['paid_amount'] = $row->compulsory_fees_sum_amount;
+                    // Calculate total compulsory + optional fees + due charges for display
+                    $totalCompulsoryFees = $row->compulsory_fees_sum_amount ?? 0;
+                    $totalDueCharges = $row->compulsory_fees_sum_due_charges ?? 0;
+                    
+                    // Get optional fees for this payment
+                    $totalOptionalFees = 0;
+                    if ($row->fees_paid->optional_fee) {
+                        foreach ($row->fees_paid->optional_fee as $optFee) {
+                            $totalOptionalFees += $optFee->amount;
+                        }
+                    }
+                    
+                    // Paid amount = compulsory + optional + due charges
+                    $tempRow['paid_amount'] = $totalCompulsoryFees + $totalOptionalFees + $totalDueCharges;
+                    
+                    // Get NEW advance amount created from this payment (unused advance)
+                    $advanceAmount = $row->fees_advances_sum_amount ?? 0;
                 } else {
                     $tempRow['paid_amount'] = 0;
+                    $advanceAmount = 0;
                 }
 
                 if ($row->fees_paid && isset($row->fees_paid->compulsory_fee[0]->mode)) {
                     $tempRow['payment_method'] = $row->fees_paid->compulsory_fee[0]->mode;
                 }
-                // dd($row->fees_advances_sum_amount);
-                $advanceAmount = $row->fees_advances_sum_amount ?? 0;
+                
                 $tempRow['advance_amount'] = $advanceAmount;
                 $tempRow['total_received'] = $tempRow['paid_amount'] + $advanceAmount;
 
@@ -998,10 +1013,14 @@ class FeesController extends Controller
                 $school['horizontal_logo'] = end($data);
             }
 
-            $advanceAmount = $student->user
-                ->fees_advances()
-                ->whereNull('used_at')
-                ->sum('amount');
+            // Get NEW advance amount created from this payment (overpayment)
+            // This is stored in fees_advance table linked to compulsory_fee
+            $advanceAmount = 0;
+            foreach ($feesPaid->compulsory_fee as $compulsoryFee) {
+                $advanceAmount += $compulsoryFee->advance_fees()
+                    ->whereNull('used_at')
+                    ->sum('amount');
+            }
 
             // dd($feesPaid);
             $pdf = Pdf::loadView('fees.fees_receipt', compact('school', 'feesPaid', 'student','advanceAmount'));
@@ -1520,7 +1539,7 @@ class FeesController extends Controller
                             'amount' => $feesClassType['amount'],
                             'fees_paid_id' => $feesPaidResult->id,
                             'date' => date('Y-m-d', strtotime($request->date)),
-                            'status' => "Success",
+                            'status' => 1, // 1 = succeed, 2 = pending
                             'created_at' => now(),
                             'updated_at' => now()
                         );

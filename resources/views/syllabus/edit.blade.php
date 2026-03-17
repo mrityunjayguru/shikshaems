@@ -70,15 +70,20 @@
                                                         <input type="hidden" name="id" value="{{ $content->id }}">
 
                                                         <div class="col-md-5">
-                                                            <label>{{ __('Title') }}</label>
-                                                            <input type="text" name="title"
-                                                                value="{{ $content->title }}" class="form-control"
-                                                                required>
+                                                            <div class="form-group">
+                                                                <label>{{ __('Title') }}</label>
+                                                                <input type="text" name="title"
+                                                                    value="{{ $content->title }}" class="form-control"
+                                                                    placeholder="{{ __('title') }}" required>
+                                                            </div>
                                                         </div>
 
                                                         <div class="col-md-5">
-                                                            <label>{{ __('Description') }}</label>
-                                                            <textarea name="description" class="form-control" required style="height: 100px">{{ $content->description }}</textarea>
+                                                            <div class="form-group">
+                                                                <label>{{ __('Description') }}</label>
+                                                                <textarea name="description" class="form-control" 
+                                                                    placeholder="{{ __('description') }}" required style="height: 100px">{{ $content->description }}</textarea>
+                                                            </div>
                                                         </div>
 
                                                         <div class="col-md-2 mt-4" data-repeater-delete>
@@ -106,7 +111,6 @@
                                 {{ __('Update') }}
                             </button>
                         </form>
-
                     </div>
                 </div>
             </div>
@@ -114,24 +118,38 @@
     </div>
 @endsection
 @section('script')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.repeater/1.2.1/jquery.repeater.min.js"></script>
     <script>
-        $('.syllabus-repeater').repeater({
-            show: function() {
-                $(this).slideDown();
-            },
-            hide: function(deleteElement) {
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: 'This item will be removed',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $(this).slideUp(deleteElement);
-                    }
-                });
-            }
+        $(document).ready(function() {
+            $('.syllabus-repeater').repeater({
+                initEmpty: false,
+                defaultValues: {
+                    'id': '',
+                    'title': '',
+                    'description': ''
+                },
+                show: function() {
+                    $(this).slideDown();
+                },
+                hide: function(deleteElement) {
+                    let el = $(this);
+                    
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'This item will be removed',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, remove it',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            el.slideUp(deleteElement);
+                        }
+                    });
+                }
+            });
         });
     </script>
 @endsection

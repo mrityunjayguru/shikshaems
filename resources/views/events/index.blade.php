@@ -39,6 +39,22 @@
                                     <label>{{ __('title') }} <span class="text-danger">*</span></label>
                                     {!! Form::text('title', null, ['required', 'placeholder' => __('title'), 'class' => 'form-control']) !!}
                                 </div>
+                                <div class="form-group col-sm-12 col-md-6">
+                                    <label>{{ __('Start Time') }} <span class="text-danger">*</span></label>
+                                    <input type="time" name="start_time" id="start_time" placeholder="Start Time"
+                                        class="form-control">
+                                    <span class="input-group-addon input-group-append">
+                                    </span>
+                                </div>
+                                <div class="form-group col-sm-12 col-md-6">
+                                    <label>{{ __('End Time') }} <span class="text-danger">*</span></label>
+                                    <input type="time" name="end_time" id="end_time" placeholder="End Time"
+                                        class="form-control">
+
+                                    <span class="input-group-addon input-group-append">
+                                    </span>
+                                </div>
+
                             </div>
                             <div class="row">
                                 <div class="form-group col-sm-12 col-md-12">
@@ -170,6 +186,25 @@
                         </div>
                         <div class="row form-group">
                             <div class="col-sm-12 col-md-12">
+                                <label>{{ __('Start Time') }} <span class="text-danger">*</span></label>
+                                <input type="time" name="edit_start_time" id="edit_start_time"
+                                    placeholder="Start Time" class="form-control">
+                                <span class="input-group-addon input-group-append">
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-12 col-md-12">
+                                <label>{{ __('End Time') }} <span class="text-danger">*</span></label>
+                                <input type="time" name="edit_end_time" id="edit_end_time" placeholder="End Time"
+                                    class="form-control">
+
+                                <span class="input-group-addon input-group-append">
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row form-group">
+                            <div class="col-sm-12 col-md-12">
                                 <label>{{ __('description') }}</label>
                                 {!! Form::textarea('description', null, [
                                     'placeholder' => __('description'),
@@ -205,6 +240,5 @@
                 todayHighlight: true
             });
         });
-       
-   </script>
+    </script>
 @endsection

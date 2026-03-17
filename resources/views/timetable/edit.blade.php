@@ -68,7 +68,16 @@
                                         data-note="">
                                         <div class='fc-event-main px-2' style="width: -webkit-fill-available"
                                             data-subject-type="{{ $subjectTeacher->class_subject ? $subjectTeacher->class_subject->type : '' }}">
-                                            {{ Str::limit($subjectTeacher->subject->name . ' ( ' . $subjectTeacher->subject->type . ' ) ' . ' - ' . $subjectTeacher->teacher->full_name, 25, ' ...') }}
+                                            {{ Str::limit(
+                                                $subjectTeacher->subject->name .
+                                                    ($subjectTeacher->subject->type && $subjectTeacher->subject->type != 'None'
+                                                        ? ' (' . $subjectTeacher->subject->type . ')'
+                                                        : '') .
+                                                    ' - ' .
+                                                    $subjectTeacher->teacher->full_name,
+                                                25,
+                                                ' ...',
+                                            ) }}
                                         </div>
                                     </div>
                                 @endforeach

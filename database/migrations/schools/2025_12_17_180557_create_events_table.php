@@ -16,6 +16,9 @@ return new class extends Migration
             $table->string('title');
             $table->string('desc');
             $table->date('date');
+            $table->time('start_time')->nullable();
+            $table->time('end_time')->nullable();
+            $table->date('date');
             $table->integer('send_notification')->default(0);
             $table->timestamps();
         });
