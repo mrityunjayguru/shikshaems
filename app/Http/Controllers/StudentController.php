@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\StudentCategory;
 use App\Models\StudentHouse;
 use App\Models\Students;
+use App\Models\SubjectTeacher;
 use App\Models\TransportationPayment;
 use App\Repositories\ClassSchool\ClassSchoolInterface;
 use App\Repositories\ClassSection\ClassSectionInterface;
@@ -458,11 +459,19 @@ class StudentController extends Controller
         }
         $sql->where('id', $id);
         $student = $sql->get();
-        $route_details = TransportationPayment::where('user_id', $student[0]->user_id)->with('pickupPoint','routeVehicle.route')->get();
-        // $classSection = ClassSection::with('class_teachers.teacher')->find($id);
+        $studentModel = $student[0];
 
-        // dd($student);
-        return view('students.profile', compact('student','route_details'));
+        $route_details = TransportationPayment::where('user_id', $studentModel->user_id)->with('pickupPoint','routeVehicle.route')->get();
+        $pickup_point = $route_details->first();
+
+        // Semester-wise filtered subject teachers (same logic as parent/teachers API)
+        $class_subject_ids = $studentModel->selectedStudentSubjects()->pluck('class_subject_id')->filter();
+        $subjectTeachers = SubjectTeacher::whereIn('class_subject_id', $class_subject_ids)
+            ->where('class_section_id', $studentModel->class_section_id)
+            ->with(['subject:id,name,type', 'teacher:id,first_name,last_name,image'])
+            ->get();
+
+        return view('students.profile', compact('student', 'route_details', 'pickup_point', 'subjectTeachers'));
     }
 
 

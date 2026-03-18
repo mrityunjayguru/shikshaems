@@ -1850,38 +1850,6 @@ class StudentApiController extends Controller
         }
     }
 
-    public function updateLocation(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'latitude'  => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-        ]);
-
-        if ($validator->fails()) {
-            ResponseService::validationError($validator->errors()->first());
-        }
-
-        try {
-            $student = Auth::user()->student;
-
-            if (!$student) {
-                ResponseService::errorResponse("Student record not found");
-            }
-
-            $student->latitude  = $request->latitude;
-            $student->longitude = $request->longitude;
-            $student->save();
-
-            ResponseService::successResponse('Location Updated Successfully', [
-                'latitude'  => $student->latitude,
-                'longitude' => $student->longitude,
-            ]);
-        } catch (Throwable $e) {
-            ResponseService::logErrorResponse($e, "StudentApiController -> updateLocation Method");
-            ResponseService::errorResponse();
-        }
-    }
-
     public function getTeachers(Request $request)
     {
         try {
@@ -1891,31 +1859,21 @@ class StudentApiController extends Controller
                 ResponseService::errorResponse("Student record not found");
             }
 
-            $classSectionId = $student->class_section_id;
+            // Filter by student's selected subjects (semester-wise) — same as parent/teachers
+            $class_subject_ids = $student->selectedStudentSubjects()->pluck('class_subject_id');
 
-            // Class Teacher
-            $classSection = ClassSection::with([
-                'class_teacher.teacher:id,first_name,last_name,image'
-            ])->where('id', $classSectionId)->first();
+            $subjectTeachers = $this->subjectTeacher->builder()
+                ->select('id', 'subject_id', 'teacher_id', 'school_id')
+                ->whereIn('class_subject_id', $class_subject_ids)
+                ->where('class_section_id', $student->class_section_id)
+                ->whereHas('teacher', fn($q) => $q->where('status', 1))
+                ->with([
+                    'subject:id,name,type',
+                    'teacher:id,first_name,last_name,image,mobile'
+                ])
+                ->get();
 
-            $classTeacherUser = $classSection->class_teacher?->teacher;
-            $classTeacherName = $classTeacherUser
-                ? $classTeacherUser->first_name . ' ' . $classTeacherUser->last_name
-                : null;
-
-            // Subject Teachers
-            $subjectTeachersQuery = $this->subjectTeacher->builder()
-                ->with(['teacher:id,first_name,last_name,image', 'subject:id,name,type'])
-                ->where('class_section_id', $classSectionId);
-
-            if ($request->filled('subject_id')) {
-                $subjectTeachersQuery->where('subject_id', $request->subject_id);
-            }
-
-            ResponseService::successResponse('Data Fetched Successfully', [
-                'class_teacher' => $classTeacherName,
-                'subject_teachers' => $subjectTeachersQuery->get()
-            ]);
+            ResponseService::successResponse('Data Fetched Successfully', $subjectTeachers);
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e, "StudentApiController -> getTeachers Method");
             ResponseService::errorResponse();

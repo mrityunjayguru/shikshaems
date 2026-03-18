@@ -91,9 +91,6 @@ Route::group(['prefix' => 'student'], static function () {
 
         // Teachers
         Route::get('teachers', [StudentApiController::class, 'getTeachers']);
-
-        // Location
-        Route::post('update-location', [StudentApiController::class, 'updateLocation']);
     });
 });
 
@@ -178,6 +175,8 @@ Route::group(['prefix' => 'parent'], static function () {
             Route::post('apply-leave', [ParentApiController::class, 'applyLeave']);
             Route::get('get-leaves', [ParentApiController::class, 'getLeaves']);
             Route::post('submit-support', [ParentApiController::class, 'support']);
+            // Location
+            Route::post('update-location', [ParentApiController::class, 'updateLocation']);
         });
     });
     // });

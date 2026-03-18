@@ -126,6 +126,8 @@
                                             <th scope="col" data-field="date" data-width="150"> {{ __('date') }}
                                             </th>
                                             <th scope="col" data-field="title">{{ __('title') }} </th>
+                                            <th scope="col" data-field="start_time">{{ __('Start Time') }}</th>
+                                            <th scope="col" data-field="end_time">{{ __('End Time') }}</th>
                                             <th scope="col" data-events="tableDescriptionEvents"
                                                 data-formatter="descriptionFormatter" data-field="desc">
                                                 {{ __('description') }}</th>
