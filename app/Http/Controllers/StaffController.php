@@ -186,7 +186,7 @@ class StaffController extends Controller
                 $data = array(
                     ...$request->except('school_id'),
                     'password' => Hash::make($generatedPassword),
-                    'image' => $request->file('image'),
+                    'image' => $this->resolveImageUpload($request),
                     'status' => $request->status ?? 0,
                     'deleted_at' => $request->status == 1 ? null : '1970-01-01 01:00:00',
                     'two_factor_enabled' => 0,
@@ -199,7 +199,7 @@ class StaffController extends Controller
                     ...$request->except('school_id'),
                     'unique_id'       => $userUniqueId,
                     'password' => Hash::make($generatedPassword),
-                    'image' => $request->file('image'),
+                    'image' => $this->resolveImageUpload($request),
                     'status' => 1,
                     'two_factor_enabled' => 0,
                     'two_factor_secret' => null,
@@ -462,8 +462,9 @@ class StaffController extends Controller
             }
             DB::beginTransaction();
             $data = $request->except('school_id');
-            if ($request->hasFile('image')) {
-                $data['image'] = $request->file('image');
+            $resolvedImage = $this->resolveImageUpload($request);
+            if ($resolvedImage) {
+                $data['image'] = $resolvedImage;
             }
 
             if ($request->reset_password) {

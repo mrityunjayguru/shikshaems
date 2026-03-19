@@ -51,14 +51,15 @@
                             </div>
                             <div class="form-group col-sm-12 col-md-4">
                                 <label for="image">{{ __('image') }}</label>
-                                <input type="file" name="image" accept="image/jpg,image/png,image/jpeg" class="file-upload-default" />
+                                <input type="hidden" name="image_cropped" id="profile_image_cropped">
+                                <input type="file" id="profile_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg"/>
                                 <div class="input-group col-xs-12">
-                                    <input type="text" id="image" class="form-control file-upload-info" disabled="" placeholder="{{ __('image') }}" required="required"/>
+                                    <input type="text" id="image" class="form-control file-upload-info" disabled="" placeholder="{{ __('image') }}"/>
                                     <span class="input-group-append">
-                                        <button class="file-upload-browse btn btn-theme" type="button">{{ __('upload') }}</button>
+                                        <button class="btn btn-theme" type="button" onclick="document.getElementById('profile_image_input').click()">{{ __('upload') }}</button>
                                     </span>
                                 </div>
-                                <div style="width: 40px; margin-top:4px;">
+                                <div style="width: 60px; margin-top:4px;">
                                     <img src="{{$userData->image}}" id="edit-user-image-tag" class="img-fluid w-100" alt=""/>
                                 </div>
                             </div>
@@ -102,30 +103,85 @@
         </div>
     </div>
 </div>
+    {{-- Profile Crop Modal --}}
+    <div class="modal fade" id="profileCropModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog" role="document" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Crop Image</h6>
+                    <button type="button" class="close" id="profileCropClose"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="profile_crop_preview" src="" style="max-width:100%;max-height:320px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="profileCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="profileCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
-
 @section('script')
-<script>
-    $(document).ready(function () {
-        @if($userData->dob)
-            $('.dob').val(moment("{{ $userData->dob }}" ,'YYYY-MM-DD').format('DD-MM-YYYY'))
-        @endif
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
+    <script>
+        let profileCropper = null;
 
-        // two factor verification
-        if ({{ $userData->two_factor_enabled }} == 1) {
-            $('#two_factor_verification').prop('checked', true);
-            $('#two_factor_verification').val(1);
-        } else {
-            $('#two_factor_verification').prop('checked', false);
-            $('#two_factor_verification').val(0);
-        }
-
-        $('.profile-update-form').on('submit', function (e) {
-            e.preventDefault();
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+        $('#profile_image_input').on('change', function() {
+            if (!this.files || !this.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('profile_crop_preview');
+                img.src = e.target.result;
+                $('#profileCropModal').modal('show');
+                $('#profileCropModal').one('shown.bs.modal', function() {
+                    if (profileCropper) { profileCropper.destroy(); profileCropper = null; }
+                    profileCropper = new Cropper(img, { aspectRatio: 308/338, viewMode: 1, autoCropArea: 1, minContainerHeight: 280, maxContainerHeight: 320 });
+                });
+            };
+            reader.readAsDataURL(this.files[0]);
         });
-    });
-</script>
+
+        $('#profileCropDone').on('click', function() {
+            if (!profileCropper) return;
+            const dataUrl = profileCropper.getCroppedCanvas({ width: 308, height: 338 }).toDataURL('image/jpeg', 0.9);
+            $('#profile_image_cropped').val(dataUrl);
+            $('#image').val('image_cropped.jpg');
+            $('#edit-user-image-tag').attr('src', dataUrl);
+            profileCropper.destroy(); profileCropper = null;
+            $('#profileCropModal').modal('hide');
+            $('#profile_image_input').val('');
+        });
+
+        $('#profileCropClose, #profileCropClose2').on('click', function() {
+            if (profileCropper) { profileCropper.destroy(); profileCropper = null; }
+            $('#profileCropModal').modal('hide');
+            $('#profile_image_input').val('');
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            @if($userData->dob)
+                $('.dob').val(moment("{{ $userData->dob }}" ,'YYYY-MM-DD').format('DD-MM-YYYY'))
+            @endif
+
+            // two factor verification
+            if ({{ $userData->two_factor_enabled }} == 1) {
+                $('#two_factor_verification').prop('checked', true);
+                $('#two_factor_verification').val(1);
+            } else {
+                $('#two_factor_verification').prop('checked', false);
+                $('#two_factor_verification').val(0);
+            }
+
+            $('.profile-update-form').on('submit', function (e) {
+                e.preventDefault();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            });
+        });
+    </script>
 @endsection

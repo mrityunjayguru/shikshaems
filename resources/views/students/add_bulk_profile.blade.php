@@ -86,7 +86,87 @@
 
         </div>
     </div>
+    {{-- Bulk Profile Crop Modal --}}
+    <div class="modal fade" id="bulkCropModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog" role="document" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Crop Image</h6>
+                    <button type="button" class="close" id="bulkCropClose"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="bulk_crop_preview" src="" style="max-width:100%;max-height:320px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="bulkCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="bulkCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('js')
+@endsection
+
+@section('script')
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
+    <script>
+        let bulkCropper = null;
+        let bulkCropMeta = null; // { type: 'student'|'guardian', id: '...' }
+
+        // Delegate file input change for dynamically rendered rows
+        $(document).on('change', '.bulk-student-file-input', function() {
+            if (!this.files || !this.files[0]) return;
+            const uid = $(this).data('uid');
+            bulkCropMeta = { type: 'student', id: uid };
+            openBulkCrop(this.files[0]);
+            $(this).val('');
+        });
+
+        $(document).on('change', '.bulk-guardian-file-input', function() {
+            if (!this.files || !this.files[0]) return;
+            const gid = $(this).data('gid');
+            bulkCropMeta = { type: 'guardian', id: gid };
+            openBulkCrop(this.files[0]);
+            $(this).val('');
+        });
+
+        function openBulkCrop(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('bulk_crop_preview');
+                img.src = e.target.result;
+                if (bulkCropper) { bulkCropper.destroy(); bulkCropper = null; }
+                $('#bulkCropModal').modal('show');
+                $('#bulkCropModal').one('shown.bs.modal', function() {
+                    bulkCropper = new Cropper(img, { aspectRatio: 308/338, viewMode: 1, autoCropArea: 1, minContainerHeight: 280, maxContainerHeight: 320 });
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        $('#bulkCropDone').on('click', function() {
+            if (!bulkCropper || !bulkCropMeta) return;
+            const dataUrl = bulkCropper.getCroppedCanvas({ width: 308, height: 338 }).toDataURL('image/jpeg', 0.9);
+            const { type, id } = bulkCropMeta;
+            if (type === 'student') {
+                $('#sc_student_cropped_' + id).val(dataUrl);
+                $('#sc_student_preview_' + id).attr('src', dataUrl).show();
+            } else {
+                $('#sc_guardian_cropped_' + id).val(dataUrl);
+                $('#sc_guardian_preview_' + id).attr('src', dataUrl).show();
+            }
+            bulkCropper.destroy(); bulkCropper = null;
+            bulkCropMeta = null;
+            $('#bulkCropModal').modal('hide');
+        });
+
+        $('#bulkCropClose, #bulkCropClose2').on('click', function() {
+            if (bulkCropper) { bulkCropper.destroy(); bulkCropper = null; }
+            bulkCropMeta = null;
+            $('#bulkCropModal').modal('hide');
+        });
+    </script>
 @endsection

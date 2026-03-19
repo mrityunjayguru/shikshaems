@@ -165,14 +165,17 @@
                                 </div>
                                 <div class="form-group col-sm-12 col-md-12 col-lg-6 col-xl-4">
                                     <label for="image">{{ __('image') }} </label>
-                                    <input type="file" name="image" class="file-upload-default" accept="image/*" />
+                                    <input type="hidden" name="image_cropped" id="sc_image_cropped">
+                                    <input type="file" id="sc_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg"/>
                                     <div class="input-group col-xs-12">
                                         <input type="text" id="image" class="form-control file-upload-info"
                                             disabled="" placeholder="{{ __('image') }}" />
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('sc_image_input').click()">{{ __('upload') }}</button>
                                         </span>
+                                    </div>
+                                    <div id="sc_image_preview" class="d-none mt-1" style="width:60px;">
+                                        <img src="" class="img-fluid w-100" alt="">
                                     </div>
                                 </div>
                                 <div class="form-group col-sm-12 col-md-12 col-lg-6 col-xl-4">
@@ -369,18 +372,18 @@
                                 </div>
                                 <div class="form-group col-sm-12 col-md-4 col-lg-6 col-xl-4">
                                     <label for="guardian_image">{{ __('image') }} </label>
-                                    <input type="file" name="guardian_image" accept="image/*"
-                                        class="file-upload-default" />
+                                    <input type="hidden" name="guardian_image_cropped" id="sc_guardian_image_cropped">
+                                    <input type="file" id="sc_guardian_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg"/>
                                     <div class="input-group col-xs-12">
                                         <input type="text" id="guardian_image" class="form-control file-upload-info"
                                             disabled="" placeholder="{{ __('image') }}" />
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('sc_guardian_image_input').click()">{{ __('upload') }}</button>
                                         </span>
                                     </div>
-                                    <img id="guardian-image-preview" src="" alt="Guardian Image"
-                                        class="img-fluid w-25" />
+                                    <div id="sc_guardian_preview" class="d-none mt-1" style="width:60px;">
+                                        <img src="" class="img-fluid w-100" alt="">
+                                    </div>
                                 </div>
                             </div>
                             <div class="mt-3">
@@ -397,7 +400,110 @@
     </div>
 @endsection
 @section('script')
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
+
+    {{-- Student Crop Modal --}}
+    <div class="modal fade" id="scStudentCropModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog" role="document" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2"><h6 class="modal-title">Crop Image</h6>
+                    <button type="button" class="close" id="scStudentCropClose"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="sc_student_crop_preview" src="" style="max-width:100%;max-height:320px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="scStudentCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="scStudentCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Guardian Crop Modal --}}
+    <div class="modal fade" id="scGuardianCropModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog" role="document" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2"><h6 class="modal-title">Crop Image</h6>
+                    <button type="button" class="close" id="scGuardianCropClose"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="sc_guardian_crop_preview" src="" style="max-width:100%;max-height:320px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="scGuardianCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="scGuardianCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ===== STUDENT IMAGE CROP =====
+        let scStudentCropper = null;
+        $('#sc_image_input').on('change', function() {
+            if (!this.files || !this.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('sc_student_crop_preview');
+                img.src = e.target.result;
+                $('#scStudentCropModal').modal('show');
+                $('#scStudentCropModal').one('shown.bs.modal', function() {
+                    if (scStudentCropper) { scStudentCropper.destroy(); scStudentCropper = null; }
+                    scStudentCropper = new Cropper(img, { aspectRatio: 308/338, viewMode: 1, autoCropArea: 1, minContainerHeight: 280, maxContainerHeight: 320 });
+                });
+            };
+            reader.readAsDataURL(this.files[0]);
+        });
+        $('#scStudentCropDone').on('click', function() {
+            if (!scStudentCropper) return;
+            const dataUrl = scStudentCropper.getCroppedCanvas({ width: 308, height: 338 }).toDataURL('image/jpeg', 0.9);
+            $('#sc_image_cropped').val(dataUrl);
+            $('#image').val('image_cropped.jpg');
+            $('#sc_image_preview').removeClass('d-none').find('img').attr('src', dataUrl);
+            scStudentCropper.destroy(); scStudentCropper = null;
+            $('#scStudentCropModal').modal('hide');
+            $('#sc_image_input').val('');
+        });
+        $('#scStudentCropClose, #scStudentCropClose2').on('click', function() {
+            if (scStudentCropper) { scStudentCropper.destroy(); scStudentCropper = null; }
+            $('#scStudentCropModal').modal('hide');
+            $('#sc_image_input').val('');
+        });
+
+        // ===== GUARDIAN IMAGE CROP =====
+        let scGuardianCropper = null;
+        $('#sc_guardian_image_input').on('change', function() {
+            if (!this.files || !this.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('sc_guardian_crop_preview');
+                img.src = e.target.result;
+                $('#scGuardianCropModal').modal('show');
+                $('#scGuardianCropModal').one('shown.bs.modal', function() {
+                    if (scGuardianCropper) { scGuardianCropper.destroy(); scGuardianCropper = null; }
+                    scGuardianCropper = new Cropper(img, { aspectRatio: 308/338, viewMode: 1, autoCropArea: 1, minContainerHeight: 280, maxContainerHeight: 320 });
+                });
+            };
+            reader.readAsDataURL(this.files[0]);
+        });
+        $('#scGuardianCropDone').on('click', function() {
+            if (!scGuardianCropper) return;
+            const dataUrl = scGuardianCropper.getCroppedCanvas({ width: 308, height: 338 }).toDataURL('image/jpeg', 0.9);
+            $('#sc_guardian_image_cropped').val(dataUrl);
+            $('#guardian_image').val('image_cropped.jpg');
+            $('#sc_guardian_preview').removeClass('d-none').find('img').attr('src', dataUrl);
+            scGuardianCropper.destroy(); scGuardianCropper = null;
+            $('#scGuardianCropModal').modal('hide');
+            $('#sc_guardian_image_input').val('');
+        });
+        $('#scGuardianCropClose, #scGuardianCropClose2').on('click', function() {
+            if (scGuardianCropper) { scGuardianCropper.destroy(); scGuardianCropper = null; }
+            $('#scGuardianCropModal').modal('hide');
+            $('#sc_guardian_image_input').val('');
+        });
+
         function formSuccessFunction() {
             setTimeout(() => {
                 window.location.reload()

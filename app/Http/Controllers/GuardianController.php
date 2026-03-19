@@ -162,12 +162,14 @@ class GuardianController extends Controller
         try {
             $data = $request->except('_token', 'edit_id', '_method', 'reset_password');
             $guardian = $this->user->guardian()->where('id', $request->edit_id)->firstOrFail();
-            if (!empty($request->image)) {
+            $resolvedImage = $this->resolveImageUpload($request);
+            if ($resolvedImage) {
                 if ($guardian->image) {
                     UploadService::delete($guardian->getRawOriginal('image'));
                 }
-                $data['image'] = UploadService::upload($request->image, 'guardian');
+                $data['image'] = UploadService::upload($resolvedImage, 'guardian');
             }
+            unset($data['image_cropped']);
 
             if ($request->reset_password) {
                 $data['password'] = Hash::make($request->mobile);

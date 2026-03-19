@@ -38,7 +38,6 @@ class SliderController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                'image' => 'required|mimes:jpeg,png,jpg,svg,svg+xml|image|max:2048',
                 'link' => 'nullable|url'
             ]
         );
@@ -48,7 +47,10 @@ class SliderController extends Controller
         }
 
         try {
-            $this->sliders->create($request->except('_token'));
+            $data = $request->except('_token');
+            $data['image'] = $this->resolveImageUpload($request);
+            unset($data['image_cropped']);
+            $this->sliders->create($data);
             ResponseService::successResponse('Data Stored Successfully');
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e, "Sliders Controller -> Store Method");
@@ -113,7 +115,15 @@ class SliderController extends Controller
         }
 
         try {
-            $this->sliders->update($id, $request->except('_token', 'edit_id'));
+            $data = $request->except('_token', 'edit_id');
+            $resolvedImage = $this->resolveImageUpload($request);
+            if ($resolvedImage) {
+                $data['image'] = $resolvedImage;
+            } else {
+                unset($data['image']);
+            }
+            unset($data['image_cropped']);
+            $this->sliders->update($id, $data);
             ResponseService::successResponse('Data Updated Successfully');
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e, "Sliders Controller -> Update Method");

@@ -91,7 +91,7 @@ class TeacherController extends Controller
             'current_address'   => 'required',
             'permanent_address' => 'required',
             'status'            => 'nullable|in:0,1',
-            'image'             => 'nullable|image|mimes:jpeg,png,jpg,svg,gif,webp',
+            'image_cropped'     => 'nullable|string',
         ]);
 
         // if (filled($request->allowance))
@@ -169,7 +169,7 @@ class TeacherController extends Controller
                 ...$request->all(),
                 'unique_id'       => $teacherCode,
                 'password'          => Hash::make($generatedPassword),
-                'image'             => $request->file('image'),
+                'image'             => $this->resolveImageUpload($request),
                 'status'            => $request->status ?? 0,
                 'dob'               => date('Y-m-d', strtotime($request->dob)),
                 'deleted_at'        => $request->status == 1 ? null : '1970-01-01 01:00:00',
@@ -367,8 +367,9 @@ class TeacherController extends Controller
             $user_data = array(
                 ...$request->all(),
             );
-            if ($request->file('image')) {
-                $user_data['image'] = $request->file('image');
+            $resolvedImage = $this->resolveImageUpload($request);
+            if ($resolvedImage) {
+                $user_data['image'] = $resolvedImage;
             }
 
             if ($request->reset_password) {
