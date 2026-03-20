@@ -106,7 +106,7 @@ class NotificationController extends Controller
                 'title' => $request->title,
                 'message' => $request->message,
                 'send_to' => $roles ?? '',
-                'image' => $request->hasFile('image') ? $request->image : null,
+                'image' => $this->resolveImageUpload($request, 'image', 'image_cropped'),
                 'session_year_id' => $sessionYear->id
             ];
             $notification = $this->notification->create($data);

@@ -1069,7 +1069,17 @@ window.schoolEvents = {
     'click .edit-data': function (e, value, row) {
         $('#edit_id').val(row.id);
         $('#edit_school_name').val(row.name);
-        $('#edit-school-logo-tag').attr('src', row.logo);
+        // Set logo preview only if logo exists
+        var logoTag = document.getElementById('edit-school-logo-tag');
+        if (logoTag) {
+            if (row.logo) {
+                logoTag.src = row.logo;
+                logoTag.style.display = 'block';
+            } else {
+                logoTag.src = '#';
+                logoTag.style.display = 'none';
+            }
+        }
         $('#edit_school_support_email').val(row.support_email);
         $('#edit_school_support_phone').val(row.support_phone);
         $('#edit_school_address').val(row.address);

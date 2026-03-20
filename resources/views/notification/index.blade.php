@@ -67,12 +67,16 @@
 
                                 <div class="form-group col-sm-6 col-md-6">
                                     <label>{{ __('image') }} </label>
-                                    <input type="file" name="image" accept="image/*" class="file-upload-default"/>
+                                    <input type="hidden" name="image_cropped" id="notif_image_cropped">
+                                    <input type="file" id="notif_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg,image/webp"/>
                                     <div class="input-group col-xs-12">
-                                        <input type="text" id="image" class="form-control file-upload-info" disabled="" placeholder="{{ __('image') }}"/>
+                                        <input type="text" id="notif_image_info" class="form-control file-upload-info" disabled="" placeholder="{{ __('image') }}"/>
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme" type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('notif_image_input').click()">{{ __('upload') }}</button>
                                         </span>
+                                    </div>
+                                    <div id="notif_image_preview" class="d-none mt-1" style="width:120px;">
+                                        <img src="" class="img-fluid w-100" alt="">
                                     </div>
                                 </div>
 
@@ -163,9 +167,103 @@
 
         </div>
     </div>
+
+    {{-- Notification Crop Modal --}}
+    <div class="modal" id="notifCropModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index:1060;display:none;">
+        <div class="modal-dialog" role="document" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Crop Image</h6>
+                    <button type="button" class="close" id="notifCropClose"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="notif_crop_preview" src="" style="max-width:100%;max-height:320px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="notifCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="notifCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
+@section('css')
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
+@endsection
+
 @section('script')
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
     <script>
+        var notifCropper = null;
+
+        function showNotifCropModal() {
+            var m = document.getElementById('notifCropModal');
+            m.style.display = 'block';
+            document.body.classList.add('modal-open');
+            var bd = document.createElement('div');
+            bd.id = 'notifCropBackdrop';
+            bd.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1059;';
+            document.body.appendChild(bd);
+        }
+
+        function hideNotifCropModal() {
+            var m = document.getElementById('notifCropModal');
+            m.style.display = 'none';
+            var bd = document.getElementById('notifCropBackdrop');
+            if (bd) bd.remove();
+            document.body.classList.remove('modal-open');
+            document.body.style.paddingRight = '';
+        }
+
+        function openNotifCrop(file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = document.getElementById('notif_crop_preview');
+                if (notifCropper) { notifCropper.destroy(); notifCropper = null; }
+                img.src = e.target.result;
+                showNotifCropModal();
+                setTimeout(function() {
+                    notifCropper = new Cropper(img, {
+                        aspectRatio: NaN,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                        minContainerHeight: 280,
+                        maxContainerHeight: 320
+                    });
+                }, 150);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('notif_image_input').addEventListener('change', function() {
+                if (this.files && this.files[0]) openNotifCrop(this.files[0]);
+            });
+            document.getElementById('notifCropDone').addEventListener('click', function() {
+                if (!notifCropper) return;
+                var canvas = notifCropper.getCroppedCanvas();
+                var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                document.getElementById('notif_image_cropped').value = dataUrl;
+                document.getElementById('notif_image_info').value = 'image_cropped.jpg';
+                var prev = document.getElementById('notif_image_preview');
+                prev.classList.remove('d-none');
+                prev.querySelector('img').src = dataUrl;
+                document.getElementById('notif_image_input').value = '';
+                notifCropper.destroy(); notifCropper = null;
+                hideNotifCropModal();
+            });
+            document.getElementById('notifCropClose').addEventListener('click', function() {
+                if (notifCropper) { notifCropper.destroy(); notifCropper = null; }
+                document.getElementById('notif_image_input').value = '';
+                hideNotifCropModal();
+            });
+            document.getElementById('notifCropClose2').addEventListener('click', function() {
+                if (notifCropper) { notifCropper.destroy(); notifCropper = null; }
+                document.getElementById('notif_image_input').value = '';
+                hideNotifCropModal();
+            });
+        });
+
         $(document).ready(function () {
             $('.role-list').hide(500);
             $('.user-list').hide(500);

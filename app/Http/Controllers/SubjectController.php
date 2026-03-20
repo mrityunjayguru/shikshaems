@@ -114,14 +114,24 @@ class SubjectController extends Controller
                 'nullable',
                 new uniqueForSchool('subjects', ['code' => $request->code, 'medium_id' => $request->medium_id, 'type' => $request->type])
             ],
-            'image' => ['required', 'mimes:jpg,jpeg,png,svg', new MaxFileSize($file_upload_size_limit)],
+            'image' => ['nullable', 'mimes:jpg,jpeg,png,svg', new MaxFileSize($file_upload_size_limit)],
         ])->setAttributeNames(['bg_color' => 'Background Color']);
 
         if ($validator->fails()) {
             ResponseService::errorResponse($validator->errors()->first());
         }
+
+        // Ensure image is provided (either file or base64 crop)
+        if (!$request->file('image') && !$request->input('image_cropped')) {
+            ResponseService::errorResponse('The image field is required.');
+        }
         try {
-            $this->subject->create($request->all());
+            $data = $request->all();
+            $resolved = $this->resolveImageUpload($request, 'image', 'image_cropped');
+            if ($resolved !== null) {
+                $data['image'] = $resolved;
+            }
+            $this->subject->create($data);
             ResponseService::successResponse('Data Stored Successfully');
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
@@ -152,7 +162,12 @@ class SubjectController extends Controller
         }
 
         try {
-            $this->subject->update($id, $request->all());
+            $data = $request->all();
+            $resolved = $this->resolveImageUpload($request, 'image', 'image_cropped');
+            if ($resolved !== null) {
+                $data['image'] = $resolved;
+            }
+            $this->subject->update($id, $data);
             ResponseService::successResponse('Data Updated Successfully');
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);

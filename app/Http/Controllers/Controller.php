@@ -121,6 +121,26 @@ class Controller extends BaseController
         return new UploadedFile($tmpPath, 'cropped_image.jpg', 'image/jpeg', null, true);
     }
 
+    /**
+     * Convert a raw base64 string (from extra fields) to UploadedFile.
+     */
+    protected function resolveImageUploadFromBase64(string $base64): ?UploadedFile
+    {
+        if (empty($base64)) {
+            return null;
+        }
+        if (str_contains($base64, ',')) {
+            $base64 = explode(',', $base64)[1];
+        }
+        $decoded = base64_decode($base64);
+        if (!$decoded) {
+            return null;
+        }
+        $tmpPath = tempnam(sys_get_temp_dir(), 'crop_img_') . '.jpg';
+        File::put($tmpPath, $decoded);
+        return new UploadedFile($tmpPath, 'cropped_image.jpg', 'image/jpeg', null, true);
+    }
+
     public function index()
     {
 

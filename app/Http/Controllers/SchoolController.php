@@ -145,7 +145,7 @@ class SchoolController extends Controller
             'school_support_phone' => 'required|numeric|digits_between:6,15',
             'school_tagline' => 'required',
             'school_address' => 'required',
-            'school_image' => 'required|mimes:jpg,jpeg,png,svg,svg+xml|max:2048',
+            'school_image' => 'nullable|mimes:jpg,jpeg,png,svg,svg+xml|max:2048',
             'domain' => 'nullable|unique:schools,domain',
             'school_code_prefix' => 'required'
 
@@ -155,6 +155,12 @@ class SchoolController extends Controller
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
         }
+
+        // Ensure logo is provided (file or base64 crop)
+        if (!$request->file('school_image') && !$request->input('school_image_cropped')) {
+            ResponseService::validationError('The logo field is required.');
+        }
+
         $domain = trim($request->input('domain'));
         $isCustom = $request->domain_type === 'custom'; // or however you define it
 
@@ -170,7 +176,6 @@ class SchoolController extends Controller
             ResponseService::validationError('Invalid domain format');
         }
         try {
-
             if (strtolower($request->domain) == 'demo') {
                 ResponseService::errorResponse("The demo domain name is already reserved.Please choose any other domain name.");
             }
@@ -189,7 +194,7 @@ class SchoolController extends Controller
                 'support_email' => $request->school_support_email,
                 'support_phone' => $request->school_support_phone,
                 'tagline' => $request->school_tagline,
-                'logo' => $request->file('school_image'),
+                'logo' => $this->resolveImageUpload($request, 'school_image', 'school_image_cropped'),
                 'domain' => $request->domain,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
@@ -253,6 +258,11 @@ class SchoolController extends Controller
                     if (isset($fields['data']) && $fields['data'] instanceof UploadedFile) {
                         $image = UploadService::upload($fields['data'], 'school');
                         $data = $image;
+                    } elseif (isset($fields['cropped_data']) && !empty($fields['cropped_data'])) {
+                        $resolved = $this->resolveImageUploadFromBase64($fields['cropped_data']);
+                        if ($resolved) {
+                            $data = UploadService::upload($resolved, 'school');
+                        }
                     }
 
                     // Now add the data to the array
@@ -530,8 +540,9 @@ class SchoolController extends Controller
                 'domain' => $request->edit_domain
             );
 
-            if ($request->hasFile('edit_school_image')) {
-                $school_data['logo'] = $request->file('edit_school_image');
+            $resolvedLogo = $this->resolveImageUpload($request, 'edit_school_image', 'edit_school_image_cropped');
+            if ($resolvedLogo !== null) {
+                $school_data['logo'] = $resolvedLogo;
             }
 
             $school = $this->schoolsRepository->update($request->edit_id, $school_data); // Call update function of Schools Repository
@@ -545,15 +556,26 @@ class SchoolController extends Controller
                 foreach ($extraFields as $fields) {
                     if ($fields['input_type'] == 'file') {
                         if (isset($fields['data']) && $fields['data'] instanceof UploadedFile) {
-
                             $image = UploadService::upload($fields['data'], 'school');
                             $schoolDataArray[] = array(
-                                'id' => $fields['id'] ?? null, // Handle nullable 'id'
+                                'id' => $fields['id'] ?? null,
                                 'school_inquiry_id' => null,
                                 'school_id' => $school->id,
                                 'form_field_id' => $fields['form_field_id'],
-                                'data' => $image, // Store the filename or handle upload
+                                'data' => $image,
                             );
+                        } elseif (isset($fields['cropped_data']) && !empty($fields['cropped_data'])) {
+                            $resolved = $this->resolveImageUploadFromBase64($fields['cropped_data']);
+                            if ($resolved) {
+                                $image = UploadService::upload($resolved, 'school');
+                                $schoolDataArray[] = array(
+                                    'id' => $fields['id'] ?? null,
+                                    'school_inquiry_id' => null,
+                                    'school_id' => $school->id,
+                                    'form_field_id' => $fields['form_field_id'],
+                                    'data' => $image,
+                                );
+                            }
                         }
                     } else {
                         $data = null;
@@ -622,10 +644,12 @@ class SchoolController extends Controller
                 ]
             );
 
-            if ($request->hasFile('edit_school_image')) {
+            if ($resolvedLogo !== null) {
                 $schoolSettingData[] = [
                     'name' => 'vertical_logo',
-                    'data' => $request->file('edit_school_image')->store('school', 'public'),
+                    'data' => ($resolvedLogo instanceof \Illuminate\Http\UploadedFile)
+                        ? $resolvedLogo->store('school', 'public')
+                        : $resolvedLogo,
                     'type' => 'file',
                     'school_id' => $request->edit_id
                 ];
@@ -733,7 +757,8 @@ class SchoolController extends Controller
                 'contact' => $request->edit_admin_contact,
                 'reset_password' => $request->reset_password,
             );
-            $this->schoolsRepository->updateSchoolAdmin($admin_data, $request->edit_admin_image); // Call updateSchoolAdmin function of Schools Repository
+            $resolvedAdminImage = $this->resolveImageUpload($request, 'edit_admin_image', 'edit_admin_image_cropped');
+            $this->schoolsRepository->updateSchoolAdmin($admin_data, $resolvedAdminImage); // Call updateSchoolAdmin function of Schools Repository
 
             // Collect all completed actions
             $completedActions = [];
