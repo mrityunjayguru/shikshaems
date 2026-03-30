@@ -32,7 +32,7 @@ $('#create-form,.create-form,.create-form-without-reset').on('submit', function 
     let formReset = $(this);
     let submitButtonElement = $(this).find(':submit');
     let url = $(this).attr('action');
-
+     
     if ($(formElement).hasClass('attendance-table') && $('.search-input').val()) {
         Swal.fire({ icon: 'error', text: window.trans['Kindly clear the data from the search field'] });
         return 0;

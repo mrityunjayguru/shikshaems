@@ -209,7 +209,7 @@ class InstallationSeeder extends Seeder {
             ['name' => 'Website Management', 'is_default' => 0, 'status' => 1, 'required_vps' => 0],
             ['name' => 'Chat Module', 'is_default' => 0, 'status' => 1, 'required_vps' => 0],
             ['name' => 'Transportation Module', 'is_default' => 0, 'status' => 1],
-            //['name' => 'Staff Attendance Management', 'is_default' => 0, 'status' => 1],
+            // ['name' => 'Staff Attendance Management', 'is_default' => 0, 'status' => 1],
         ];
 
         foreach ($features as $key => $feature) {

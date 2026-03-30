@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FeesAdvance;
 use App\Models\FeesClassType;
+use App\Models\FeesPaid;
 use App\Repositories\ClassSchool\ClassSchoolInterface;
 use App\Repositories\ClassSection\ClassSectionInterface;
 use App\Repositories\CompulsoryFee\CompulsoryFeeInterface;
@@ -113,6 +114,9 @@ class FeesController extends Controller
             'optional_fees_type.*' => 'required|array',
             'optional_fees_type.*.fees_type_id' => 'required|numeric',
             'optional_fees_type.*.amount' => 'required|numeric',
+            'optional_fees_type.*.number_of_months' => 'required|integer|min:1|max:12',
+            'optional_fees_type.*.months' => 'required|array',
+            'optional_fees_type.*.months.*' => 'required|integer|between:1,12',
             'fees_installments' => 'required_if:include_fee_installments,1|array',
             'fees_installments.*.name' => 'required',
             'fees_installments.*.due_date' => 'required|date',
@@ -171,6 +175,8 @@ class FeesController extends Controller
                         "fees_type_id" => $data['fees_type_id'],
                         "amount" => $data['amount'],
                         "optional" => 0,
+                        "number_of_months" => null,
+                        "applicable_months" => null
                     );
                 }
 
@@ -182,12 +188,14 @@ class FeesController extends Controller
                             "fees_type_id" => $data['fees_type_id'],
                             "amount" => $data['amount'],
                             "optional" => 1,
+                            "number_of_months" => $data['number_of_months'],
+                            "applicable_months" => json_encode($data['months']) // store as JSON
                         );
                     }
                 }
 
                 if (count($feeClassType) > 0) {
-                    $this->feesClassType->upsert($feeClassType, ['class_id', 'fees_type_id'], ['amount', 'optional']);
+                    $this->feesClassType->upsert($feeClassType, ['class_id', 'fees_type_id'], ['amount', 'optional', 'number_of_months', 'applicable_months']);
                 }
 
                 if ($request->include_fee_installments && count($request->fees_installments)) {
@@ -330,6 +338,9 @@ class FeesController extends Controller
             'optional_fees_type.*' => 'required|array',
             'optional_fees_type.*.fees_type_id' => 'required|numeric',
             'optional_fees_type.*.amount' => 'required|numeric',
+            'optional_fees_type.*.number_of_months' => 'required|integer|min:1|max:12',
+            'optional_fees_type.*.months' => 'required|array',
+            'optional_fees_type.*.months.*' => 'required|integer|between:1,12',
             'fees_installments' => 'nullable|array',
             'fees_installments.*.name' => 'required',
             'fees_installments.*.due_date' => 'required|date',
@@ -366,6 +377,8 @@ class FeesController extends Controller
                     "fees_type_id" => $data['fees_type_id'],
                     "amount" => $data['amount'],
                     "optional" => 0,
+                    "number_of_months" => null,
+                    "applicable_months" => null
                 );
             }
 
@@ -378,6 +391,8 @@ class FeesController extends Controller
                         "fees_type_id" => $data['fees_type_id'],
                         "amount" => $data['amount'],
                         "optional" => 1,
+                        "number_of_months" => $data['number_of_months'],
+                        "applicable_months" => json_encode($data['months'])
                     );
                 }
             }
@@ -918,30 +933,38 @@ class FeesController extends Controller
 
                 if (!empty($row->fees_paid)) {
                     $operate .= ($fees->session_year_id == $sessionYearId) ? $operate : "";
-                    $operate .= BootstrapTableService::button('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2V8L14 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 8L10 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M7 12C3 12 3 13.79 3 16V17C3 19.76 3 22 8 22H16C20 22 21 19.76 21 17V16C21 13.79 21 12 17 12C16 12 15.72 12.21 15.2 12.6L14.18 13.68C13 14.94 11 14.94 9.81 13.68L8.8 12.6C8.28 12.21 8 12 7 12Z" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M5 12V8.00004C5 5.99004 5 4.33004 8 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M19 12V8.00004C19 5.99004 19 4.33004 16 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                    // $operate .= BootstrapTableService::button('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    // <path d="M12 2V8L14 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    // <path d="M12 8L10 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    // <path d="M7 12C3 12 3 13.79 3 16V17C3 19.76 3 22 8 22H16C20 22 21 19.76 21 17V16C21 13.79 21 12 17 12C16 12 15.72 12.21 15.2 12.6L14.18 13.68C13 14.94 11 14.94 9.81 13.68L8.8 12.6C8.28 12.21 8 12 7 12Z" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                    // <path d="M5 12V8.00004C5 5.99004 5 4.33004 8 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                    // <path d="M19 12V8.00004C19 5.99004 19 4.33004 16 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                    // </svg>
 
 
-                    ', route('fees.paid.receipt.pdf', $row->fees_paid->id), ['btn', 'btn-xs', 'btn-download', 'btn-rounded', 'btn-icon', 'generate-paid-fees-pdf'], ['target' => "_blank", 'data-id' => $row->fees_paid->id, 'title' => trans('generate_pdf') . ' ' . trans('fees')]);
+                    // ', route('fees.paid.receipt.pdf', $row->fees_paid->id), ['btn', 'btn-xs', 'btn-download', 'btn-rounded', 'btn-icon', 'generate-paid-fees-pdf'], ['target' => "_blank", 'data-id' => $row->fees_paid->id, 'title' => trans('generate_pdf') . ' ' . trans('fees')]);
+                    $operate .= '<button 
+                            class="btn btn-xs btn-download btn-rounded btn-icon open-receipt-modal"
+                            data-student="' . $row->id . '" data-fees="' . $fees->id . '" 
+                            data-url="' . route('get.receipts', ['studentId' => $row->id, 'feesId' => $fees->id]) . '"
+                            title="View Receipts">
+                            
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2V8L14 6" stroke="white" stroke-width="1.5"/>
+                                <path d="M12 8L10 6" stroke="white" stroke-width="1.5"/>
+                                <path d="M7 12C3 12 3 13.79 3 16V17C3 19.76 3 22 8 22H16C20 22 21 19.76 21 17V16C21 13.79 21 12 17 12" stroke="white" stroke-width="1.5"/>
+                            </svg>
+
+                        </button>';
+
                     $tempRow['fees_status'] = $row->fees_paid->is_fully_paid;
                 }
-
-                // if (!empty($row->fees_paid->is_fully_paid)) {
-                //     $operate .= ($fees->session_year_id == $sessionYearId) ? $operate : "";
-                //     $operate .= BootstrapTableService::button('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2V8L14 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8L10 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 12C3 12 3 13.79 3 16V17C3 19.76 3 22 8 22H16C20 22 21 19.76 21 17V16C21 13.79 21 12 17 12C16 12 15.72 12.21 15.2 12.6L14.18 13.68C13 14.94 11 14.94 9.81 13.68L8.8 12.6C8.28 12.21 8 12 7 12Z" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12V8.00004C5 5.99004 5 4.33004 8 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 12V8.00004C19 5.99004 19 4.33004 16 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/></svg>', route('fees.paid.receipt.pdf', $row->fees_paid->id), ['btn', 'btn-xs', 'btn-gradient-info', 'btn-rounded', 'btn-icon', 'generate-paid-fees-pdf'], ['target' => "_blank", 'data-id' => $row->fees_paid->id, 'title' => trans('generate_pdf') . ' ' . trans('fees')]);
-                //     $tempRow['fees_status'] = $row->fees_paid->is_fully_paid;
-                // }
 
                 if ($row->fees_paid) {
                     // Calculate total compulsory + optional fees + due charges for display
                     $totalCompulsoryFees = $row->compulsory_fees_sum_amount ?? 0;
                     $totalDueCharges = $row->compulsory_fees_sum_due_charges ?? 0;
-                    
+
                     // Get optional fees for this payment
                     $totalOptionalFees = 0;
                     if ($row->fees_paid->optional_fee) {
@@ -949,10 +972,10 @@ class FeesController extends Controller
                             $totalOptionalFees += $optFee->amount;
                         }
                     }
-                    
+
                     // Paid amount = compulsory + optional + due charges
                     $tempRow['paid_amount'] = $totalCompulsoryFees + $totalOptionalFees + $totalDueCharges;
-                    
+
                     // Get NEW advance amount created from this payment (unused advance)
                     $advanceAmount = $row->fees_advances_sum_amount ?? 0;
                 } else {
@@ -963,7 +986,7 @@ class FeesController extends Controller
                 if ($row->fees_paid && isset($row->fees_paid->compulsory_fee[0]->mode)) {
                     $tempRow['payment_method'] = $row->fees_paid->compulsory_fee[0]->mode;
                 }
-                
+
                 $tempRow['advance_amount'] = $advanceAmount;
                 $tempRow['total_received'] = $tempRow['paid_amount'] + $advanceAmount;
 
@@ -971,37 +994,87 @@ class FeesController extends Controller
                 $rows[] = $tempRow;
             }
             $bulkData['rows'] = $rows;
+            // dd($bulkData);
             return response()->json($bulkData);
         }
 
 
         $bulkData['total'] = 0;
         $bulkData['rows'] = $tempRow = [];
+
         return response()->json($bulkData);
     }
 
-    public function feesPaidReceiptPDF($feesPaidId)
+    public function getReceipts($studentId, $feesId)
     {
-        // dd($feesPaidId);
+        $receipts = FeesPaid::where('student_id', $studentId)
+            ->where('fees_id', $feesId)
+            ->select('id', 'date', 'is_fully_paid')
+            ->latest()
+            ->get();
+
+        return response()->json($receipts);
+    }
+
+    // public function feesPaidReceiptPDF($feesPaidId)
+    // {
+    //     // dd($feesPaidId);
+    //     ResponseService::noFeatureThenRedirect('Fees Management');
+    //     ResponseService::noPermissionThenRedirect('fees-paid');
+    //     try {
+    //         $feesPaid = $this->feesPaid->builder()->where('id', $feesPaidId)->with([
+    //             'fees.fees_class_type.fees_type',
+    //             'compulsory_fee.installment_fee:id,name',
+    //             'compulsory_fee.months',
+    //             'optional_fee' => function ($q) {
+    //                 $q->with([
+    //                     'fees_class_type' => function ($q) {
+    //                         $q->select('id', 'fees_type_id', 'applicable_months')->with('fees_type:id,name');
+    //                     }
+    //                 ]);
+    //             }
+    //         ])->firstOrFail();
+
+    //         $student = $this->student->builder()->with('user:id,first_name,last_name,mobile,current_address', 'guardian:id,first_name,last_name,mobile', 'class_section.class.stream', 'class_section.section', 'class_section.medium')->whereHas('user', function ($q) use ($feesPaid) {
+    //             $q->where('id', $feesPaid->student_id);
+    //         })->firstOrFail();
+
+    //         $school = $this->cache->getSchoolSettings();
+
+    //         $data = explode("storage/", $school['horizontal_logo'] ?? '');
+    //         $school['horizontal_logo'] = end($data);
+
+    //         if ($school['horizontal_logo'] == null) {
+    //             $systemSettings = $this->cache->getSystemSettings();
+    //             $data = explode("storage/", $systemSettings['horizontal_logo'] ?? '');
+    //             $school['horizontal_logo'] = end($data);
+    //         }
+
+    //         // Get NEW advance amount created from this payment (overpayment)
+    //         // This is stored in fees_advance table linked to compulsory_fee
+    //         $advanceAmount = 0;
+    //         foreach ($feesPaid->compulsory_fee as $compulsoryFee) {
+    //             $advanceAmount += $compulsoryFee->advance_fees()
+    //                 ->whereNull('used_at')
+    //                 ->sum('amount');
+    //         }
+
+    //         // dd($feesPaid);
+    //         $pdf = Pdf::loadView('fees.fees_receipt', compact('school', 'feesPaid', 'student', 'advanceAmount'));
+    //         return $pdf->stream('fees-receipt.pdf');
+    //     } catch (Throwable $e) {
+    //         return $e;
+    //         ResponseService::errorRedirectResponse();
+    //         return false;
+    //     }
+    // }
+
+    public function feesPaidReceiptPDF($type, $id)
+    {
         ResponseService::noFeatureThenRedirect('Fees Management');
         ResponseService::noPermissionThenRedirect('fees-paid');
+
         try {
-            $feesPaid = $this->feesPaid->builder()->where('id', $feesPaidId)->with([
-                'fees.fees_class_type.fees_type',
-                'compulsory_fee.installment_fee:id,name',
-                'optional_fee' => function ($q) {
-                    $q->with([
-                        'fees_class_type' => function ($q) {
-                            $q->select('id', 'fees_type_id')->with('fees_type:id,name');
-                        }
-                    ]);
-                }
-            ])->firstOrFail();
-
-            $student = $this->student->builder()->with('user:id,first_name,last_name,mobile,current_address', 'guardian:id,first_name,last_name,mobile', 'class_section.class.stream', 'class_section.section', 'class_section.medium')->whereHas('user', function ($q) use ($feesPaid) {
-                $q->where('id', $feesPaid->student_id);
-            })->firstOrFail();
-
             $school = $this->cache->getSchoolSettings();
 
             $data = explode("storage/", $school['horizontal_logo'] ?? '');
@@ -1013,17 +1086,95 @@ class FeesController extends Controller
                 $school['horizontal_logo'] = end($data);
             }
 
-            // Get NEW advance amount created from this payment (overpayment)
-            // This is stored in fees_advance table linked to compulsory_fee
+            $compulsoryFees = collect();
+            $optionalFees = collect();
             $advanceAmount = 0;
-            foreach ($feesPaid->compulsory_fee as $compulsoryFee) {
-                $advanceAmount += $compulsoryFee->advance_fees()
+
+            // ----------------------------
+            // If compulsory payment receipt
+            // ----------------------------
+            if ($type === 'compulsory') {
+                $payment = $this->compulsoryFee->builder()
+                    ->where('id', $id)
+                    ->with([
+                        'fees_paid.fees.fees_class_type.fees_type',
+                        'installment_fee:id,name',
+                        'months',
+                        'advance_fees'
+                    ])
+                    ->firstOrFail();
+
+                $feesPaid = $payment->fees_paid;
+                $fees = $feesPaid->fees;
+
+                $compulsoryFees = collect([$payment]);
+                $optionalFees = collect(); // none in compulsory receipt
+
+                $advanceAmount = $payment->advance_fees()
                     ->whereNull('used_at')
                     ->sum('amount');
             }
 
-            // dd($feesPaid);
-            $pdf = Pdf::loadView('fees.fees_receipt', compact('school', 'feesPaid', 'student','advanceAmount'));
+            // ----------------------------
+            // If optional payment receipt
+            // ----------------------------
+            elseif ($type === 'optional') {
+                $payment = $this->optionalFee->builder()
+                    ->where('id', $id)
+                    ->with([
+                        'fees_paid.fees.fees_class_type.fees_type',
+                        'fees_class_type' => function ($q) {
+                            $q->select('id', 'fees_type_id', 'applicable_months')
+                                ->with('fees_type:id,name');
+                        }
+                    ])
+                    ->firstOrFail();
+
+                $feesPaid = $payment->fees_paid;
+                $fees = $feesPaid->fees;
+
+                $compulsoryFees = collect(); // none in optional receipt
+                $optionalFees = collect([$payment]);
+            } else {
+                abort(404);
+            }
+
+            // ----------------------------
+            // Student
+            // ----------------------------
+            $student = $this->student->builder()
+                ->with(
+                    'user:id,first_name,last_name,mobile,current_address',
+                    'guardian:id,first_name,last_name,mobile',
+                    'class_section.class.stream',
+                    'class_section.section',
+                    'class_section.medium'
+                )
+                ->whereHas('user', function ($q) use ($feesPaid) {
+                    $q->where('id', $feesPaid->student_id);
+                })
+                ->firstOrFail();
+
+            // ----------------------------
+            // Dummy object for blade
+            // ----------------------------
+            $receiptData = new \stdClass();
+            $receiptData->id = $feesPaid->id;
+            $receiptData->fees = $fees;
+            $receiptData->compulsory_fee = $compulsoryFees;
+            $receiptData->optional_fee = $optionalFees;
+            $receiptData->date = $payment->date;
+            $receiptData->student_id = $feesPaid->student_id;
+            $receiptData->fees_id = $feesPaid->fees_id;
+            $receiptData->amount = $payment->amount;
+
+            $pdf = Pdf::loadView('fees.fees_receipt', [
+                'school' => $school,
+                'feesPaid' => $receiptData,
+                'student' => $student,
+                'advanceAmount' => $advanceAmount
+            ]);
+
             return $pdf->stream('fees-receipt.pdf');
         } catch (Throwable $e) {
             return $e;
@@ -1377,6 +1528,92 @@ class FeesController extends Controller
                     'fees_paid_id' => $feesPaidResult->id,
                     'date'         => date('Y-m-d', strtotime($request->date))
                 ]);
+
+                /** ----------------------------
+                 *  MONTH-WISE BREAKDOWN
+                 *  ---------------------------- */
+                if ($fees->total_compulsory_fees > 0 && $usedCurrentPayment > 0) {
+                    $monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                    $monthlyFee = round($fees->total_compulsory_fees / 12, 2);
+
+                    // Get last month record from previous payments for this student+fees
+                    // This is the most reliable way — directly from stored month records
+                    $lastMonthRecord = \App\Models\CompulsoryFeeMonth::whereHas('compulsory_fee', function ($q) use ($request) {
+                        $q->where('student_id', $request->student_id)
+                            ->whereHas('fees_paid', function ($q2) use ($request) {
+                                $q2->where('fees_id', $request->fees_id);
+                            });
+                    })->orderBy('month_number', 'desc')->first();
+
+                    if ($lastMonthRecord) {
+                        $currentMonth       = $lastMonthRecord->month_number;
+                        $partialAlreadyPaid = $lastMonthRecord->is_partial
+                            ? round($lastMonthRecord->amount, 2)  // partial month me kitna paid tha
+                            : 0;                                   // full month tha, next se shuru karo
+
+                        if (!$lastMonthRecord->is_partial) {
+                            $currentMonth++; // last month full tha, next month se shuru
+                        }
+                    } else {
+                        // Pehli payment hai
+                        $currentMonth       = 1;
+                        $partialAlreadyPaid = 0;
+                    }
+
+                    $remaining = round($usedCurrentPayment, 2);
+
+                    // Agar previous partial month hai to pehle use complete karo
+                    if ($partialAlreadyPaid > 0.01) {
+                        $neededToComplete = round($monthlyFee - $partialAlreadyPaid, 2);
+
+                        if ($remaining >= $neededToComplete - 0.01) {
+                            // Partial month complete ho gaya
+                            \App\Models\CompulsoryFeeMonth::create([
+                                'compulsory_fee_id' => $compulsoryFee->id,
+                                'month_number'      => $currentMonth,
+                                'month_name'        => $monthNames[$currentMonth - 1],
+                                'amount'            => $neededToComplete,
+                                'is_partial'        => false,
+                            ]);
+                            $remaining = round($remaining - $neededToComplete, 2);
+                            $currentMonth++;
+                        } else {
+                            // Abhi bhi partial
+                            \App\Models\CompulsoryFeeMonth::create([
+                                'compulsory_fee_id' => $compulsoryFee->id,
+                                'month_number'      => $currentMonth,
+                                'month_name'        => $monthNames[$currentMonth - 1],
+                                'amount'            => $remaining,
+                                'is_partial'        => true,
+                            ]);
+                            $remaining = 0;
+                        }
+                    }
+
+                    // Baaki amount ke liye agle months
+                    while ($remaining > 0.01 && $currentMonth <= 12) {
+                        if ($remaining >= $monthlyFee - 0.01) {
+                            \App\Models\CompulsoryFeeMonth::create([
+                                'compulsory_fee_id' => $compulsoryFee->id,
+                                'month_number'      => $currentMonth,
+                                'month_name'        => $monthNames[$currentMonth - 1],
+                                'amount'            => $monthlyFee,
+                                'is_partial'        => false,
+                            ]);
+                            $remaining = round($remaining - $monthlyFee, 2);
+                        } else {
+                            \App\Models\CompulsoryFeeMonth::create([
+                                'compulsory_fee_id' => $compulsoryFee->id,
+                                'month_number'      => $currentMonth,
+                                'month_name'        => $monthNames[$currentMonth - 1],
+                                'amount'            => $remaining,
+                                'is_partial'        => true,
+                            ]);
+                            $remaining = 0;
+                        }
+                        $currentMonth++;
+                    }
+                }
             }
 
             /** ----------------------------

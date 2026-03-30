@@ -777,6 +777,9 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::get('/paid', [FeesController::class, 'feesPaidListIndex'])->name('fees.paid.index');
             Route::get('/paid/list', [FeesController::class, 'feesPaidList'])->name('fees.paid.list');
 
+            Route::get('/get-receipts/{studentId}/{feesId}', [FeesController::class, 'getReceipts'])->name('get.receipts');
+            // Route::get('/get-receipt-details/{id}', [FeesController::class, 'getReceiptDetails']);
+
             Route::get('/pay/compulsory/{feesID}/{studentID}', [FeesController::class, 'payCompulsoryFeesIndex'])->name('fees.compulsory.index');
             Route::post('pay/compulsory', [FeesController::class, 'payCompulsoryFeesStore'])->name('fees.compulsory.store');
 
@@ -803,8 +806,8 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::get('/transaction-logs/list', [FeesController::class, 'feesTransactionsLogsList'])->name('fees.transactions.log.list');
 
             // Receipt
-            Route::get('/paid/receipt-pdf/{id}', [FeesController::class, 'feesPaidReceiptPDF'])->name('fees.paid.receipt.pdf');
-
+            // Route::get('/paid/receipt-pdf/{id}', [FeesController::class, 'feesPaidReceiptPDF'])->name('fees.paid.receipt.pdf');
+            Route::get('/paid/receipt-pdf/{type}/{id}', [FeesController::class, 'feesPaidReceiptPDF'])->name('fees.paid.receipt.pdf');
             // Fees Over Due Dashboard
             Route::get('/fees-over-due/{class_section_id}', [FeesController::class, 'feesOverDue']);
             Route::post('/student-account-deactivate', [FeesController::class, 'studentAccountDeactivate'])->name('deactivate-student-account');

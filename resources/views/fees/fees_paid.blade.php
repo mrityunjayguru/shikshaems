@@ -96,7 +96,9 @@
                                     <label class="filter-menu" for="filter_fees_id">{{ __('Fees') }}</label>
                                     <select name="filter_fees_id" id="filter_fees_id" class="form-control">
                                         @foreach ($fees as $key => $fee)
-                                            <option value="{{ $fee->id }}" data-class-section-id="{{ $fee->class_id }}" {{ $key == 0 ? 'selected' : '' }}>
+                                            <option value="{{ $fee->id }}"
+                                                data-class-section-id="{{ $fee->class_id }}"
+                                                {{ $key == 0 ? 'selected' : '' }}>
                                                 {{ $fee->name }}</option>
                                         @endforeach
                                     </select>
@@ -109,7 +111,8 @@
                                         class="form-control">
                                         <option value="">{{ __('all') }}</option>
                                         @foreach ($class_section as $class)
-                                            <option value="{{ $class->id }}" data-class-section-id="{{ $class->class_id }}">
+                                            <option value="{{ $class->id }}"
+                                                data-class-section-id="{{ $class->class_id }}">
                                                 {{ $class->full_name }}
                                             </option>
                                         @endforeach
@@ -122,7 +125,7 @@
                                         <option value="0">{{ __('unpaid') }}</option>
                                         <option value="1">{{ __('paid') }}</option>
                                         <option value="2">{{ __('Partial Paid') }}</option>
-                                        
+
                                     </select>
                                 </div>
                             </div>
@@ -131,17 +134,22 @@
                             <div class="row paid-filter" style="display: none">
                                 <div class="form-group col-md-3">
                                     <label class="filter-menu" for="filter_paid_status"> {{ __('month') }} </label>
-                                    {!! Form::select('month', $months, date('n'), ['class' => 'form-control paid-month','placeholder' => __('all')]) !!}
+                                    {!! Form::select('month', $months, date('n'), [
+                                        'class' => 'form-control paid-month',
+                                        'placeholder' => __('all'),
+                                    ]) !!}
                                 </div>
 
                                 {{-- <div class="form-group col-md-3">
                                     <label for="filter_gateway" class="filter-menu">{{ __('payment_type') }}</label>
                                     {!! Form::select('payment_type', ['' => __('All'), 'cash_cheque' => __('cash_cheque'),'stripe_razorpay' => __('stripe_razorpay')], 0, ['class' => 'form-control payment-gateway' ,'id' => 'filter_gateway']) !!}
                                 </div> --}}
-                                
+
                                 <div class="form-group col-md-3">
-                                    <label for="filter_online_offline_payment" class="filter-menu">{{ __('online_offline_payment') }}</label>
-                                    <select name="filter_online_offline_payment" id="filter_online_offline_payment" class="form-control select2">
+                                    <label for="filter_online_offline_payment"
+                                        class="filter-menu">{{ __('online_offline_payment') }}</label>
+                                    <select name="filter_online_offline_payment" id="filter_online_offline_payment"
+                                        class="form-control select2">
                                         <option value="0">{{ __('all') }}</option>
                                         <option value="1">{{ __('online') }}</option>
                                         <option value="2">{{ __('offline') }}</option>
@@ -151,29 +159,44 @@
                         </div>
                         <table aria-describedby="mydesc" class='table' id='table_list' data-toggle="table"
                             data-url="{{ route('fees.paid.list', 1) }}" data-click-to-select="true"
-                            data-side-pagination="server" data-pagination="true" data-page-list="[5, 10, 20, 50, 100, 200]"
-                            data-search="true" data-toolbar="#toolbar" data-show-columns="true" data-show-refresh="true"
-                            data-fixed-columns="false" data-trim-on-search="false" data-mobile-responsive="true"
-                            data-sort-name="id" data-sort-order="desc" data-maintain-selected="true"
-                            data-export-data-type='all'
+                            data-side-pagination="server" data-pagination="true"
+                            data-page-list="[5, 10, 20, 50, 100, 200]" data-search="true" data-toolbar="#toolbar"
+                            data-show-columns="true" data-show-refresh="true" data-fixed-columns="false"
+                            data-trim-on-search="false" data-mobile-responsive="true" data-sort-name="id"
+                            data-sort-order="desc" data-maintain-selected="true" data-export-data-type='all'
                             data-export-options='{ "fileName": "{{ __('fees') }}-{{ __('paid') }}-{{ __('list') }}-<?= date('d-m-y')
                             ?>" ,"ignoreColumn":["operate"]}'
                             data-show-export="true" data-query-params="feesPaidListQueryParams" data-escape="true">
                             <thead>
                                 <tr>
-                                    <th scope="col" data-field="id" data-sortable="true" data-visible="false" data-align="center">{{ __('id') }}</th>
-                                    <th scope="col" data-field="no" data-formatter="totalFeesFormatter" data-sortable="false" data-align="center">{{ __('no.') }}</th>
-                                    <th scope="col" data-field="student.id" data-sortable="false" data-visible="false" data-align="center">{{ __('Student Id') }}</th>
-                                    <th scope="col" data-field="full_name" data-sortable="false" data-align="center"> {{ __('Student Name') }}</th>
-                                    <th scope="col" data-field="student.class_section.full_name" data-sortable="false" data-align="center">{{ __('Class') }}</th>
-                                    <th scope="col" data-field="fees.total_compulsory_fees" data-sortable="false" data-align="center">{{ __('Compulsory Fees') }}</th>
-                                    <th scope="col" data-field="fees.total_optional_fees" data-sortable="false" data-align="center">{{ __('Optional Fees') }}</th>
-                                    <th scope="col" data-field="payment_method" data-sortable="false" data-align="center"> {{ __('Payment Method') }}</th>
-                                    <th scope="col" data-field="fees_status" data-sortable="false" data-formatter="feesPaidStatusFormatter" data-align="center"> {{ __('Fees Status') }}</th>
-                                    <th scope="col" data-field="fees_paid.date"  data-sortable="false" data-align="center">{{ __('Date') }}</th>
-                                    <th scope="col" data-field="paid_amount" data-sortable="false">{{ __('paid_amount') }}</th>
-                                    <th scope="col" data-field="advance_amount" data-sortable="false">{{ __('Advance Amount') }}</th>
-                                    <th scope="col" data-field="operate" data-sortable="false" data-events="feesPaidEvents" data-align="center" data-escape="false"> {{ __('Action') }}</th>
+                                    <th scope="col" data-field="id" data-sortable="true" data-visible="false"
+                                        data-align="center">{{ __('id') }}</th>
+                                    <th scope="col" data-field="no" data-formatter="totalFeesFormatter"
+                                        data-sortable="false" data-align="center">{{ __('no.') }}</th>
+                                    <th scope="col" data-field="student.id" data-sortable="false"
+                                        data-visible="false" data-align="center">{{ __('Student Id') }}</th>
+                                    <th scope="col" data-field="full_name" data-sortable="false" data-align="center">
+                                        {{ __('Student Name') }}</th>
+                                    <th scope="col" data-field="student.class_section.full_name" data-sortable="false"
+                                        data-align="center">{{ __('Class') }}</th>
+                                    <th scope="col" data-field="fees.total_compulsory_fees" data-sortable="false"
+                                        data-align="center">{{ __('Compulsory Fees') }}</th>
+                                    <th scope="col" data-field="fees.total_optional_fees" data-sortable="false"
+                                        data-align="center">{{ __('Optional Fees') }}</th>
+                                    <th scope="col" data-field="payment_method" data-sortable="false"
+                                        data-align="center"> {{ __('Payment Method') }}</th>
+                                    <th scope="col" data-field="fees_status" data-sortable="false"
+                                        data-formatter="feesPaidStatusFormatter" data-align="center">
+                                        {{ __('Fees Status') }}</th>
+                                    <th scope="col" data-field="fees_paid.date" data-sortable="false"
+                                        data-align="center">{{ __('Date') }}</th>
+                                    <th scope="col" data-field="paid_amount" data-sortable="false">
+                                        {{ __('paid_amount') }}</th>
+                                    <th scope="col" data-field="fees_advances_sum_amount" data-sortable="false">
+                                        {{ __('Advance Amount') }}</th>
+                                    <th scope="col" data-field="operate" data-sortable="false"
+                                        data-events="feesPaidEvents" data-align="center" data-escape="false">
+                                        {{ __('Action') }}</th>
                                 </tr>
                             </thead>
                         </table>
@@ -182,11 +205,36 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="receiptModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5>Select Receipt</h5>
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- Dropdown -->
+                    <select id="receiptDropdown" class="form-control mb-3">
+                        <option value="">Select Receipt</option>
+                    </select>
+
+                    <!-- Download Button -->
+                    <button id="downloadReceiptBtn" class="btn btn-success w-100">
+                        Download Receipt
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
 @endsection
 @section('js')
     <script>
-
-        $('#filter_paid_status').change(function (e) { 
+        $('#filter_paid_status').change(function(e) {
             e.preventDefault();
             $('.paid-filter').hide(500);
 
@@ -207,12 +255,33 @@
             }, null, function(response) {
                 let feesDropdown = "";
                 response.data.forEach(function(value, index) {
-                    feesDropdown += "<option value='" + value.id + "' data-class-section-id='" + value.class_id + "'>" + value.name + "</option>";
+                    feesDropdown += "<option value='" + value.id + "' data-class-section-id='" +
+                        value.class_id + "'>" + value.name + "</option>";
                 })
 
                 $('#filter_fees_id').html(feesDropdown);
                 $('#table_list').bootstrapTable('refresh');
             }, null, null, true)
         })
+
+        $('#downloadReceiptBtn').on('click', function() {
+            let selected = $('#receiptDropdown').val();
+
+            if (!selected) {
+                alert('Please select a receipt');
+                return;
+            }
+
+            let parts = selected.split('|');
+            let type = parts[0];
+            let id = parts[1];
+
+            let urlTemplate = "{{ route('fees.paid.receipt.pdf', ['type' => '__type__', 'id' => '__id__']) }}";
+            let finalUrl = urlTemplate
+                .replace('__type__', type)
+                .replace('__id__', id);
+
+            window.open(finalUrl, '_blank');
+        });
     </script>
 @endsection
