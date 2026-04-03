@@ -52,14 +52,17 @@
                                 </div>
                                 <div class="form-group col-sm-12 col-md-4">
                                     <label>{{ __('image') }} <span class="text-info text-small">(308px*338px)</span></label>
-                                    <input type="file" name="image" class="file-upload-default" accept="image/*" />
+                                    <input type="hidden" name="image_cropped" id="dh_create_image_cropped">
+                                    <input type="file" id="dh_create_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg"/>
                                     <div class="input-group col-xs-12">
                                         <input type="text" class="form-control file-upload-info" disabled=""
-                                            placeholder="{{ __('image') }}" required />
+                                            placeholder="{{ __('image') }}" id="dh_create_image_info" required />
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('dh_create_image_input').click()">{{ __('upload') }}</button>
                                         </span>
+                                    </div>
+                                    <div id="dh_create_preview" class="d-none mt-1" style="width:60px;">
+                                        <img src="" class="img-fluid w-100" alt="">
                                     </div>
                                 </div>
                                 <div class="form-group col-sm-12 col-md-4">
@@ -490,16 +493,16 @@
                                     <div class="form-group col-sm-12 col-md-4">
                                         <label>{{ __('image') }} <span
                                                 class="text-info text-small">(308px*338px)</span></label>
-                                        <input type="file" name="image" class="file-upload-default" />
+                                        <input type="hidden" name="image_cropped" id="dh_edit_image_cropped">
+                                        <input type="file" id="dh_edit_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg"/>
                                         <div class="input-group col-xs-12">
                                             <input type="text" class="form-control file-upload-info" disabled=""
-                                                placeholder="{{ __('image') }}" required />
+                                                placeholder="{{ __('image') }}" id="dh_edit_image_info" required />
                                             <span class="input-group-append">
-                                                <button class="file-upload-browse btn btn-theme"
-                                                    type="button">{{ __('upload') }}</button>
+                                                <button class="btn btn-theme" type="button" onclick="document.getElementById('dh_edit_image_input').click()">{{ __('upload') }}</button>
                                             </span>
                                         </div>
-                                        <div style="width: 60px;">
+                                        <div style="width: 60px;" class="mt-1">
                                             <img src="" id="edit_staff_image" class="img-fluid w-100" alt="" />
                                         </div>
                                     </div>
@@ -652,7 +655,7 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="form-group col-sm-12 col-md-4">
+                                    {{-- <div class="form-group col-sm-12 col-md-4">
                                         <div class="d-flex">
                                             <div class="form-check w-fit-content">
                                                 <label class="form-check-label ml-4">
@@ -661,10 +664,10 @@
                                                 </label>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> --}}
 
                                     {{-- two factor verification --}}
-                                    <div class="d-flex">
+                                    {{-- <div class="d-flex">
                                         <div class="form-check w-fit-content">
                                             <label class="form-check-label ml-4">
                                                 <input type="checkbox" class="form-check-input" id="two_factor_verification"
@@ -672,7 +675,7 @@
                                                 {{ __('two_factor_verification') }}
                                             </label>
                                         </div>
-                                    </div>
+                                    </div> --}}
                                 </div>
 
                             </div>
@@ -687,8 +690,85 @@
             </div>
         </div>
     </div>
+    {{-- Driver/Helper Crop Modal --}}
+    <div class="modal" id="dhCropModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index:1060;display:none;">
+        <div class="modal-dialog" role="document" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Crop Image</h6>
+                    <button type="button" class="close" id="dhCropClose" aria-label="Close"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="dh_crop_preview" src="" style="max-width:100%;max-height:320px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="dhCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="dhCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 @section('script')
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
+    <script>
+        let dhCropper = null, dhCropTarget = null;
+
+        function openDhCrop(file, target) {
+            dhCropTarget = target;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('dh_crop_preview');
+                img.src = e.target.result;
+                if (dhCropper) { dhCropper.destroy(); dhCropper = null; }
+                $('#dhCropModal').modal('show');
+                $('#dhCropModal').one('shown.bs.modal', function() {
+                    dhCropper = new Cropper(img, { aspectRatio: 308/338, viewMode: 1, autoCropArea: 1, minContainerHeight: 280, maxContainerHeight: 320 });
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        $(document).ready(function() {
+            $('#dh_create_image_input').on('change', function() {
+                if (this.files && this.files[0]) openDhCrop(this.files[0], 'create');
+            });
+            $('#dh_edit_image_input').on('change', function() {
+                if (this.files && this.files[0]) openDhCrop(this.files[0], 'edit');
+            });
+            $('#dhCropDone').on('click', function() {
+                if (!dhCropper) return;
+                const dataUrl = dhCropper.getCroppedCanvas({ width: 308, height: 338 }).toDataURL('image/jpeg', 0.9);
+                if (dhCropTarget === 'create') {
+                    $('#dh_create_image_cropped').val(dataUrl);
+                    $('#dh_create_image_info').val('image_cropped.jpg');
+                    $('#dh_create_preview').removeClass('d-none').find('img').attr('src', dataUrl);
+                } else {
+                    $('#dh_edit_image_cropped').val(dataUrl);
+                    $('#dh_edit_image_info').val('image_cropped.jpg');
+                    $('#edit_staff_image').attr('src', dataUrl);
+                }
+                dhCropper.destroy(); dhCropper = null;
+                $('#dhCropModal').modal('hide');
+                if (dhCropTarget === 'create') $('#dh_create_image_input').val('');
+                else $('#dh_edit_image_input').val('');
+            });
+            $('#dhCropClose, #dhCropClose2').on('click', function() {
+                if (dhCropper) { dhCropper.destroy(); dhCropper = null; }
+                $('#dhCropModal').modal('hide');
+                if (dhCropTarget === 'create') $('#dh_create_image_input').val('');
+                else $('#dh_edit_image_input').val('');
+            });
+            $('#dhCropModal').on('hidden.bs.modal', function() {
+                if (dhCropTarget === 'edit' && $('#editModal').hasClass('show')) {
+                    var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+                    $('body').addClass('modal-open').css('padding-right', scrollbarWidth > 0 ? scrollbarWidth + 'px' : '');
+                }
+            });
+        });
+    </script>
     <script>
         let userIds;
         let schoolDateFormat = "{{ $schoolSettings['date_format'] }}";

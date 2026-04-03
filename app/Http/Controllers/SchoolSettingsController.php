@@ -347,11 +347,12 @@ class SchoolSettingsController extends Controller
             $data = array();
             foreach ($settings as $key => $rule) {
                 if ($key == 'background_image' || $key == 'staff_background_image' || $key == 'signature') {
-                    if ($request->hasFile($key)) {
-                        // TODO : Remove the old files from server
+                    $croppedKey = $key . '_cropped';
+                    $resolvedFile = $this->resolveImageUpload($request, $key, $croppedKey);
+                    if ($resolvedFile) {
                         $data[] = [
                             "name" => $key,
-                            "data" => $request->file($key),
+                            "data" => $resolvedFile,
                             "type" => "file"
                         ];
                     }

@@ -405,11 +405,23 @@ function layoutFormatter(value, row) {
 }
 
 function studentImageFormatter(value, row) {
-    return '<input type="file" name="student_image[' + row.user.id + ']" accept="image/jpg,image/png,image/jpeg,image/svg">';
+    var uid = row.user.id;
+    return '<div class="d-flex align-items-center gap-1">' +
+        '<input type="hidden" name="student_image_cropped[' + uid + ']" id="sc_student_cropped_' + uid + '">' +
+        '<input type="file" id="sc_student_file_' + uid + '" class="bulk-student-file-input d-none" data-uid="' + uid + '" accept="image/jpg,image/png,image/jpeg">' +
+        '<button type="button" class="btn btn-sm btn-theme" onclick="$(\'#sc_student_file_' + uid + '\').click()">Upload</button>' +
+        '<img id="sc_student_preview_' + uid + '" src="" style="width:40px;height:40px;object-fit:cover;display:none;margin-left:4px;" />' +
+        '</div>';
 }
 
 function guardianImageFormatter(value, row) {
-    return '<input type="file" name="guardian_image[' + row.guardian.id + ']" accept="image/jpg,image/png,image/jpeg,image/svg">';
+    var gid = row.guardian.id;
+    return '<div class="d-flex align-items-center gap-1">' +
+        '<input type="hidden" name="guardian_image_cropped[' + gid + ']" id="sc_guardian_cropped_' + gid + '">' +
+        '<input type="file" id="sc_guardian_file_' + gid + '" class="bulk-guardian-file-input d-none" data-gid="' + gid + '" accept="image/jpg,image/png,image/jpeg">' +
+        '<button type="button" class="btn btn-sm btn-theme" onclick="$(\'#sc_guardian_file_' + gid + '\').click()">Upload</button>' +
+        '<img id="sc_guardian_preview_' + gid + '" src="" style="width:40px;height:40px;object-fit:cover;display:none;margin-left:4px;" />' +
+        '</div>';
 }
 
 function dateFormatter(value) {

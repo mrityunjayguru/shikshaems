@@ -6,11 +6,18 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style>
+        /* * {
+            font-family: Mulish, sans-serif;
+        } */
         * {
             font-family: DejaVu Sans, sans-serif;
         }
     </style>
     <style>
+        /* body {
+            background: #f5f5f5;
+        } */
+
         .receipt-container {
             max-width: 800px;
             margin: 30px auto;
@@ -47,6 +54,12 @@
             width: 100%;
             border-collapse: collapse;
         }
+
+        /* table th,
+        table td {
+            border-bottom: 1px solid #000;
+            padding: 6px;
+        } */
 
         table th {
             text-align: left;
@@ -112,6 +125,31 @@
 <body>
     <div class="receipt-container">
 
+        {{-- HEADER --}}
+        {{-- <div class="receipt-header">
+            <div class="row align-items-center text-center">
+
+                <div class="col-md-4">
+                    @if ($school['horizontal_logo'] ?? '')
+                        <img src="{{ public_path('storage/' . $school['horizontal_logo']) }}" style="height:60px;">
+                    @else
+                        <img src="{{ public_path('assets/horizontal-logo2.svg') }}" style="height:60px;">
+                    @endif
+                </div>
+
+                <div class="col-md-4">
+                    <strong style="font-size:18px">{{ $school['school_name'] }}</strong><br>
+                    <small>{{ $school['school_address'] }}</small><br>
+                    <small>(Affiliated to CBSE, School Code: XXXXX)</small>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Contact</strong><br>
+                    {{ $school['phone'] ?? '+91 XXXXX XXXXX' }}
+                </div>
+
+            </div>
+        </div> --}}
         <table width="100%" class="gap-3">
             <tr>
                 <td width="25%">
@@ -120,7 +158,7 @@
                             style="height:30px; margin-bottom:2px;">
                     @endif
                 </td>
-
+                    
                 <td width="50%" align="center">
                     <strong style="font-size:18px;">{{ $school['school_name'] }}</strong><br>
                     <small>{{ $school['school_address'] }}</small><br>
@@ -134,125 +172,36 @@
             </tr>
         </table>
 
+
         {{-- TITLE --}}
         <div class="receipt-title">
             <span>FEE RECEIPT</span>
         </div>
+
         {{-- RECEIPT META --}}
+        {{-- <div class="row info-row">
+            <div class="col-md-6">
+                <strong>Receipt Date:</strong> {{ date('d M Y h:i A') }}<br>
+                <strong>Receipt No:</strong> {{ $feesPaid->id }}<br>
+                <strong>Name:</strong> {{ $student->user->full_name }}<br>
+                <strong>Admission No:</strong> {{ $student->admission_no ?? '' }}<br>
+                <strong>Class & Section:</strong> {{ $student->class_section->full_name }}
+            </div>
+
+            <div class="col-md-6">
+                <strong>Payment Mode:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br>
+                <strong>Transaction ID:</strong> {{ $feesPaid->transaction_id ?? '-' }}<br>
+                <strong>Month:</strong> January
+            </div>
+        </div> --}}
         <table width="100%" class="info-row">
             <tr>
                 <td width="50%" valign="top">
                     <strong>Receipt Date:</strong> {{ date('d M Y h:i A') }}
                 </td>
+
                 <td width="50%" valign="top">
-                    @php
-                        $currency = $school['currency_symbol'] ?? '';
-
-                        $monthNames = [
-                            1 => 'January',
-                            2 => 'February',
-                            3 => 'March',
-                            4 => 'April',
-                            5 => 'May',
-                            6 => 'June',
-                            7 => 'July',
-                            8 => 'August',
-                            9 => 'September',
-                            10 => 'October',
-                            11 => 'November',
-                            12 => 'December',
-                        ];
-
-                        $short = fn($n) => substr($n, 0, 3);
-
-                        $headerMonths = '';
-
-                        /*
-                |--------------------------------------------------------------------------
-                | 1) First check compulsory fee months
-                |--------------------------------------------------------------------------
-                */
-                        $allMonths = collect();
-
-                        foreach ($feesPaid->compulsory_fee ?? [] as $cf) {
-                            if (!empty($cf->months) && $cf->months->count()) {
-                                $allMonths = $allMonths->merge($cf->months);
-                            }
-                        }
-
-                        $allMonths = $allMonths->sortBy('month_number');
-
-                        if ($allMonths->count()) {
-                            $grouped = $allMonths
-                                ->groupBy('month_number')
-                                ->map(function ($records) {
-                                    $hasFull = $records->contains('is_partial', false);
-
-                                    return (object) [
-                                        'month_number' => $records->first()->month_number,
-                                        'month_name' => $records->first()->month_name,
-                                        'is_partial' => !$hasFull,
-                                        'amount' => $records->sum('amount'),
-                                    ];
-                                })
-                                ->sortBy('month_number');
-
-                            $fullMonths = $grouped->where('is_partial', false);
-                            $partialMonth = $grouped->where('is_partial', true)->last();
-
-                            if ($fullMonths->count() >= 2) {
-                                $r =
-                                    $short($fullMonths->first()->month_name) .
-                                    ' to ' .
-                                    $short($fullMonths->last()->month_name);
-                            } elseif ($fullMonths->count() === 1) {
-                                $r = $short($fullMonths->first()->month_name);
-                            } else {
-                                $r = '';
-                            }
-
-                            $p = $partialMonth
-                                ? $short($partialMonth->month_name) .
-                                    ' (Partial ' .
-                                    $currency .
-                                    number_format($partialMonth->amount) .
-                                    ')'
-                                : '';
-
-                            $headerMonths = $r && $p ? $r . ' and ' . $p : ($r ?: $p);
-                        }
-
-                        /*
-                        |--------------------------------------------------------------------------
-                        | 2) If no compulsory months found, check optional fee months
-                        |--------------------------------------------------------------------------
-                        */
-                        if (empty($headerMonths)) {
-                            $optionalMonths = collect();
-
-                            foreach ($feesPaid->optional_fee ?? [] as $optionalFee) {
-                                $months = json_decode($optionalFee->fees_class_type->applicable_months ?? '[]', true);
-
-                                if (!empty($months)) {
-                                    foreach ($months as $monthNo) {
-                                        $monthNo = (int) $monthNo;
-
-                                        if (isset($monthNames[$monthNo])) {
-                                            $optionalMonths->push($monthNames[$monthNo]);
-                                        }
-                                    }
-                                }
-                            }
-
-                            $optionalMonths = $optionalMonths->unique()->values()->toArray();
-
-                            if (!empty($optionalMonths)) {
-                                $headerMonths = implode(', ', $optionalMonths);
-                            }
-                        }
-                    @endphp
-
-                    <strong>Fee for the month of:</strong> {{ $headerMonths ?: '-' }}
+                    <strong>Fee for the month of:</strong> -
                 </td>
             </tr>
         </table>
@@ -270,6 +219,8 @@
                     <strong>Guardian Name:</strong>
                     {{ $student->guardian->first_name . ' ' . $student->guardian->last_name ?? 'N/A' }}<br>
                     <strong>Address:</strong> {{ $student->user->current_address ?? 'N/A' }}<br>
+                    {{-- <strong>Payment Mode:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br>
+                    <strong>Transaction ID:</strong> {{ $feesPaid->transaction_id ?? '-' }}<br> --}}
                 </td>
             </tr>
         </table>
@@ -297,42 +248,6 @@
                             <strong>{{ $compulsoryFee->type }}</strong><br>
                             <span class="small-text">( {{ $compulsoryFeesType }} )</span><br>
                             <span class="small-text">Payment Mode : ({{ $compulsoryFee->mode }})</span>
-                            @if ($compulsoryFee->months && $compulsoryFee->months->count())
-                                @php
-                                    $fullMonths = $compulsoryFee->months
-                                        ->where('is_partial', false)
-                                        ->sortBy('month_number');
-                                    $partialMonth = $compulsoryFee->months->where('is_partial', true)->first();
-                                    $currency = $school['currency_symbol'] ?? '';
-                                    $short = fn($n) => substr($n, 0, 3);
-
-                                    if ($fullMonths->count() >= 2) {
-                                        $rangeStr =
-                                            $short($fullMonths->first()->month_name) .
-                                            ' to ' .
-                                            $short($fullMonths->last()->month_name);
-                                    } elseif ($fullMonths->count() === 1) {
-                                        $rangeStr = $short($fullMonths->first()->month_name);
-                                    } else {
-                                        $rangeStr = '';
-                                    }
-
-                                    $partialStr = $partialMonth
-                                        ? $short($partialMonth->month_name) .
-                                            ' (Partial ' .
-                                            $currency .
-                                            number_format($partialMonth->amount) .
-                                            ')'
-                                        : '';
-
-                                    $coveredStr =
-                                        $rangeStr && $partialStr
-                                            ? $rangeStr . ' and ' . $partialStr
-                                            : ($rangeStr ?:
-                                            $partialStr);
-                                @endphp
-                                <br><span class="small-text">Months : <strong>{{ $coveredStr }}</strong></span>
-                            @endif
                         </td>
                         <td class="amount">
                             {{ $school['currency_symbol'] ?? '' }}
@@ -365,37 +280,6 @@
                             {{ $optionalFee->fees_class_type->fees_type_name }}
                             <span class="small-text">(Optional)</span><br>
                             <span class="small-text">Mode : ({{ $optionalFee->mode }})</span>
-                            @php
-                                $months = json_decode($optionalFee->fees_class_type->applicable_months, true);
-                                $monthNames = [
-                                    1 => 'January',
-                                    2 => 'February',
-                                    3 => 'March',
-                                    4 => 'April',
-                                    5 => 'May',
-                                    6 => 'June',
-                                    7 => 'July',
-                                    8 => 'August',
-                                    9 => 'September',
-                                    10 => 'October',
-                                    11 => 'November',
-                                    12 => 'December',
-                                ];
-
-                                $selectedMonths = [];
-
-                                if (!empty($months)) {
-                                    foreach ($months as $m) {
-                                        $selectedMonths[] = $monthNames[(int) $m] ?? '';
-                                    }
-                                }
-                            @endphp
-                            @if (!empty($selectedMonths))
-                                <br><span class="small-text">
-                                    Months: <strong>{{ implode(', ', $selectedMonths) }}</strong>
-                                </span>
-                            @endif
-
                         </td>
                         <td class="amount">
                             {{ $school['currency_symbol'] ?? '' }}
@@ -429,22 +313,32 @@
         </table>
 
         <table>
+            {{-- <thead>
+                <tr>
+                    <th>PARTICULARS</th>
+                    <th class="text-right">DUES</th>
+                    <th class="text-right">BALANCE</th>
+                </tr>
+            </thead> --}}
+
             <tbody>
                 <tr>
                     <td width="50%" valign="top">
                         <strong>Discount Type:</strong> NA<br>
                         <strong>Discount Fee:</strong> 0<br>
+                        {{-- <strong>Payment Mode:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br> --}}
+                        {{-- <strong>Bank:</strong> {{ $feesPaid->payment_mode ?? 'Online' }}<br> --}}
                         <strong>Transaction ID:</strong> {{ $feesPaid->transaction_id ?? '-' }}<br>
                         <strong>Date:</strong> {{ $feesPaid->date ?? '-' }}<br>
                     </td>
                 </tr>
             </tbody>
         </table>
-
         {{-- FOOTER --}}
         <p class="mt-2">
             Received with thanks
             <strong>{{ $school['currency_symbol'] ?? '' }}{{ $total_fees + $due_charges }}</strong>
+
         </p>
 
         <div class="signature">

@@ -134,16 +134,16 @@ class AuthController extends Controller
             'dob' => 'required',
             'email' => 'nullable|email|unique:users,email,' . Auth::user()->id,
             'image' => 'nullable|image|mimes:jpeg,png,jpg,svg,gif,webp',
+            'image_cropped' => 'nullable|string',
 
             'current_address' => 'required',
             'permanent_address' => 'required',
         ]);
         try {
-            $userData = array(
-                ...$request->all()
-            );
-            if (!empty($request->image)) {
-                $userData['image'] = $request->image;
+            $userData = $request->except(['image', 'image_cropped', '_token']);
+            $imageFile = $this->resolveImageUpload($request, 'image', 'image_cropped');
+            if ($imageFile) {
+                $userData['image'] = $imageFile;
             }
 
             // two factor verification

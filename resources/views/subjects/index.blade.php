@@ -72,12 +72,16 @@
 
                             <div class="form-group">
                                 <label>{{ __('image') }} <span class="text-danger">*</span></label>
-                                <input type="file" name="image" class="file-upload-default" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/svg"/>
+                                <input type="hidden" name="image_cropped" id="subject_create_image_cropped"/>
                                 <div class="input-group col-xs-12">
-                                    <input type="text" class="form-control file-upload-info" disabled="" placeholder="{{ __('image') }}"/>
+                                    <input type="text" class="form-control" id="subject_create_image_name" disabled="" placeholder="{{ __('image') }}"/>
                                     <span class="input-group-append">
-                                        <button class="file-upload-browse btn btn-theme" type="button">{{ __('upload') }}</button>
+                                        <button class="btn btn-theme" type="button" id="subject_create_image_btn">{{ __('upload') }}</button>
                                     </span>
+                                </div>
+                                <input type="file" id="subject_create_image_input" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/svg" style="display:none"/>
+                                <div id="subject_create_image_preview" style="margin-top:8px;display:none;">
+                                    <img id="subject_create_image_preview_img" src="" style="max-height:80px;border-radius:4px;"/>
                                 </div>
                             </div>
                             <div class="mt-3">
@@ -209,12 +213,16 @@
 
                                 <div class="form-group">
                                     <label>{{ __('image') }}</label>
-                                    <input type="file" id="edit_image" name="image" class="file-upload-default" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/svg"/>
+                                    <input type="hidden" name="image_cropped" id="subject_edit_image_cropped"/>
                                     <div class="input-group col-xs-12">
-                                        <input type="text" id="edit_image" class="form-control" disabled="" value=""/>
+                                        <input type="text" class="form-control" id="subject_edit_image_name" disabled="" value=""/>
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme" type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" id="subject_edit_image_btn">{{ __('upload') }}</button>
                                         </span>
+                                    </div>
+                                    <input type="file" id="subject_edit_image_input" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/svg" style="display:none"/>
+                                    <div id="subject_edit_image_preview" style="margin-top:8px;display:none;">
+                                        <img id="subject_edit_image_preview_img" src="" style="max-height:80px;border-radius:4px;"/>
                                     </div>
                                 </div>
                             </div>
@@ -228,4 +236,149 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('css')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"/>
+<style>
+.subject-crop-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;}
+.subject-crop-modal-box{background:#fff;border-radius:8px;padding:16px;width:100%;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,.25);}
+.subject-crop-modal-box .crop-img-wrap{max-height:320px;overflow:hidden;background:#000;}
+.subject-crop-modal-box .crop-img-wrap img{display:block;max-width:100%;}
+.subject-crop-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
+</style>
+@endsection
+
+@section('script')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    function initSubjectCrop(opts) {
+        var btn         = document.getElementById(opts.btnId);
+        var fileInput   = document.getElementById(opts.inputId);
+        var croppedEl   = document.getElementById(opts.croppedId);
+        var nameEl      = document.getElementById(opts.nameId);
+        var previewWrap = document.getElementById(opts.previewId);
+        var previewImg  = document.getElementById(opts.previewImgId);
+        if (!btn || !fileInput) return;
+        // remove old listeners by cloning
+        var newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        var newInput = fileInput.cloneNode(true);
+        fileInput.parentNode.replaceChild(newInput, fileInput);
+
+        newBtn.addEventListener('click', function () { newInput.value = ''; newInput.click(); });
+        newInput.addEventListener('change', function () {
+            if (!newInput.files || !newInput.files[0]) return;
+            var file = newInput.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                openSubjectCropModal(e.target.result, file.name, opts.aspectRatio, function(base64, fname) {
+                    croppedEl.value = base64;
+                    if (nameEl) nameEl.value = fname;
+                    if (previewWrap) previewWrap.style.display = 'block';
+                    if (previewImg) previewImg.src = base64;
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    var _cropperInstance = null;
+    var _cropCallback    = null;
+
+    function openSubjectCropModal(src, fname, aspectRatio, cb) {
+        _cropCallback = cb;
+        var overlay = document.createElement('div');
+        overlay.className = 'subject-crop-modal-overlay';
+        overlay.id = 'subjectCropOverlay';
+        overlay.innerHTML =
+            '<div class="subject-crop-modal-box">' +
+                '<div class="crop-img-wrap"><img id="subjectCropImg" src="' + src + '"/></div>' +
+                '<div class="subject-crop-modal-actions">' +
+                    '<button type="button" class="btn btn-secondary btn-sm" id="subjectCropSkip">Skip</button>' +
+                    '<button type="button" class="btn btn-theme btn-sm" id="subjectCropDone">Crop & Use</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+
+        var img = document.getElementById('subjectCropImg');
+        _cropperInstance = new Cropper(img, {
+            aspectRatio: aspectRatio,
+            viewMode: 1,
+            autoCropArea: 1,
+            minContainerHeight: 280,
+            maxContainerHeight: 320,
+        });
+
+        document.getElementById('subjectCropDone').addEventListener('click', function () {
+            var canvas = _cropperInstance.getCroppedCanvas();
+            var base64 = canvas.toDataURL('image/jpeg', 0.85);
+            closeSubjectCropModal();
+            if (_cropCallback) _cropCallback(base64, fname);
+        });
+
+        document.getElementById('subjectCropSkip').addEventListener('click', function () {
+            closeSubjectCropModal();
+            if (_cropCallback) _cropCallback(src, fname);
+        });
+    }
+
+    function closeSubjectCropModal() {
+        if (_cropperInstance) { _cropperInstance.destroy(); _cropperInstance = null; }
+        var overlay = document.getElementById('subjectCropOverlay');
+        if (overlay) overlay.remove();
+    }
+
+    // Init Create
+    initSubjectCrop({
+        btnId: 'subject_create_image_btn',
+        inputId: 'subject_create_image_input',
+        croppedId: 'subject_create_image_cropped',
+        nameId: 'subject_create_image_name',
+        previewId: 'subject_create_image_preview',
+        previewImgId: 'subject_create_image_preview_img',
+        aspectRatio: NaN,
+    });
+
+    // Init Edit on modal open
+    var editModalEl = document.getElementById('editModal');
+    if (editModalEl) {
+        editModalEl.addEventListener('shown.bs.modal', function () {
+            initSubjectCrop({
+                btnId: 'subject_edit_image_btn',
+                inputId: 'subject_edit_image_input',
+                croppedId: 'subject_edit_image_cropped',
+                nameId: 'subject_edit_image_name',
+                previewId: 'subject_edit_image_preview',
+                previewImgId: 'subject_edit_image_preview_img',
+                aspectRatio: NaN,
+            });
+        });
+
+        // Restore scroll when edit modal closes (crop was inside it)
+        editModalEl.addEventListener('hidden.bs.modal', function () {
+            if (!document.getElementById('subjectCropOverlay')) {
+                var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+                document.body.classList.add('modal-open');
+                document.body.style.paddingRight = scrollbarWidth + 'px';
+            }
+        });
+    }
+
+    // Reset create form
+    var createForm = document.getElementById('create-form');
+    if (createForm) {
+        createForm.addEventListener('reset', function () {
+            var prev = document.getElementById('subject_create_image_preview');
+            if (prev) prev.style.display = 'none';
+            var cr = document.getElementById('subject_create_image_cropped');
+            if (cr) cr.value = '';
+            var nm = document.getElementById('subject_create_image_name');
+            if (nm) nm.value = '';
+        });
+    }
+});
+</script>
 @endsection

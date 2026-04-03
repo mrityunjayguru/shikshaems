@@ -69,14 +69,17 @@
 
                                 <div class="form-group col-sm-12 col-md-4">
                                     <label>{{ __('background_image') }} </label>
-                                    <input type="file" name="background_image" id="thumbnail" class="file-upload-default" accept="image/*"/>
+                                    <input type="hidden" name="background_image_cropped" id="cert_bg_cropped">
+                                    <input type="file" id="cert_bg_input" class="d-none" accept="image/png,image/jpeg,image/jpg,image/webp"/>
                                     <div class="input-group col-xs-12">
                                         <input type="text" class="form-control file-upload-info" disabled=""
-                                                placeholder="{{ __('thumbnail') }}" required aria-label=""/>
+                                                placeholder="{{ __('background_image') }}" aria-label="" id="cert_bg_info"/>
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                    type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('cert_bg_input').click()">{{ __('upload') }}</button>
                                         </span>
+                                    </div>
+                                    <div id="cert_bg_preview" class="d-none mt-1" style="width:120px;">
+                                        <img src="" class="img-fluid w-100" alt="">
                                     </div>
                                 </div>
 
@@ -129,13 +132,102 @@
             </div>
         </div>
     </div>
+    </div>
+
+    {{-- Certificate Crop Modal --}}
+    <div class="modal" id="certCropModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index:1060;display:none;">
+        <div class="modal-dialog" role="document" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Crop Image</h6>
+                    <button type="button" class="close" id="certCropClose"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="cert_crop_preview_img" src="" style="max-width:100%;max-height:320px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="certCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="certCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('css')
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
 @endsection
 
 @section('script')
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
     <script>
+        var certCropper = null;
+
+        function showCertCropModal() {
+            var m = document.getElementById('certCropModal');
+            m.style.display = 'block';
+            document.body.classList.add('modal-open');
+            var bd = document.createElement('div');
+            bd.id = 'certCropBackdrop';
+            bd.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1059;';
+            document.body.appendChild(bd);
+        }
+
+        function hideCertCropModal() {
+            var m = document.getElementById('certCropModal');
+            m.style.display = 'none';
+            var bd = document.getElementById('certCropBackdrop');
+            if (bd) bd.remove();
+            document.body.classList.remove('modal-open');
+            document.body.style.paddingRight = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('cert_bg_input').addEventListener('change', function() {
+                if (!this.files || !this.files[0]) return;
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = document.getElementById('cert_crop_preview_img');
+                    if (certCropper) { certCropper.destroy(); certCropper = null; }
+                    img.src = e.target.result;
+                    showCertCropModal();
+                    setTimeout(function() {
+                        certCropper = new Cropper(img, {
+                            aspectRatio: NaN, viewMode: 1, autoCropArea: 1,
+                            minContainerHeight: 280, maxContainerHeight: 320
+                        });
+                    }, 150);
+                };
+                reader.readAsDataURL(this.files[0]);
+            });
+
+            document.getElementById('certCropDone').addEventListener('click', function() {
+                if (!certCropper) return;
+                var dataUrl = certCropper.getCroppedCanvas().toDataURL('image/jpeg', 0.9);
+                document.getElementById('cert_bg_cropped').value = dataUrl;
+                document.getElementById('cert_bg_info').value = 'background_cropped.jpg';
+                var prev = document.getElementById('cert_bg_preview');
+                prev.classList.remove('d-none');
+                prev.querySelector('img').src = dataUrl;
+                document.getElementById('cert_bg_input').value = '';
+                certCropper.destroy(); certCropper = null;
+                hideCertCropModal();
+            });
+
+            document.getElementById('certCropClose').addEventListener('click', function() {
+                if (certCropper) { certCropper.destroy(); certCropper = null; }
+                document.getElementById('cert_bg_input').value = '';
+                hideCertCropModal();
+            });
+            document.getElementById('certCropClose2').addEventListener('click', function() {
+                if (certCropper) { certCropper.destroy(); certCropper = null; }
+                document.getElementById('cert_bg_input').value = '';
+                hideCertCropModal();
+            });
+        });
+
         window.onload = setTimeout(() => {
             $('.page_layout').trigger('change');
             $('.certificate_type').trigger('change');
         }, 500);
     </script>
-@endsection

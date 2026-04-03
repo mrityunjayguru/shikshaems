@@ -2,13 +2,7 @@
 
 var toast_position = 'top-right';
 function isRTL() {
-    var dir = $('html').attr('dir');
-    if (dir === 'rtl') {
-        return true;
-    } else {
-        return false;
-    }
-    return false;
+    var dir = document.documentElement.getAttribute('dir');
     return dir === 'rtl';
 }
 if (isRTL()) {

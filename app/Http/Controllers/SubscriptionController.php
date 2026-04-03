@@ -240,14 +240,11 @@ class SubscriptionController extends Controller
             } else if ($paymentConfiguration->payment_method == 'Flutterwave') {
                 return $this->subscriptionService->flutterwave_payment(null, $package_id, $type, null, $isCurrentPlan);
             }
-
-
         } catch (\Throwable $th) {
             DB::rollBack();
             ResponseService::logErrorResponse($th, 'Subscription Controller -> Prepaid Plan method');
             ResponseService::errorResponse();
         }
-
     }
 
     public function show()
@@ -535,112 +532,277 @@ class SubscriptionController extends Controller
     /**
      * @throws ApiErrorException
      */
-    public function payment_success($check_out_session_id, $subscriptionBill_id = null, $package_id = null, $type = null, $subscription_id = null, $isCurrentPlan = null)
-    {
-        // check_out_session_id => Stripe check out session
-        // subscriptionBill_id => If already bill generated Like postpaid plan run cron job and generate bill
+    // public function payment_success($check_out_session_id, $subscriptionBill_id = null, $package_id = null, $type = null, $subscription_id = null, $isCurrentPlan = null)
+    // {
+    //     // check_out_session_id => Stripe check out session
+    //     // subscriptionBill_id => If already bill generated Like postpaid plan run cron job and generate bill
 
-        // package_id => required for prepaid plans if payment success then create all required entries like => subscriptions, subscription bill, subscription features and all.
+    //     // package_id => required for prepaid plans if payment success then create all required entries like => subscriptions, subscription bill, subscription features and all.
 
-        // type & subscription_id
-        // Required when setting up next prepaid plan pay before current plan expires
+    //     // type & subscription_id
+    //     // Required when setting up next prepaid plan pay before current plan expires
 
-        $settings = app(CachingService::class)->getSystemSettings();
-        $currency = $settings['currency_code'];
+    //     $settings = app(CachingService::class)->getSystemSettings();
+    //     $currency = $settings['currency_code'];
+    //     DB::setDefaultConnection('mysql');
+    //     $paymentConfiguration = PaymentConfiguration::where('school_id', null)->first();
+    //     $stripe_secret_key = $paymentConfiguration->secret_key ?? null;
+    //     $currency = $paymentConfiguration->currency_code;
+
+    //     Stripe::setApiKey($stripe_secret_key);
+
+    //     $session = StripeSession::retrieve($check_out_session_id);
+    //     $status = "pending";
+    //     if ($session->payment_status == 'paid') {
+    //         $status = "succeed";
+    //     }
+
+    //     $id = '';
+    //     if ($type != -1) {
+    //         if ($type == 1) {
+    //             $subscription = $this->subscriptionService->createSubscription($package_id, NULL, $subscription_id);
+    //         } elseif ($type == 0 && $isCurrentPlan == 1) {
+    //             $subscription = $this->subscriptionService->createSubscription($package_id, null, null, 1);
+    //         } else {
+    //             $subscription = $this->subscriptionService->createSubscription($package_id);
+    //         }
+
+    //         $subscription_features = array();
+    //         foreach ($subscription->package->package_feature as $key => $feature) {
+    //             $subscription_features[] = [
+    //                 'subscription_id' => $subscription->id,
+    //                 'feature_id' => $feature->feature_id
+    //             ];
+    //         }
+    //         $this->subscriptionFeature->upsert($subscription_features, ['subscription_id', 'feature_id'], ['subscription_id', 'feature_id']);
+
+
+    //         // Create bill if not
+    //         if ($subscription->package_type == 1) {
+    //             // Postpaid
+    //             $this->subscriptionService->createSubscriptionBill($subscription, 1);
+    //         } else {
+    //             // Prepaid
+    //             $subscription_bill[] = [
+    //                 'subscription_id' => $subscription->id,
+    //                 'amount' => $subscription->charges,
+    //                 'total_student' => $subscription->no_of_students,
+    //                 'total_staff' => $subscription->no_of_staffs,
+    //                 'due_date' => Carbon::now(),
+    //                 'school_id' => $subscription->school_id
+    //             ];
+
+    //             $this->subscriptionBill->upsert($subscription_bill, ['subscription_id', 'school_id'], ['amount', 'total_student', 'total_staff', 'due_date']);
+
+    //         }
+
+    //         $id = $subscription->subscription_bill->id;
+
+    //     } else {
+    //         if ($subscriptionBill_id != -1) {
+    //             $id = $subscriptionBill_id;
+    //         }
+    //         if ($package_id != -1 && $id != '') {
+    //             $subscription = $this->subscriptionService->createSubscription($package_id, null, null, 1);
+    //             $id = $subscription->subscription_bill->id;
+    //         }
+    //     }
+
+
+    //     $payment_data = [
+    //         'user_id' => Auth::user()->id,
+    //         'amount' => ($session->amount_total / 100),
+    //         'payment_gateway' => 'Stripe',
+    //         'order_id' => $session->payment_intent,
+    //         'payment_id' => $session->id,
+    //         'payment_status' => $status,
+    //     ];
+    //     DB::setDefaultConnection('mysql');
+    //     $paymentTransaction = $this->paymentTransaction->create($payment_data);
+    //     $subscriptionBill = $this->subscriptionBill->update($id, ['payment_transaction_id' => $paymentTransaction->id]);
+    //     $stripe = new StripeClient($stripe_secret_key);
+    //     $stripeData = $stripe->customers->create(
+    //         [
+    //             'metadata' => [
+    //                 'amount' => $paymentTransaction->amount,
+    //                 'transaction_id' => $paymentTransaction->id,
+    //                 'order_id' => $paymentTransaction->order_id,
+    //                 'payment_id' => $paymentTransaction->payment_id,
+    //                 'payment_status' => $paymentTransaction->payment_status,
+    //             ]
+    //         ]
+    //     );
+
+    //     $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.FEATURES'), $subscriptionBill->school_id);
+
+    //     return redirect()->route('subscriptions.history')->with('success', trans('the_payment_has_been_completed_successfully'));
+    // }
+    public function payment_success(
+        $check_out_session_id,
+        $subscriptionBill_id = null,
+        $package_id = null,
+        $type = null,
+        $subscription_id = null,
+        $isCurrentPlan = null
+    ) {
         DB::setDefaultConnection('mysql');
-        $paymentConfiguration = PaymentConfiguration::where('school_id', null)->first();
+
+        // 🔹 Payment Config
+        $paymentConfiguration = PaymentConfiguration::whereNull('school_id')->first();
         $stripe_secret_key = $paymentConfiguration->secret_key ?? null;
-        $currency = $paymentConfiguration->currency_code;
 
         Stripe::setApiKey($stripe_secret_key);
 
+        // 🔹 Get Stripe Session
         $session = StripeSession::retrieve($check_out_session_id);
-        $status = "pending";
-        if ($session->payment_status == 'paid') {
-            $status = "succeed";
-        }
+        $status = ($session->payment_status == 'paid') ? "succeed" : "pending";
 
-        $id = '';
+        $id = null;
+        $subscription = null;
+
+        // =====================================================
+        // 🔹 CREATE SUBSCRIPTION
+        // =====================================================
         if ($type != -1) {
+
             if ($type == 1) {
-                $subscription = $this->subscriptionService->createSubscription($package_id, NULL, $subscription_id);
+                $subscription = $this->subscriptionService->createSubscription($package_id, null, $subscription_id);
             } elseif ($type == 0 && $isCurrentPlan == 1) {
                 $subscription = $this->subscriptionService->createSubscription($package_id, null, null, 1);
             } else {
                 $subscription = $this->subscriptionService->createSubscription($package_id);
             }
 
-            $subscription_features = array();
-            foreach ($subscription->package->package_feature as $key => $feature) {
+            // ✅ FIX N+1 (load relations once)
+            $subscription->load('package.package_feature');
+
+            // =====================================================
+            // 🔹 INSERT FEATURES
+            // =====================================================
+            $subscription_features = [];
+
+            foreach ($subscription->package->package_feature as $feature) {
                 $subscription_features[] = [
                     'subscription_id' => $subscription->id,
                     'feature_id' => $feature->feature_id
                 ];
             }
-            $this->subscriptionFeature->upsert($subscription_features, ['subscription_id', 'feature_id'], ['subscription_id', 'feature_id']);
 
+            if (!empty($subscription_features)) {
+                $this->subscriptionFeature->upsert(
+                    $subscription_features,
+                    ['subscription_id', 'feature_id'],
+                    ['subscription_id', 'feature_id']
+                );
+            }
 
-            // Create bill if not
+            // =====================================================
+            // 🔹 CREATE BILL
+            // =====================================================
             if ($subscription->package_type == 1) {
                 // Postpaid
                 $this->subscriptionService->createSubscriptionBill($subscription, 1);
             } else {
                 // Prepaid
-                $subscription_bill[] = [
-                    'subscription_id' => $subscription->id,
-                    'amount' => $subscription->charges,
-                    'total_student' => $subscription->no_of_students,
-                    'total_staff' => $subscription->no_of_staffs,
-                    'due_date' => Carbon::now(),
-                    'school_id' => $subscription->school_id
-                ];
-
-                $this->subscriptionBill->upsert($subscription_bill, ['subscription_id', 'school_id'], ['amount', 'total_student', 'total_staff', 'due_date']);
-
+                $this->subscriptionBill->upsert([
+                    [
+                        'subscription_id' => $subscription->id,
+                        'amount' => $subscription->charges,
+                        'total_student' => $subscription->no_of_students,
+                        'total_staff' => $subscription->no_of_staffs,
+                        'due_date' => Carbon::now(),
+                        'school_id' => $subscription->school_id
+                    ]
+                ], ['subscription_id', 'school_id'], [
+                    'amount',
+                    'total_student',
+                    'total_staff',
+                    'due_date'
+                ]);
             }
 
-            $id = $subscription->subscription_bill->id;
+            // ✅ FIX: Don't rely on relation after upsert
+            $bill = $this->subscriptionBill
+                ->where('subscription_id', $subscription->id)
+                ->where('school_id', $subscription->school_id)
+                ->first();
 
+            $id = $bill?->id;
         } else {
+            // =====================================================
+            // 🔹 EXISTING BILL FLOW
+            // =====================================================
             if ($subscriptionBill_id != -1) {
                 $id = $subscriptionBill_id;
             }
-            if ($package_id != -1 && $id != '') {
+
+            if ($package_id != -1 && $id) {
                 $subscription = $this->subscriptionService->createSubscription($package_id, null, null, 1);
-                $id = $subscription->subscription_bill->id;
+
+                // Fetch bill safely
+                $bill = $this->subscriptionBill
+                    ->where('subscription_id', $subscription->id)
+                    ->where('school_id', $subscription->school_id)
+                    ->first();
+
+                $id = $bill?->id;
             }
         }
 
-
+        // =====================================================
+        // 🔹 PAYMENT TRANSACTION
+        // =====================================================
         $payment_data = [
-            'user_id' => Auth::user()->id,
+            'user_id' => Auth::id(),
             'amount' => ($session->amount_total / 100),
             'payment_gateway' => 'Stripe',
             'order_id' => $session->payment_intent,
             'payment_id' => $session->id,
             'payment_status' => $status,
         ];
-        DB::setDefaultConnection('mysql');
+
         $paymentTransaction = $this->paymentTransaction->create($payment_data);
-        $subscriptionBill = $this->subscriptionBill->update($id, ['payment_transaction_id' => $paymentTransaction->id]);
-        $stripe = new StripeClient($stripe_secret_key);
-        $stripeData = $stripe->customers->create(
-            [
-                'metadata' => [
-                    'amount' => $paymentTransaction->amount,
-                    'transaction_id' => $paymentTransaction->id,
-                    'order_id' => $paymentTransaction->order_id,
-                    'payment_id' => $paymentTransaction->payment_id,
-                    'payment_status' => $paymentTransaction->payment_status,
-                ]
-            ]
+
+        // =====================================================
+        // 🔹 UPDATE BILL WITH TRANSACTION
+        // =====================================================
+        $subscriptionBill = $this->subscriptionBill->update(
+            $id,
+            ['payment_transaction_id' => $paymentTransaction->id]
         );
 
-        $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.FEATURES'), $subscriptionBill->school_id);
+        // =====================================================
+        // 🔹 STRIPE CUSTOMER METADATA
+        // =====================================================
+        $stripe = new StripeClient($stripe_secret_key);
 
-        return redirect()->route('subscriptions.history')->with('success', trans('the_payment_has_been_completed_successfully'));
+        $stripe->customers->create([
+            'metadata' => [
+                'amount' => $paymentTransaction->amount,
+                'transaction_id' => $paymentTransaction->id,
+                'order_id' => $paymentTransaction->order_id,
+                'payment_id' => $paymentTransaction->payment_id,
+                'payment_status' => $paymentTransaction->payment_status,
+            ]
+        ]);
+
+        // =====================================================
+        // 🔹 CLEAR CACHE
+        // =====================================================
+        if ($subscriptionBill) {
+            $this->cache->removeSchoolCache(
+                config('constants.CACHE.SCHOOL.FEATURES'),
+                $subscriptionBill->school_id
+            );
+        }
+
+        // =====================================================
+        // 🔹 RESPONSE
+        // =====================================================
+        return redirect()
+            ->route('subscriptions.history')
+            ->with('success', trans('the_payment_has_been_completed_successfully'));
     }
-
     public function payment_cancel($subscriptionBillId = null)
     {
         DB::rollBack();
@@ -811,7 +973,6 @@ class SubscriptionController extends Controller
             // Generate bill
             if ($row->status == 'Bill Not Generated') {
                 $operate .= BootstrapTableService::menuButton('generate_bill', "#", ['generate-bill'], []);
-
             }
 
             // Bill Receipt & Pay bill cash
@@ -931,11 +1092,11 @@ class SubscriptionController extends Controller
 
             // Check previous pending bills
             $subscriptionBill = $this->subscriptionService->subscriptionPendingBill();
-                        
+
             if ($subscriptionBill) {
                 ResponseService::errorResponse('Kindly settle any outstanding payments from before');
             }
-            
+
             if ($type == 0) {
                 $paymentConfiguration = PaymentConfiguration::where('school_id', null)->where('status', 1)->first();
                 if (!$paymentConfiguration) {
@@ -1352,7 +1513,6 @@ class SubscriptionController extends Controller
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
         }
-
     }
 
     public function delete_bill_payment($id)
@@ -1594,11 +1754,8 @@ class SubscriptionController extends Controller
             ])->toArray();
 
             return redirect()->back()->with('success', trans('the_payment_has_been_completed_successfully'));
-
-
         } catch (\Throwable $th) {
             return $th;
         }
     }
-
 }

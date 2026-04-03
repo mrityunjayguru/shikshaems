@@ -38,32 +38,34 @@
                                     </div>
                                     <div class="form-group col-sm-6 col-md-6">
                                         <label>{{ __('thumbnail') }} <span class="text-danger">*</span> <span class="text-small text-info">( jpg,svg,jpeg,png )</span></label>
-                                        <input type="file" required name="thumbnail" id="thumbnail"
-                                               class="file-upload-default" accept="image/*"/>
+                                        <input type="hidden" name="thumbnail_cropped" id="gallery_create_thumb_cropped">
+                                        <input type="file" id="gallery_create_thumb_input" required class="d-none" accept="image/png,image/jpeg,image/jpg,image/webp"/>
                                         <div class="input-group col-xs-12">
                                             <input type="text" class="form-control file-upload-info" disabled=""
-                                                   placeholder="{{ __('thumbnail') }}" required aria-label=""/>
+                                                   placeholder="{{ __('thumbnail') }}" required aria-label="" id="gallery_create_thumb_info"/>
                                             <span class="input-group-append">
-                                                <button class="file-upload-browse btn btn-theme"
-                                                        type="button">{{ __('upload') }}</button>
+                                                <button class="btn btn-theme" type="button" onclick="document.getElementById('gallery_create_thumb_input').click()">{{ __('upload') }}</button>
                                             </span>
+                                        </div>
+                                        <div id="gallery_create_thumb_preview" class="d-none mt-1" style="width:120px;">
+                                            <img src="" class="img-fluid w-100" alt="">
                                         </div>
                                     </div>
                                     <div class="form-group col-sm-6 col-md-6">
                                         <label>{{ __('images') }} <span class="text-small text-info"> ({{ __('upload_multiple_images') }})</span></label>
-                                        <input type="file" multiple name="images[]" id="uploadInput"
-                                               class="file-upload-default" accept="image/*"/>
+                                        <input type="file" multiple id="uploadInput" class="d-none" accept="image/png,image/jpeg,image/jpg,image/webp"/>
                                         <div class="input-group col-xs-12">
-                                            <input type="text" class="form-control file-upload-info" disabled=""
-                                                   placeholder="{{ __('images') }}" required aria-label=""/>
+                                            <input type="text" class="form-control" disabled=""
+                                                   placeholder="{{ __('images') }}" aria-label="" id="uploadInputInfo"/>
                                             <span class="input-group-append">
-                                                <button class="file-upload-browse btn btn-theme"
-                                                        type="button">{{ __('upload') }}</button>
+                                                <button class="btn btn-theme" type="button" onclick="document.getElementById('uploadInput').click()">{{ __('upload') }}</button>
                                             </span>
                                         </div>
                                         <div id="selectedFiles" class="mt-3" style="max-height: 200px; overflow-y: auto;">
                                             <!-- Selected files will be listed here -->
                                         </div>
+                                        {{-- cropped images hidden inputs injected here by JS --}}
+                                        <div id="croppedImagesContainer"></div>
                                     </div>
 
                                     <div class="form-group col-sm-12 col-md-6">
@@ -203,14 +205,13 @@
                             <div class="row form-group">
                                 <div class="col-sm-12 col-md-12">
                                     <label>{{ __('thumbnail') }} </label>
-                                    <input type="file" name="thumbnail" id="thumbnail"
-                                           class="file-upload-default" accept="image/*"/>
+                                    <input type="hidden" name="thumbnail_cropped" id="gallery_edit_thumb_cropped">
+                                    <input type="file" id="gallery_edit_thumb_input" class="d-none" accept="image/png,image/jpeg,image/jpg,image/webp"/>
                                     <div class="input-group col-xs-12">
                                         <input type="text" class="form-control file-upload-info" disabled=""
-                                               placeholder="{{ __('thumbnail') }}" aria-label=""/>
+                                               placeholder="{{ __('thumbnail') }}" aria-label="" id="gallery_edit_thumb_info"/>
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                    type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('gallery_edit_thumb_input').click()">{{ __('upload') }}</button>
                                         </span>
                                     </div>
                                     <img src="" id="edit-thumbnail" class="img-lg mt-2" alt="">
@@ -226,92 +227,292 @@
             </div>
         </div>
     </div>
-@endsection
-@section('script')
-    <script>
-        const uploadInput = document.getElementById('uploadInput');
-        const selectedFilesContainer = document.getElementById('selectedFiles');
-        let fileList = [];
 
-        // Event listener to handle file selection
-        uploadInput.addEventListener('change', function () {
-            // Store files in our array
-            fileList = Array.from(this.files);
-            updateFilePreview();
+    {{-- Gallery Crop Modal --}}
+    <div class="modal" id="galleryCropModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index:1060;display:none;">
+        <div class="modal-dialog" role="document" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Crop Image <span id="galleryCropCounter" class="text-muted" style="font-size:13px;"></span></h6>
+                    <button type="button" class="close" id="galleryCropClose"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="gallery_crop_preview" src="" style="max-width:100%;max-height:320px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="galleryCropSkip">Skip</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="galleryCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="galleryCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+@section('css')
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
+@endsection
+
+@section('script')
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
+    <script>
+        var galleryCropper = null;
+        var galleryCropTarget = null;
+
+        // ── Multi-image crop queue ──────────────────────────────────────
+        var imageQueue = [];        // raw File objects pending crop
+        var croppedResults = [];    // { file: File|null, dataUrl: string|null, name: string }
+        var currentQueueIndex = 0;
+
+        function showGalleryCropModal() {
+            var m = document.getElementById('galleryCropModal');
+            m.style.display = 'block';
+            document.body.classList.add('modal-open');
+            if (!document.getElementById('galleryCropBackdrop')) {
+                var bd = document.createElement('div');
+                bd.id = 'galleryCropBackdrop';
+                bd.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1059;';
+                document.body.appendChild(bd);
+            }
+        }
+
+        function hideGalleryCropModal() {
+            var m = document.getElementById('galleryCropModal');
+            m.style.display = 'none';
+            var bd = document.getElementById('galleryCropBackdrop');
+            if (bd) bd.remove();
+            if (galleryCropTarget === 'edit') {
+                var editModal = document.getElementById('editModal');
+                if (editModal && editModal.classList.contains('show')) {
+                    var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+                    document.body.classList.add('modal-open');
+                    document.body.style.paddingRight = (scrollbarWidth > 0 ? scrollbarWidth : 0) + 'px';
+                } else {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.paddingRight = '';
+                }
+            } else {
+                document.body.classList.remove('modal-open');
+                document.body.style.paddingRight = '';
+            }
+        }
+
+        function openGalleryCrop(file, target) {
+            galleryCropTarget = target;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = document.getElementById('gallery_crop_preview');
+                if (galleryCropper) { galleryCropper.destroy(); galleryCropper = null; }
+                img.src = e.target.result;
+                showGalleryCropModal();
+                setTimeout(function() {
+                    galleryCropper = new Cropper(img, {
+                        aspectRatio: NaN,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                        minContainerHeight: 280,
+                        maxContainerHeight: 320
+                    });
+                }, 150);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Open next image in queue
+        function openNextInQueue() {
+            if (currentQueueIndex >= imageQueue.length) {
+                hideGalleryCropModal();
+                renderCroppedPreview();
+                return;
+            }
+            var file = imageQueue[currentQueueIndex];
+            document.getElementById('galleryCropCounter').textContent =
+                '(' + (currentQueueIndex + 1) + ' / ' + imageQueue.length + ')';
+            galleryCropTarget = 'multi';
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                // store preview URL on the file object for later use
+                file._previewUrl = e.target.result;
+                var img = document.getElementById('gallery_crop_preview');
+                if (galleryCropper) { galleryCropper.destroy(); galleryCropper = null; }
+                img.src = e.target.result;
+                showGalleryCropModal();
+                setTimeout(function() {
+                    galleryCropper = new Cropper(img, {
+                        aspectRatio: NaN,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                        minContainerHeight: 280,
+                        maxContainerHeight: 320
+                    });
+                }, 150);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Render preview list + inject hidden inputs
+        function renderCroppedPreview() {
+            var container = document.getElementById('selectedFiles');
+            var hiddenContainer = document.getElementById('croppedImagesContainer');
+            container.innerHTML = '';
+            hiddenContainer.innerHTML = '';
+
+            var count = croppedResults.length;
+            document.getElementById('uploadInputInfo').value =
+                count + (count === 1 ? ' file selected' : ' files selected');
+
+            // Build a DataTransfer for original (skipped) files → images[]
+            var dt = new DataTransfer();
+
+            croppedResults.forEach(function(item, index) {
+                var div = document.createElement('div');
+                div.className = 'selected-file d-flex align-items-center p-2 border-bottom';
+                div.innerHTML = '<img src="' + item.previewUrl + '" alt="' + item.name + '" style="width:50px;height:50px;object-fit:cover;margin-right:10px;">' +
+                    '<div class="flex-grow-1"><div class="font-weight-bold">' + item.name + '</div>' +
+                    (item.cropped ? '<div class="text-success small">Cropped</div>' : '<div class="text-muted small">Original</div>') +
+                    '</div>' +
+                    '<button type="button" class="btn btn-sm btn-danger" style="padding:2px 8px;line-height:1;" onclick="removeGalleryImage(' + index + ')">×</button>';
+                container.appendChild(div);
+
+                if (item.cropped) {
+                    // cropped → hidden base64 input
+                    var inp = document.createElement('input');
+                    inp.type = 'hidden';
+                    inp.name = 'images_cropped[]';
+                    inp.value = item.dataUrl;
+                    hiddenContainer.appendChild(inp);
+                } else {
+                    // skipped → add original file to DataTransfer
+                    dt.items.add(item.file);
+                }
+            });
+
+            // Inject original files via a hidden file input
+            if (dt.files.length > 0) {
+                var fileInp = document.createElement('input');
+                fileInp.type = 'file';
+                fileInp.name = 'images[]';
+                fileInp.multiple = true;
+                fileInp.style.display = 'none';
+                fileInp.files = dt.files;
+                hiddenContainer.appendChild(fileInp);
+            }
+        }
+
+        function removeGalleryImage(index) {
+            croppedResults.splice(index, 1);
+            renderCroppedPreview();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // ── Thumbnail crop (create) ──
+            document.getElementById('gallery_create_thumb_input').addEventListener('change', function() {
+                if (this.files && this.files[0]) openGalleryCrop(this.files[0], 'create');
+            });
+
+            // ── Thumbnail crop (edit) ──
+            document.getElementById('gallery_edit_thumb_input').addEventListener('change', function() {
+                if (this.files && this.files[0]) openGalleryCrop(this.files[0], 'edit');
+            });
+
+            // ── Multi-image selection ──
+            document.getElementById('uploadInput').addEventListener('change', function() {
+                if (!this.files || !this.files.length) return;
+                imageQueue = Array.from(this.files);
+                croppedResults = [];
+                currentQueueIndex = 0;
+                openNextInQueue();
+                this.value = ''; // reset so same files can be re-selected
+            });
+
+            // ── Crop Done ──
+            document.getElementById('galleryCropDone').addEventListener('click', function() {
+                if (!galleryCropper) return;
+                var canvas = galleryCropper.getCroppedCanvas();
+                var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+                if (galleryCropTarget === 'create') {
+                    document.getElementById('gallery_create_thumb_cropped').value = dataUrl;
+                    document.getElementById('gallery_create_thumb_info').value = 'thumbnail_cropped.jpg';
+                    var prev = document.getElementById('gallery_create_thumb_preview');
+                    prev.classList.remove('d-none');
+                    prev.querySelector('img').src = dataUrl;
+                    document.getElementById('gallery_create_thumb_input').value = '';
+                    galleryCropper.destroy(); galleryCropper = null;
+                    hideGalleryCropModal();
+                } else if (galleryCropTarget === 'edit') {
+                    document.getElementById('gallery_edit_thumb_cropped').value = dataUrl;
+                    document.getElementById('gallery_edit_thumb_info').value = 'thumbnail_cropped.jpg';
+                    document.getElementById('edit-thumbnail').src = dataUrl;
+                    document.getElementById('gallery_edit_thumb_input').value = '';
+                    galleryCropper.destroy(); galleryCropper = null;
+                    hideGalleryCropModal();
+                } else {
+                    // multi-image queue
+                    croppedResults.push({
+                        dataUrl: dataUrl,
+                        previewUrl: dataUrl,
+                        name: imageQueue[currentQueueIndex].name,
+                        cropped: true
+                    });
+                    galleryCropper.destroy(); galleryCropper = null;
+                    currentQueueIndex++;
+                    openNextInQueue();
+                }
+            });
+
+            // ── Skip (keep original, no crop) ──
+            document.getElementById('galleryCropSkip').addEventListener('click', function() {
+                if (galleryCropTarget !== 'multi') return;
+                if (galleryCropper) { galleryCropper.destroy(); galleryCropper = null; }
+                var file = imageQueue[currentQueueIndex];
+                croppedResults.push({
+                    dataUrl: null,
+                    previewUrl: file._previewUrl || '',
+                    name: file.name,
+                    file: file,
+                    cropped: false
+                });
+                currentQueueIndex++;
+                openNextInQueue();
+            });
+
+            // ── Cancel all ──
+            document.getElementById('galleryCropClose').addEventListener('click', function() {
+                if (galleryCropper) { galleryCropper.destroy(); galleryCropper = null; }
+                if (galleryCropTarget === 'multi') {
+                    imageQueue = []; croppedResults = []; currentQueueIndex = 0;
+                    document.getElementById('selectedFiles').innerHTML = '';
+                    document.getElementById('croppedImagesContainer').innerHTML = '';
+                    document.getElementById('uploadInputInfo').value = '';
+                } else if (galleryCropTarget === 'create') {
+                    document.getElementById('gallery_create_thumb_input').value = '';
+                } else {
+                    document.getElementById('gallery_edit_thumb_input').value = '';
+                }
+                hideGalleryCropModal();
+            });
+
+            document.getElementById('galleryCropClose2').addEventListener('click', function() {
+                if (galleryCropper) { galleryCropper.destroy(); galleryCropper = null; }
+                if (galleryCropTarget === 'multi') {
+                    imageQueue = []; croppedResults = []; currentQueueIndex = 0;
+                    document.getElementById('selectedFiles').innerHTML = '';
+                    document.getElementById('croppedImagesContainer').innerHTML = '';
+                    document.getElementById('uploadInputInfo').value = '';
+                } else if (galleryCropTarget === 'create') {
+                    document.getElementById('gallery_create_thumb_input').value = '';
+                } else {
+                    document.getElementById('gallery_edit_thumb_input').value = '';
+                }
+                hideGalleryCropModal();
+            });
         });
 
-        function updateFilePreview() {
-            // Update file counter
-            const fileCount = fileList.length;
-            $(uploadInput).parent().find('.form-control').val(fileCount + (fileCount === 1 ? ' file selected' : ' files selected'));
-            
-            // Clear previous preview
-            selectedFilesContainer.innerHTML = '';
-            
-            // Create preview for each selected file
-            fileList.forEach((file, index) => {
-                const fileDiv = document.createElement('div');
-                fileDiv.className = 'selected-file d-flex align-items-center p-2 border-bottom';
-                
-                if (file.type.startsWith('image/')) {
-                    // For images, show thumbnail
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        fileDiv.innerHTML = `
-                            <img src="${e.target.result}" alt="${file.name}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;">
-                            <div class="flex-grow-1">
-                                <div class="font-weight-bold">${file.name}</div>
-                                <div class="text-muted small">${(file.size / 1024).toFixed(2)} KB</div>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-danger remove-file" style="padding: 2px 8px; line-height: 1;" data-index="${index}">×</button>
-                        `;
-                        
-                        // Add click handler for remove button
-                        const removeBtn = fileDiv.querySelector('.remove-file');
-                        removeBtn.addEventListener('click', function() {
-                            removeFile(index);
-                        });
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    // For non-images, show simple text
-                    fileDiv.innerHTML = `
-                        <div class="mr-3">📄</div>
-                        <div class="flex-grow-1">
-                            <div class="font-weight-bold">${file.name}</div>
-                            <div class="text-muted small">${(file.size / 1024).toFixed(2)} KB</div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-danger remove-file" style="padding: 2px 8px; line-height: 1;" data-index="${index}">×</button>
-                    `;
-                    
-                    // Add click handler for remove button
-                    const removeBtn = fileDiv.querySelector('.remove-file');
-                    removeBtn.addEventListener('click', function() {
-                        removeFile(index);
-                    });
-                }
-                
-                selectedFilesContainer.appendChild(fileDiv);
-            });
-        }
-
-        function removeFile(index) {
-            // Remove file from our array
-            fileList.splice(index, 1);
-            
-            // Update the file input
-            const dt = new DataTransfer();
-            fileList.forEach(file => dt.items.add(file));
-            uploadInput.files = dt.files;
-            
-            // Update the preview
-            updateFilePreview();
-        }
-
         function formSuccessFunction(response) {
-                setTimeout(() => {
-                    window.location.reload()
-                }, 1000);
-            }
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
     </script>
 @endsection

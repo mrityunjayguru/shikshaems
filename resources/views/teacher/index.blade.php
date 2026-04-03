@@ -66,12 +66,17 @@
                                 </div>
                                 <div class="form-group col-sm-12 col-md-4">
                                     <label for="image">{{ __('image') }} <span class="text-info text-small">(308px*338px)</span></label>
-                                    <input type="file" name="image" class="file-upload-default" accept="image/png,image/jpeg,image/jpg"/>
+                                    {{-- Hidden input to hold cropped image data --}}
+                                    <input type="hidden" name="image_cropped" id="create_image_cropped">
+                                    <input type="file" id="create_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg"/>
                                     <div class="input-group col-xs-12">
                                         <input type="text" class="form-control file-upload-info" id="image" disabled="" placeholder="{{ __('image') }}"/>
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme" type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('create_image_input').click()">{{ __('upload') }}</button>
                                         </span>
+                                    </div>
+                                    <div id="create_image_preview" class="mt-2 d-none" style="width:60px;">
+                                        <img src="" class="img-fluid w-100" alt="preview">
                                     </div>
                                 </div>
                                 <div class="form-group col-sm-12 col-md-4">
@@ -379,7 +384,7 @@
                     <div class="modal-body">
                         <div class="row">
                             <div class="form-group col-sm-12 col-md-12 col-lg-4">
-                                <label>{{ __('email') }} <span class="text-danger">*</span></label>
+                                <label>{{ __('email') }}</label>
                                 {!! Form::text('email', null, ['placeholder' => __('email'), 'class' => 'form-control', 'id' => 'email']) !!}
                             </div>
                             <div class="form-group col-sm-12 col-md-12 col-lg-4">
@@ -420,12 +425,13 @@
                             </div>
                             <div class="form-group col-sm-12 col-md-12 col-lg-4">
                                 <label for="edit-image">{{ __('image') }} <span class="text-info text-small">(308px*338px)</span></label><br>
-                                {{-- <input type="file" name="image" id="edit_image" class="form-control" placeholder="{{__('image')}}"> --}}
-                                <input type="file" name="image" class="file-upload-default" accept="image/png,image/jpeg,image/jpg"/>
+                                {{-- Hidden input to hold cropped image data --}}
+                                <input type="hidden" name="image_cropped" id="edit_image_cropped">
+                                <input type="file" id="edit_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg"/>
                                 <div class="input-group col-xs-12">
                                     <input type="text" class="form-control file-upload-info" id="edit-image" disabled="" placeholder="{{ __('image') }}"/>
                                     <span class="input-group-append">
-                                        <button class="file-upload-browse btn btn-theme" type="button">{{ __('upload') }}</button>
+                                        <button class="btn btn-theme" type="button" onclick="document.getElementById('edit_image_input').click()">{{ __('upload') }}</button>
                                     </span>
                                 </div>
                                 <div style="width: 60px;" class="mt-2">
@@ -555,7 +561,7 @@
                             
                         </div>
 
-                        <div class="row">
+                        {{-- <div class="row">
                             <div class="form-group col-sm-12 col-md-4">
                                 <div class="d-flex">
                                     <div class="form-check w-fit-content">
@@ -576,7 +582,7 @@
                                 </div>
                             </div>
                     
-                        </div>
+                        </div> --}}
 
                     </div>
                     <div class="modal-footer">
@@ -587,10 +593,103 @@
             </div>
         </div>
     </div>
+
+    {{-- ===== CROP MODAL ===== --}}
+    <div class="modal" id="cropModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index:1060;display:none;">
+        <div class="modal-dialog" role="document" style="max-width: 480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Crop Image</h6>
+                    <button type="button" class="close" id="cropModalClose" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="crop_image_preview" src="" style="max-width:100%; max-height:320px; display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="cropModalClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="cropDoneBtn">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 @section('script')
+    {{-- Cropper.js --}}
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
     <script>
         let userIds;
+
+        // ===== CROP LOGIC =====
+        let cropper = null;
+        let activeCropTarget = null; // 'create' or 'edit'
+
+        function openCropModal(file, target) {
+            activeCropTarget = target;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('crop_image_preview');
+                img.src = e.target.result;
+                if (cropper) { cropper.destroy(); cropper = null; }
+                $('#cropModal').modal('show');
+                // Init cropper after modal shown
+                $('#cropModal').one('shown.bs.modal', function() {
+                    cropper = new Cropper(img, {
+                        aspectRatio: 308 / 338,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                        minContainerHeight: 280,
+                        maxContainerHeight: 320,
+                    });
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        $(document).ready(function() {
+            $('#create_image_input').on('change', function() {
+                if (this.files && this.files[0]) openCropModal(this.files[0], 'create');
+            });
+            $('#edit_image_input').on('change', function() {
+                if (this.files && this.files[0]) openCropModal(this.files[0], 'edit');
+            });
+            $('#cropDoneBtn').on('click', function() {
+                if (!cropper) return;
+                const canvas = cropper.getCroppedCanvas({ width: 308, height: 338 });
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                if (activeCropTarget === 'create') {
+                    $('#create_image_cropped').val(dataUrl);
+                    $('#image').val('image_cropped.jpg');
+                    $('#create_image_preview').removeClass('d-none').find('img').attr('src', dataUrl);
+                } else {
+                    $('#edit_image_cropped').val(dataUrl);
+                    $('#edit-image').val('image_cropped.jpg');
+                    $('#edit-teacher-image-tag').attr('src', dataUrl);
+                }
+                cropper.destroy(); cropper = null;
+                $('#cropModal').modal('hide');
+                if (activeCropTarget === 'create') $('#create_image_input').val('');
+                else $('#edit_image_input').val('');
+            });
+            $('#cropModalClose, #cropModalClose2').on('click', function() {
+                if (cropper) { cropper.destroy(); cropper = null; }
+                $('#cropModal').modal('hide');
+                if (activeCropTarget === 'create') $('#create_image_input').val('');
+                else $('#edit_image_input').val('');
+            });
+            $('#cropModal').on('hidden.bs.modal', function() {
+                if (activeCropTarget === 'edit' && $('#editModal').hasClass('show')) {
+                    var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+                    $('body').addClass('modal-open').css('padding-right', scrollbarWidth > 0 ? scrollbarWidth + 'px' : '');
+                }
+            });
+        });
+        // ===== END CROP LOGIC =====
+
+
         $('.table-list-type').on('click', function (e) {
             let value = $(this).data('id');
             let ActiveLang = window.trans['Active'];

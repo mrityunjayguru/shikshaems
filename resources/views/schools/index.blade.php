@@ -71,16 +71,16 @@
                                     </div>
                                     <div class="form-group col-sm-12 col-md-6">
                                         <label>{{ __('logo') }} <span class="text-danger">*</span></label>
-                                        <input type="file" required name="school_image" id="school_image"
-                                            class="file-upload-default"
-                                            accept="image/png, image/jpg, image/jpeg, image/svg+xml" />
+                                        <input type="hidden" name="school_image_cropped" id="school_create_image_cropped"/>
                                         <div class="input-group col-xs-12">
-                                            <input type="text" class="form-control file-upload-info" disabled=""
-                                                placeholder="{{ __('logo') }}" required aria-label="" />
+                                            <input type="text" class="form-control" id="school_create_image_name" disabled="" placeholder="{{ __('logo') }}" required aria-label=""/>
                                             <span class="input-group-append">
-                                                <button class="file-upload-browse btn btn-theme"
-                                                    type="button">{{ __('upload') }}</button>
+                                                <button class="btn btn-theme" type="button" id="school_create_image_btn">{{ __('upload') }}</button>
                                             </span>
+                                        </div>
+                                        <input type="file" id="school_create_image_input" accept="image/png, image/jpg, image/jpeg, image/svg+xml" style="display:none"/>
+                                        <div id="school_create_image_preview" style="margin-top:8px;display:none;">
+                                            <img id="school_create_image_preview_img" src="" style="max-height:60px;border-radius:4px;"/>
                                         </div>
                                     </div>
                                     <div class="form-group col-sm-12 col-md-6">
@@ -284,17 +284,20 @@
 
                                                     {{-- File Upload Field --}}
                                                 @elseif($data->type == 'file')
+                                                    <input type="hidden" name="extra_fields[{{ $key }}][cropped_data]" id="crop_create_{{ $fieldName }}"/>
                                                     <div class="input-group">
-                                                        {{ Form::file('extra_fields[' . $key . '][data]', ['class' => 'file-upload-default', 'id' => $fieldName, $data->is_required == 1 ? 'required' : '']) }}
-                                                        {{ Form::text('', '', ['class' => 'form-control file-upload-info', 'disabled' => '', 'placeholder' => __('image')]) }}
+                                                        <input type="text" class="form-control" id="crop_create_name_{{ $fieldName }}" disabled="" placeholder="{{ __('image') }}"/>
                                                         <span class="input-group-append">
-                                                            <button class="file-upload-browse btn btn-theme"
-                                                                type="button">{{ __('upload') }}</button>
+                                                            <button class="btn btn-theme school-extra-crop-btn" type="button"
+                                                                data-field="{{ $fieldName }}" data-context="create">{{ __('upload') }}</button>
                                                         </span>
                                                     </div>
+                                                    <input type="file" id="crop_create_input_{{ $fieldName }}" class="school-extra-crop-input" data-field="{{ $fieldName }}" data-context="create" accept="image/*" style="display:none"/>
+                                                    <div id="crop_create_preview_{{ $fieldName }}" class="mt-2" style="display:none;">
+                                                        <img id="crop_create_preview_img_{{ $fieldName }}" src="" style="max-height:60px;border-radius:4px;"/>
+                                                    </div>
                                                     <div id="file_div_{{ $fieldName }}" class="mt-2 d-none file-div">
-                                                        <a href="" id="file_link_{{ $fieldName }}"
-                                                            target="_blank">{{ $data->name }}</a>
+                                                        <a href="" id="file_link_{{ $fieldName }}" target="_blank">{{ $data->name }}</a>
                                                     </div>
                                                 @endif
                                             </div>
@@ -424,20 +427,16 @@
                             </div>
                             <div class="form-group col-sm-12 col-md-6">
                                 <label>{{ __('logo') }}</label>
-                                <input type="file" id="edit_school_image" name="edit_school_image"
-                                    class="file-upload-default"
-                                    accept="image/png, image/jpg, image/jpeg, image/svg+xml" />
+                                <input type="hidden" name="edit_school_image_cropped" id="school_edit_image_cropped"/>
                                 <div class="input-group">
-                                    <input type="text" class="form-control file-upload-info" disabled=""
-                                        placeholder="{{ __('logo') }}" aria-label="" />
+                                    <input type="text" class="form-control" id="school_edit_image_name" disabled="" placeholder="{{ __('logo') }}" aria-label=""/>
                                     <span class="input-group-append">
-                                        <button class="file-upload-browse btn btn-theme"
-                                            type="button">{{ __('upload') }}</button>
+                                        <button class="btn btn-theme" type="button" id="school_edit_image_btn">{{ __('upload') }}</button>
                                     </span>
                                 </div>
-                                <div style="width: 60px;">
-                                    <img src="" id="edit-school-logo-tag" class="img-fluid w-100"
-                                        alt="" />
+                                <input type="file" id="school_edit_image_input" accept="image/png, image/jpg, image/jpeg, image/svg+xml" style="display:none"/>
+                                <div style="width: 60px; margin-top:6px;">
+                                    <img src="#" id="edit-school-logo-tag" class="img-fluid w-100" alt="" style="display:none;"/>
                                 </div>
                             </div>
                             <div class="form-group col-sm-12 col-md-3">
@@ -647,17 +646,20 @@
 
                                             {{-- File Upload Field --}}
                                         @elseif($data->type == 'file')
+                                            <input type="hidden" name="edit_extra_fields[{{ $key }}][cropped_data]" id="crop_edit_{{ $fieldName }}"/>
                                             <div class="input-group col-xs-12">
-                                                {{ Form::file('edit_extra_fields[' . $key . '][data]', ['class' => 'file-upload-default', 'id' => 'edit_' . $fieldName]) }}
-                                                {{ Form::text('', '', ['class' => 'form-control file-upload-info', 'disabled' => '', 'placeholder' => __('image')]) }}
+                                                <input type="text" class="form-control" id="crop_edit_name_{{ $fieldName }}" disabled="" placeholder="{{ __('image') }}"/>
                                                 <span class="input-group-append">
-                                                    <button class="file-upload-browse btn btn-theme"
-                                                        type="button">{{ __('upload') }}</button>
+                                                    <button class="btn btn-theme school-extra-crop-btn" type="button"
+                                                        data-field="{{ $fieldName }}" data-context="edit">{{ __('upload') }}</button>
                                                 </span>
                                             </div>
+                                            <input type="file" id="crop_edit_input_{{ $fieldName }}" class="school-extra-crop-input" data-field="{{ $fieldName }}" data-context="edit" accept="image/*" style="display:none"/>
+                                            <div id="crop_edit_preview_{{ $fieldName }}" class="mt-2" style="display:none;">
+                                                <img id="crop_edit_preview_img_{{ $fieldName }}" src="" style="max-height:60px;border-radius:4px;"/>
+                                            </div>
                                             <div id="edit_file_div_{{ $fieldName }}" class="mt-2 d-none file-div">
-                                                <a href="" id="edit_file_link_{{ $fieldName }}"
-                                                    target="_blank">{{ $data->name }}</a>
+                                                <a href="" id="edit_file_link_{{ $fieldName }}" target="_blank">{{ $data->name }}</a>
                                             </div>
                                         @endif
                                     </div>
@@ -888,18 +890,15 @@
                             </div>
                             <div class="form-group col-sm-12 col-md-6">
                                 <label>{{ __('admin') . ' ' . __('image') }}</label>
-                                <input type="file" name="edit_admin_image"
-                                    class="edit-admin-image file-upload-default"
-                                    accept="image/png, image/jpg, image/jpeg, image/svg+xml" />
+                                <input type="hidden" name="edit_admin_image_cropped" id="school_admin_image_cropped"/>
                                 <div class="input-group col-xs-12">
-                                    <input type="text" class="form-control file-upload-info" disabled=""
-                                        placeholder="{{ __('admin') . ' ' . __('image') }}" aria-label="" />
+                                    <input type="text" class="form-control" id="school_admin_image_name" disabled="" placeholder="{{ __('admin') . ' ' . __('image') }}" aria-label=""/>
                                     <span class="input-group-append">
-                                        <button class="file-upload-browse btn btn-theme" id="file-upload-admin-browse"
-                                            type="button">{{ __('upload') }}</button>
+                                        <button class="btn btn-theme" type="button" id="school_admin_image_btn">{{ __('upload') }}</button>
                                     </span>
                                 </div>
-                                <div style="width: 100px;">
+                                <input type="file" id="school_admin_image_input" accept="image/png, image/jpg, image/jpeg, image/svg+xml" style="display:none"/>
+                                <div style="width: 100px; margin-top:6px;">
                                     <img src="" id="admin-image-tag" class="img-fluid w-100" alt="" />
                                 </div>
                             </div>
@@ -959,6 +958,236 @@
             </div>
         </div>
     </div>
+@endsection
+@section('css')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"/>
+<style>
+.school-crop-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;}
+.school-crop-box{background:#fff;border-radius:8px;padding:16px;width:100%;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,.25);}
+.school-crop-box .crop-img-wrap{max-height:320px;overflow:hidden;background:#000;}
+.school-crop-box .crop-img-wrap img{display:block;max-width:100%;}
+.school-crop-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
+</style>
+@endsection
+@section('script')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    var _schoolCropper = null;
+    var _schoolCropCb  = null;
+
+    function openSchoolCropModal(src, fname, aspectRatio, cb) {
+        _schoolCropCb = cb;
+        var overlay = document.createElement('div');
+        overlay.className = 'school-crop-overlay';
+        overlay.id = 'schoolCropOverlay';
+        overlay.innerHTML =
+            '<div class="school-crop-box">' +
+                '<div class="crop-img-wrap"><img id="schoolCropImg" src="' + src + '"/></div>' +
+                '<div class="school-crop-actions">' +
+                    '<button type="button" class="btn btn-secondary btn-sm" id="schoolCropSkip">Skip</button>' +
+                    '<button type="button" class="btn btn-theme btn-sm" id="schoolCropDone">Crop & Use</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+
+        var img = document.getElementById('schoolCropImg');
+        _schoolCropper = new Cropper(img, {
+            aspectRatio: aspectRatio,
+            viewMode: 1,
+            autoCropArea: 1,
+            minContainerHeight: 280,
+            maxContainerHeight: 320,
+        });
+
+        document.getElementById('schoolCropDone').addEventListener('click', function () {
+            var base64 = _schoolCropper.getCroppedCanvas().toDataURL('image/jpeg', 0.85);
+            closeSchoolCropModal();
+            if (_schoolCropCb) _schoolCropCb(base64, fname);
+        });
+        document.getElementById('schoolCropSkip').addEventListener('click', function () {
+            closeSchoolCropModal();
+            if (_schoolCropCb) _schoolCropCb(src, fname);
+        });
+    }
+
+    function closeSchoolCropModal() {
+        if (_schoolCropper) { _schoolCropper.destroy(); _schoolCropper = null; }
+        var el = document.getElementById('schoolCropOverlay');
+        if (el) el.remove();
+    }
+
+    function initSchoolCrop(opts) {
+        var btn       = document.getElementById(opts.btnId);
+        var fileInput = document.getElementById(opts.inputId);
+        if (!btn || !fileInput) return;
+
+        // clone to remove old listeners
+        var newBtn = btn.cloneNode(true); btn.parentNode.replaceChild(newBtn, btn);
+        var newInput = fileInput.cloneNode(true); fileInput.parentNode.replaceChild(newInput, fileInput);
+
+        newBtn.addEventListener('click', function () { newInput.value = ''; newInput.click(); });
+        newInput.addEventListener('change', function () {
+            if (!newInput.files || !newInput.files[0]) return;
+            var file = newInput.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                openSchoolCropModal(e.target.result, file.name, opts.aspectRatio, function(base64, fname) {
+                    // Re-query after clone
+                    var croppedEl   = document.getElementById(opts.croppedId);
+                    var nameEl      = document.getElementById(opts.nameId);
+                    var previewImg  = opts.previewImgId ? document.getElementById(opts.previewImgId) : null;
+                    var previewWrap = opts.previewId    ? document.getElementById(opts.previewId)    : null;
+                    if (croppedEl)   croppedEl.value = base64;
+                    if (nameEl)      nameEl.value    = fname;
+                    if (previewImg)  { previewImg.src = base64; previewImg.style.display = 'block'; }
+                    if (previewWrap) previewWrap.style.display = 'block';
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // --- Create form: school logo (free aspect ratio - logo/icon) ---
+    initSchoolCrop({
+        btnId: 'school_create_image_btn',
+        inputId: 'school_create_image_input',
+        croppedId: 'school_create_image_cropped',
+        nameId: 'school_create_image_name',
+        previewId: 'school_create_image_preview',
+        previewImgId: 'school_create_image_preview_img',
+        aspectRatio: NaN,
+    });
+
+    // --- Edit modal: school logo ---
+    var editModal = document.getElementById('editModal');
+    if (editModal) {
+        editModal.addEventListener('shown.bs.modal', function () {
+            initSchoolCrop({
+                btnId: 'school_edit_image_btn',
+                inputId: 'school_edit_image_input',
+                croppedId: 'school_edit_image_cropped',
+                nameId: 'school_edit_image_name',
+                previewImgId: 'edit-school-logo-tag',
+                aspectRatio: NaN,
+            });
+
+            // Re-bind extra fields crop inside edit modal
+            editModal.querySelectorAll('.school-extra-crop-btn').forEach(function(btn) {
+                var newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                newBtn.addEventListener('click', function() {
+                    var field   = newBtn.getAttribute('data-field');
+                    var context = newBtn.getAttribute('data-context');
+                    var input   = document.getElementById('crop_' + context + '_input_' + field);
+                    if (input) { input.value = ''; input.click(); }
+                });
+            });
+
+            editModal.querySelectorAll('.school-extra-crop-input').forEach(function(input) {
+                var newInput = input.cloneNode(true);
+                input.parentNode.replaceChild(newInput, input);
+                newInput.addEventListener('change', function() {
+                    if (!newInput.files || !newInput.files[0]) return;
+                    var field   = newInput.getAttribute('data-field');
+                    var context = newInput.getAttribute('data-context');
+                    var file    = newInput.files[0];
+                    var reader  = new FileReader();
+                    reader.onload = function(e) {
+                        openSchoolCropModal(e.target.result, file.name, NaN, function(base64, fname) {
+                            var croppedEl   = document.getElementById('crop_' + context + '_' + field);
+                            var nameEl      = document.getElementById('crop_' + context + '_name_' + field);
+                            var previewWrap = document.getElementById('crop_' + context + '_preview_' + field);
+                            var previewImg  = document.getElementById('crop_' + context + '_preview_img_' + field);
+                            if (croppedEl)   croppedEl.value = base64;
+                            if (nameEl)      nameEl.value    = fname;
+                            if (previewWrap) previewWrap.style.display = 'block';
+                            if (previewImg)  previewImg.src  = base64;
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        });
+        editModal.addEventListener('hidden.bs.modal', function () {
+            if (!document.getElementById('schoolCropOverlay')) {
+                var sw = window.innerWidth - document.documentElement.clientWidth;
+                document.body.classList.add('modal-open');
+                document.body.style.paddingRight = sw + 'px';
+            }
+        });
+    }
+
+    // --- Edit Admin modal: admin image (person 308:338) ---
+    var adminModal = document.getElementById('editAdminModal');
+    if (adminModal) {
+        adminModal.addEventListener('shown.bs.modal', function () {
+            initSchoolCrop({
+                btnId: 'school_admin_image_btn',
+                inputId: 'school_admin_image_input',
+                croppedId: 'school_admin_image_cropped',
+                nameId: 'school_admin_image_name',
+                previewImgId: 'admin-image-tag',
+                aspectRatio: 308/338,
+            });
+        });
+        adminModal.addEventListener('hidden.bs.modal', function () {
+            if (!document.getElementById('schoolCropOverlay')) {
+                var sw = window.innerWidth - document.documentElement.clientWidth;
+                document.body.classList.add('modal-open');
+                document.body.style.paddingRight = sw + 'px';
+            }
+        });
+    }
+
+    // Reset create form
+    var createForm = document.querySelector('.school-registration-form');
+    if (createForm) {
+        createForm.addEventListener('reset', function () {
+            var cr = document.getElementById('school_create_image_cropped');
+            if (cr) cr.value = '';
+            var nm = document.getElementById('school_create_image_name');
+            if (nm) nm.value = '';
+            var prev = document.getElementById('school_create_image_preview');
+            if (prev) prev.style.display = 'none';
+        });
+    }
+
+    // --- Extra fields crop (create form) ---
+    document.querySelectorAll('.school-extra-crop-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var field   = btn.getAttribute('data-field');
+            var context = btn.getAttribute('data-context');
+            var input   = document.getElementById('crop_' + context + '_input_' + field);
+            if (input) { input.value = ''; input.click(); }
+        });
+    });
+
+    document.querySelectorAll('.school-extra-crop-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+            if (!input.files || !input.files[0]) return;
+            var field   = input.getAttribute('data-field');
+            var context = input.getAttribute('data-context');
+            var file    = input.files[0];
+            var reader  = new FileReader();
+            reader.onload = function(e) {
+                openSchoolCropModal(e.target.result, file.name, NaN, function(base64, fname) {
+                    var croppedEl  = document.getElementById('crop_' + context + '_' + field);
+                    var nameEl     = document.getElementById('crop_' + context + '_name_' + field);
+                    var previewWrap = document.getElementById('crop_' + context + '_preview_' + field);
+                    var previewImg  = document.getElementById('crop_' + context + '_preview_img_' + field);
+                    if (croppedEl)  croppedEl.value = base64;
+                    if (nameEl)     nameEl.value    = fname;
+                    if (previewWrap) previewWrap.style.display = 'block';
+                    if (previewImg)  previewImg.src = base64;
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+});
+</script>
 @endsection
 @section('js')
     <script>

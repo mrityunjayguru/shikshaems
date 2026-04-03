@@ -66,22 +66,20 @@
     {{-- Background Image --}}
     <div class="form-group col-sm-12 col-md-6">
         <label for="image">{{ __('background_image') }} </label>
-        <input type="file" name="background_image" accept="image/jpg,image/png,image/jpeg,image/svg"
-            class="file-upload-default" />
+        <input type="hidden" name="background_image_cropped" id="student_bg_cropped">
+        <input type="file" id="student_bg_input" class="d-none" accept="image/png,image/jpeg,image/jpg,image/webp"/>
         <div class="input-group col-xs-12">
-            <input type="text" id="image" class="form-control file-upload-info" disabled=""
+            <input type="text" id="student_bg_info" class="form-control file-upload-info" disabled=""
                 placeholder="{{ __('image') }}" />
             <span class="input-group-append">
-                <button class="file-upload-browse btn btn-theme" type="button">{{ __('upload') }}</button>
+                <button class="btn btn-theme" type="button" onclick="document.getElementById('student_bg_input').click()">{{ __('upload') }}</button>
             </span>
         </div>
         @if ($settings['background_image'] ?? '')
             <div id="background">
                 <img src="{{ $settings['background_image'] }}" class="img-fluid w-25" alt="">
-
                 <div class="mt-2">
-                    <a href="" data-type="background"
-                        class="btn btn-inverse-danger btn-sm id-card-settings">
+                    <a href="" data-type="background" class="btn btn-inverse-danger btn-sm id-card-settings">
                         <i class="fa fa-times"></i>
                     </a>
                 </div>

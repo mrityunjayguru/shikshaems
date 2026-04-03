@@ -32,12 +32,14 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
@@ -80,6 +82,63 @@ class Controller extends BaseController
     public function makeStudentPassword($dob)
     {
         return str_replace('-', '', date('d-m-Y', strtotime($dob)));
+    }
+
+    /**
+     * Resolve image from file upload or base64 cropped data.
+     * Use this in any controller where crop tool is used.
+     *
+     * @param Request $request
+     * @param string $fieldName      file input name (default: 'image')
+     * @param string $croppedField   hidden base64 input name (default: 'image_cropped')
+     */
+    protected function resolveImageUpload(Request $request, string $fieldName = 'image', string $croppedField = 'image_cropped'): ?UploadedFile
+    {
+        // Priority 1: actual file upload
+        if ($request->file($fieldName)) {
+            return $request->file($fieldName);
+        }
+
+        // Priority 2: base64 cropped image
+        $base64 = $request->input($croppedField);
+        if (!$base64) {
+            return null;
+        }
+
+        // Strip data URI prefix: data:image/jpeg;base64,...
+        if (str_contains($base64, ',')) {
+            $base64 = explode(',', $base64)[1];
+        }
+
+        $decoded = base64_decode($base64);
+        if (!$decoded) {
+            return null;
+        }
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'crop_img_') . '.jpg';
+        File::put($tmpPath, $decoded);
+
+        return new UploadedFile($tmpPath, 'cropped_image.jpg', 'image/jpeg', null, true);
+    }
+
+    /**
+     * Convert a raw base64 string (from extra fields) to UploadedFile.
+     */
+    protected function resolveImageUploadFromBase64(string $base64): ?UploadedFile
+    {
+        if (empty($base64)) {
+            return null;
+        }
+        if (str_contains($base64, ',')) {
+            $base64 = explode(',', $base64)[1];
+        }
+        $decoded = base64_decode($base64);
+        if (!$decoded) {
+            return null;
+        }
+        $tmpPath = tempnam(sys_get_temp_dir(), 'crop_img_') . '.jpg';
+        File::put($tmpPath, $decoded);
+        return new UploadedFile($tmpPath, 'cropped_image.jpg', 'image/jpeg', null, true);
     }
 
     public function index()

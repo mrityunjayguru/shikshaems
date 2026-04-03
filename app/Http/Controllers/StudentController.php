@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\StudentCategory;
 use App\Models\StudentHouse;
 use App\Models\Students;
+use App\Models\SubjectTeacher;
 use App\Models\TransportationPayment;
 use App\Repositories\ClassSchool\ClassSchoolInterface;
 use App\Repositories\ClassSection\ClassSectionInterface;
@@ -176,10 +177,10 @@ class StudentController extends Controller
 
             $userService = app(UserService::class);
             $sessionYear = $this->sessionYear->findById($request->session_year_id);
-            $guardian = $userService->createOrUpdateParent($request->guardian_first_name, $request->guardian_last_name, $request->guardian_email, $request->guardian_mobile, $request->guardian_gender, $request->guardian_image);
+            $guardian = $userService->createOrUpdateParent($request->guardian_first_name, $request->guardian_last_name, $request->guardian_email, $request->guardian_mobile, $request->guardian_gender, $this->resolveImageUpload($request, 'guardian_image', 'guardian_image_cropped'));
             $is_send_notification = true;
 
-            $userService->createStudentUser($request->first_name, $request->last_name, $request->admission_no, $request->mobile, $request->dob, $request->gender, $request->image, $request->class_section_id, $request->student_house_id, $request->student_category_id, null, $request->admission_date, $request->current_address, $request->permanent_address, $sessionYear->id, $guardian->id, $request->extra_fields ?? [], $request->status ?? 0, $is_send_notification);
+            $userService->createStudentUser($request->first_name, $request->last_name, $request->admission_no, $request->mobile, $request->dob, $request->gender, $this->resolveImageUpload($request), $request->class_section_id, $request->student_house_id, $request->student_category_id, null, $request->admission_date, $request->current_address, $request->permanent_address, $sessionYear->id, $guardian->id, $request->extra_fields ?? [], $request->status ?? 0, $is_send_notification);
 
             DB::commit();
             ResponseService::successResponse('Data Stored Successfully');
@@ -224,9 +225,9 @@ class StudentController extends Controller
             DB::beginTransaction();
             $userService = app(UserService::class);
             $sessionYear = $this->sessionYear->findById($request->session_year_id);
-            $guardian = $userService->createOrUpdateParent($request->guardian_first_name, $request->guardian_last_name, $request->guardian_email, $request->guardian_mobile, $request->guardian_gender, $request->guardian_image, $request->parent_reset_password);
+            $guardian = $userService->createOrUpdateParent($request->guardian_first_name, $request->guardian_last_name, $request->guardian_email, $request->guardian_mobile, $request->guardian_gender, $this->resolveImageUpload($request, 'guardian_image', 'guardian_image_cropped'), $request->parent_reset_password);
 
-            $userService->updateStudentUser($id, $request->first_name, $request->last_name, $request->mobile, $request->dob, $request->gender, $request->image, $sessionYear->id, $request->extra_fields ?? [], $guardian->id, $request->current_address, $request->permanent_address, $request->reset_password, $request->class_section_id, $request->student_house_id, $request->student_category_id);
+            $userService->updateStudentUser($id, $request->first_name, $request->last_name, $request->mobile, $request->dob, $request->gender, $this->resolveImageUpload($request), $sessionYear->id, $request->extra_fields ?? [], $guardian->id, $request->current_address, $request->permanent_address, $request->reset_password, $request->class_section_id, $request->student_house_id, $request->student_category_id);
             DB::commit();
             ResponseService::successResponse('Data Updated Successfully');
         } catch (Throwable $e) {
@@ -458,11 +459,19 @@ class StudentController extends Controller
         }
         $sql->where('id', $id);
         $student = $sql->get();
-        $route_details = TransportationPayment::where('user_id', $student[0]->user_id)->with('pickupPoint','routeVehicle.route')->get();
-        // $classSection = ClassSection::with('class_teachers.teacher')->find($id);
+        $studentModel = $student[0];
 
-        // dd($student);
-        return view('students.profile', compact('student','route_details'));
+        $route_details = TransportationPayment::where('user_id', $studentModel->user_id)->with('pickupPoint','routeVehicle.route')->get();
+        $pickup_point = $route_details->first();
+
+        // Semester-wise filtered subject teachers (same logic as parent/teachers API)
+        $class_subject_ids = $studentModel->selectedStudentSubjects()->pluck('class_subject_id')->filter();
+        $subjectTeachers = SubjectTeacher::whereIn('class_subject_id', $class_subject_ids)
+            ->where('class_section_id', $studentModel->class_section_id)
+            ->with(['subject:id,name,type', 'teacher:id,first_name,last_name,image'])
+            ->get();
+
+        return view('students.profile', compact('student', 'route_details', 'pickup_point', 'subjectTeachers'));
     }
 
 
@@ -869,29 +878,48 @@ class StudentController extends Controller
 
         try {
             $data = array();
-            if ($request->student_image) {
-                foreach ($request->student_image as $key => $profile) {
-                    $data[] = [
-                        'id' => $key,
-                        'image' => $profile
-                    ];
+
+            // Student images
+            $studentImages = $request->input('student_image_cropped', []);
+            foreach ($studentImages as $userId => $base64) {
+                if (empty($base64)) continue;
+                $file = $this->base64ToUploadedFile($base64);
+                if ($file) {
+                    $data[] = ['id' => $userId, 'image' => $file];
                 }
             }
-            if ($request->guardian_image) {
-                foreach ($request->guardian_image as $key => $profile) {
-                    $data[] = [
-                        'id' => $key,
-                        'image' => $profile
-                    ];
+
+            // Guardian images
+            $guardianImages = $request->input('guardian_image_cropped', []);
+            foreach ($guardianImages as $userId => $base64) {
+                if (empty($base64)) continue;
+                $file = $this->base64ToUploadedFile($base64);
+                if ($file) {
+                    $data[] = ['id' => $userId, 'image' => $file];
                 }
             }
-            $this->user->upsertProfile($data, ['id'], ['image']);
-            // $this->user->upsert($data,['id'],['image']);
+
+            if (!empty($data)) {
+                $this->user->upsertProfile($data, ['id'], ['image']);
+            }
+
             ResponseService::successResponse('Profile Updated Successfully');
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
         }
+    }
+
+    private function base64ToUploadedFile(string $base64): ?\Illuminate\Http\UploadedFile
+    {
+        if (str_contains($base64, ',')) {
+            $base64 = explode(',', $base64)[1];
+        }
+        $decoded = base64_decode($base64);
+        if (!$decoded) return null;
+        $tmpPath = tempnam(sys_get_temp_dir(), 'crop_img_') . '.jpg';
+        \Illuminate\Support\Facades\File::put($tmpPath, $decoded);
+        return new \Illuminate\Http\UploadedFile($tmpPath, 'cropped_image.jpg', 'image/jpeg', null, true);
     }
 
     public function generate_id_card_index()

@@ -107,7 +107,7 @@ class OnlineExamController extends Controller
                         'name' => $class->name,
                         'medium' => $mediumName,
                         'stream' => $streamName,
-                        'full_name' => $class->name . ' - ' . $mediumName . ($streamName ? ' (' . $streamName . ')' : '')
+                        'full_name' => $class->name . ' - ' .  ($streamName ? ' (' . $streamName . ')' : '')
                     ];
                 })
                 ->values();
@@ -127,7 +127,7 @@ class OnlineExamController extends Controller
                         'name' => $class->name,
                         'medium' => $mediumName,
                         'stream' => $streamName,
-                        'full_name' => $class->name . ' - ' . $mediumName . ($streamName ? ' (' . $streamName . ')' : '')
+                        'full_name' => $class->name . ($streamName ? ' ('. ' - ' .  $streamName . ')' : '')
                     ];
                 })
                 ->values();

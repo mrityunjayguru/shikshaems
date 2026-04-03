@@ -76,16 +76,16 @@
 
                                 <div class="form-group col-sm-12 col-md-4">
                                     <label>{{ __('background_image') }} <span class="text-danger">*</span></label>
-                                    <input type="file" name="background_image" id="thumbnail" class="file-upload-default" accept="image/*"/>
+                                    <input type="hidden" name="background_image_cropped" id="cert_edit_bg_cropped">
+                                    <input type="file" id="cert_edit_bg_input" class="d-none" accept="image/png,image/jpeg,image/jpg,image/webp"/>
                                     <div class="input-group col-xs-12">
                                         <input type="text" class="form-control file-upload-info" disabled=""
-                                                placeholder="{{ __('thumbnail') }}" aria-label=""/>
+                                                placeholder="{{ __('background_image') }}" aria-label="" id="cert_edit_bg_info"/>
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                    type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('cert_edit_bg_input').click()">{{ __('upload') }}</button>
                                         </span>
                                     </div>
-                                    <img src="{{ $certificateTemplate->background_image }}" class="img-fluid w-75 mt-2" alt="">
+                                    <img src="{{ $certificateTemplate->background_image }}" id="cert_edit_bg_preview" class="img-fluid w-75 mt-2" alt="">
                                 </div>
 
                                 <div class="form-group col-sm-12 col-md-12">
@@ -111,10 +111,98 @@
             </div>
         </div>
     </div>
+    </div>
+
+    {{-- Certificate Edit Crop Modal --}}
+    <div class="modal" id="certEditCropModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index:1060;display:none;">
+        <div class="modal-dialog" role="document" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Crop Background Image</h6>
+                    <button type="button" class="close" id="certEditCropClose"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="cert_edit_crop_img" src="" style="max-width:100%;max-height:320px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="certEditCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="certEditCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('css')
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
 @endsection
 
 @section('script')
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
     <script>
+        var certEditCropper = null;
+
+        function showCertEditCropModal() {
+            var m = document.getElementById('certEditCropModal');
+            m.style.display = 'block';
+            document.body.classList.add('modal-open');
+            var bd = document.createElement('div');
+            bd.id = 'certEditCropBackdrop';
+            bd.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1059;';
+            document.body.appendChild(bd);
+        }
+
+        function hideCertEditCropModal() {
+            var m = document.getElementById('certEditCropModal');
+            m.style.display = 'none';
+            var bd = document.getElementById('certEditCropBackdrop');
+            if (bd) bd.remove();
+            document.body.classList.remove('modal-open');
+            document.body.style.paddingRight = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('cert_edit_bg_input').addEventListener('change', function() {
+                if (!this.files || !this.files[0]) return;
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = document.getElementById('cert_edit_crop_img');
+                    if (certEditCropper) { certEditCropper.destroy(); certEditCropper = null; }
+                    img.src = e.target.result;
+                    showCertEditCropModal();
+                    setTimeout(function() {
+                        certEditCropper = new Cropper(img, {
+                            aspectRatio: NaN, viewMode: 1, autoCropArea: 1,
+                            minContainerHeight: 280, maxContainerHeight: 320
+                        });
+                    }, 150);
+                };
+                reader.readAsDataURL(this.files[0]);
+            });
+
+            document.getElementById('certEditCropDone').addEventListener('click', function() {
+                if (!certEditCropper) return;
+                var dataUrl = certEditCropper.getCroppedCanvas().toDataURL('image/jpeg', 0.9);
+                document.getElementById('cert_edit_bg_cropped').value = dataUrl;
+                document.getElementById('cert_edit_bg_info').value = 'background_cropped.jpg';
+                document.getElementById('cert_edit_bg_preview').src = dataUrl;
+                document.getElementById('cert_edit_bg_input').value = '';
+                certEditCropper.destroy(); certEditCropper = null;
+                hideCertEditCropModal();
+            });
+
+            document.getElementById('certEditCropClose').addEventListener('click', function() {
+                if (certEditCropper) { certEditCropper.destroy(); certEditCropper = null; }
+                document.getElementById('cert_edit_bg_input').value = '';
+                hideCertEditCropModal();
+            });
+            document.getElementById('certEditCropClose2').addEventListener('click', function() {
+                if (certEditCropper) { certEditCropper.destroy(); certEditCropper = null; }
+                document.getElementById('cert_edit_bg_input').value = '';
+                hideCertEditCropModal();
+            });
+        });
+
         window.onload = setTimeout(() => {
             $('.page_layout').trigger('change');
             $('.certificate_type').trigger('change');
@@ -126,4 +214,3 @@
             }, 2000);
         }
     </script>
-@endsection

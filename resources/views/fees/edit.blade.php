@@ -69,6 +69,7 @@
                                             <div class="form-group col-md-12 col-lg-3">
                                                 {!! Form::text('amount', null, ['class' => 'form-control amount', 'placeholder' => __('enter') . ' ' . __('fees') . ' ' . __('amount'), 'id' => 'amount', 'required' => true, 'min' => 0, "data-convert" => "number"]) !!}
                                             </div>
+                                            
 
                                             <div class="col-md-12 col-lg-1">
                                                 <button type="button"
@@ -234,6 +235,33 @@
                                                 {!! Form::text('amount', null, ['class' => 'form-control amount', 'placeholder' => __('enter') . ' ' . __('fees') . ' ' . __('amount'), 'id' => 'amount', 'required' => true, 'min' => 0, "data-convert" => "number"]) !!}
                                             </div>
 
+                                            
+                                            <div class="form-group col-md-12 col-lg-2">
+                                                <input type="number" name="optional_fees_type[0][number_of_months]"
+                                                    min="1" max="12"
+                                                    class="form-control optional-num-months" placeholder="No. of Months"
+                                                    required>
+                                            </div>
+
+                                            <div class="form-group col-md-12 col-lg-3">
+                                                <select name="optional_fees_type[0][months][]"
+                                                    class="form-control optional-months-select" multiple required>
+                                                    <option value="1">January</option>
+                                                    <option value="2">February</option>
+                                                    <option value="3">March</option>
+                                                    <option value="4">April</option>
+                                                    <option value="5">May</option>
+                                                    <option value="6">June</option>
+                                                    <option value="7">July</option>
+                                                    <option value="8">August</option>
+                                                    <option value="9">September</option>
+                                                    <option value="10">October</option>
+                                                    <option value="11">November</option>
+                                                    <option value="12">December</option>
+                                                </select>
+                                                <small class="text-muted optional-months-hint"></small>
+                                            </div>
+                                            
                                             <div class="col-md-12 col-lg-1">
                                                 <button type="button"
                                                     class="btn btn-inverse-danger btn-icon remove-fees-type"

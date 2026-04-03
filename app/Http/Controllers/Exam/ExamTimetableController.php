@@ -41,6 +41,7 @@ class ExamTimetableController extends Controller {
         $exam = $this->exam->builder()->where(['id' => $examId])->with(['class.medium', 'class.all_subjects' => function($query) use($currentSemester){
             (isset($currentSemester) && !empty($currentSemester)) ? $query->where('semester_id',$currentSemester->id)->orWhereNull('semester_id') : $query->orWhereNull('semester_id');
         }, 'timetable'])->firstOrFail();
+        dd($exam);
         $last_result_submission_date = date('d-m-Y',strtotime($exam->getRawOriginal('last_result_submission_date')));
         $disabled = $exam->publish ? 'disabled' : '';
         $schoolSettings = $this->cache->getSchoolSettings();

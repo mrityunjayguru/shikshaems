@@ -66,7 +66,7 @@ class GalleryController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'required',
-            'thumbnail' => 'required|mimes:jpg,svg,jpeg,png',
+            'thumbnail' => $request->filled('thumbnail_cropped') ? 'nullable' : 'required|mimes:jpg,svg,jpeg,png',
             'images.*' => 'mimes:jpg,svg,jpeg,png'
         ]);
         if ($validator->fails()) {
@@ -95,7 +95,7 @@ class GalleryController extends Controller
             $data = [
                 'title' => $request->title,
                 'description' => $request->description,
-                'thumbnail' => $request->thumbnail,
+                'thumbnail' => $this->resolveImageUpload($request, 'thumbnail', 'thumbnail_cropped'),
                 'session_year_id' => $request->session_year_id
             ];
 
@@ -112,21 +112,25 @@ class GalleryController extends Controller
             // Get the Association Values of File with gallery
             $galleryModelAssociate = $galleryFile->modal()->associate($gallery);
 
-            if (!empty($request->images)) {
+            if (!empty($request->images_cropped)) {
+                foreach ($request->images_cropped as $key => $base64) {
+                    if (!$base64) continue;
+                    // Convert base64 to UploadedFile
+                    $b64 = str_contains($base64, ',') ? explode(',', $base64)[1] : $base64;
+                    $decoded = base64_decode($b64);
+                    if (!$decoded) continue;
+                    $tmpPath = tempnam(sys_get_temp_dir(), 'gal_img_') . '.jpg';
+                    \Illuminate\Support\Facades\File::put($tmpPath, $decoded);
+                    $uploadedFile = new \Illuminate\Http\UploadedFile($tmpPath, 'gallery_image_' . ($key + 1) . '.jpg', 'image/jpeg', null, true);
 
-                foreach ($request->images as $key => $image) {
-
-                    $tempFileData = array(
+                    $galleryFileData[] = [
                         'modal_type' => $galleryModelAssociate->modal_type,
-                        'modal_id' => $galleryModelAssociate->modal_id,
-                        'file_name' => basename($image->getClientOriginalName(), '.' . $image->getClientOriginalExtension()),
-                    );
-
-                    $tempFileData['type'] = 1;
-                    $tempFileData['file_thumbnail'] = null;
-                    $tempFileData['file_url'] = $image;
-
-                    $galleryFileData[] = $tempFileData;
+                        'modal_id'   => $galleryModelAssociate->modal_id,
+                        'file_name'  => 'gallery_image_' . ($key + 1),
+                        'type'       => 1,
+                        'file_thumbnail' => null,
+                        'file_url'   => $uploadedFile,
+                    ];
                 }
             }
             // YouTube links
@@ -147,7 +151,22 @@ class GalleryController extends Controller
                     $galleryFileData[] = $tempFileData;
                 }
             }
-            if (!empty($request->images) || $request->youtube_links) {
+
+            // Original (skipped) images
+            if (!empty($request->images)) {
+                foreach ($request->images as $key => $image) {
+                    $galleryFileData[] = [
+                        'modal_type' => $galleryModelAssociate->modal_type,
+                        'modal_id'   => $galleryModelAssociate->modal_id,
+                        'file_name'  => basename($image->getClientOriginalName(), '.' . $image->getClientOriginalExtension()),
+                        'type'       => 1,
+                        'file_thumbnail' => null,
+                        'file_url'   => $image,
+                    ];
+                }
+            }
+
+            if (!empty($request->images_cropped) || !empty($request->images) || $request->youtube_links) {
                 $this->files->createBulk($galleryFileData);
             }
 
@@ -286,8 +305,8 @@ class GalleryController extends Controller
                 'session_year_id' => $request->session_year_id,
             ];
 
-            if ($request->hasFile('thumbnail')) {
-                $data['thumbnail'] = $request->thumbnail;
+            if ($request->hasFile('thumbnail') || $request->filled('thumbnail_cropped')) {
+                $data['thumbnail'] = $this->resolveImageUpload($request, 'thumbnail', 'thumbnail_cropped');
             }
 
             $gallery = $this->gallery->update($id, $data);

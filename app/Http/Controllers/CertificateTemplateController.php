@@ -107,8 +107,8 @@ class CertificateTemplateController extends Controller
                 'description' => $request->description,
                 'type' => $request->type,
             ];
-            if ($request->hasFile('background_image')) {
-                $data['background_image'] = $request->background_image;
+            if ($request->hasFile('background_image') || $request->filled('background_image_cropped')) {
+                $data['background_image'] = $this->resolveImageUpload($request, 'background_image', 'background_image_cropped');
             }
             $certificateTemplate = $this->certificateTemplate->create($data);
             DB::commit();
@@ -228,8 +228,8 @@ class CertificateTemplateController extends Controller
                 'type' => $request->type,
             ];
 
-            if ($request->hasFile('background_image')) {
-                $data['background_image'] = $request->background_image;
+            if ($request->hasFile('background_image') || $request->filled('background_image_cropped')) {
+                $data['background_image'] = $this->resolveImageUpload($request, 'background_image', 'background_image_cropped');
             }
 
             $this->certificateTemplate->update($id, $data);

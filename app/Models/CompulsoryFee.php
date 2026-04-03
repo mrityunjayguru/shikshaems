@@ -67,6 +67,11 @@ class CompulsoryFee extends Model
         return $this->hasMany(FeesAdvance::class);
     }
 
+    public function months()
+    {
+        return $this->hasMany(CompulsoryFeeMonth::class, 'compulsory_fee_id');
+    }
+
     public function getModeNameAttribute(){
         if ($this->mode == 1) {
             return 'Cash';

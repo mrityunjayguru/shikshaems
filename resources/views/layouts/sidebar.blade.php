@@ -708,7 +708,7 @@
         @endcanany
 
         {{-- staff attendance --}}
-        @if (!Auth::user()->hasRole('School Admin') && Auth::user()->school_id)
+        {{-- @if (!Auth::user()->hasRole('School Admin') && Auth::user()->school_id)
             <li class="nav-item">
                 <a href="{{ route('staff-attendance.your-index') }}" class="nav-link"
                     data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Staff Attendance Management')">
@@ -741,7 +741,7 @@
                     <span class="menu-title">{{ __('my_attendance') }}</span>
                 </a>
             </li>
-        @endif
+        @endif --}}
 
         {{-- Staff Attendance --}}
         {{-- @canany(['staff-attendance-list', 'staff-attendance-create', 'staff-attendance-edit', 'staff-attendance-delete'])

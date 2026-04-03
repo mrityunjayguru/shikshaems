@@ -23,14 +23,17 @@
                             <div class="row">
                                 <div class="form-group col-sm-12 col-md-12 col-lg-6 col-xl-4">
                                     <label>{{ __('image') }} <span class="text-danger">*</span></label>
-                                    <input type="file" required name="image" class="file-upload-default" accept="image/*"/>
+                                    <input type="hidden" name="image_cropped" id="slider_create_image_cropped">
+                                    <input type="file" id="slider_create_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg,image/webp"/>
                                     <div class="input-group col-xs-12">
                                         <input type="text" class="form-control file-upload-info" disabled=""
-                                               placeholder="{{ __('image') }}"/>
+                                               placeholder="{{ __('image') }}" id="slider_create_image_info"/>
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                    type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('slider_create_image_input').click()">{{ __('upload') }}</button>
                                         </span>
+                                    </div>
+                                    <div id="slider_create_preview" class="d-none mt-1" style="width:120px;">
+                                        <img src="" class="img-fluid w-100" alt="">
                                     </div>
                                 </div>
                                 <div class="form-group col-sm-12 col-md-8">
@@ -128,16 +131,15 @@
 
                                 <div class="form-group">
                                     <label>{{ __('image') }} <span class="text-danger">*</span></label>
-                                    <input type="file" name="image" class="file-upload-default edit_image"/>
+                                    <input type="hidden" name="image_cropped" id="slider_edit_image_cropped">
+                                    <input type="file" id="slider_edit_image_input" class="d-none" accept="image/png,image/jpeg,image/jpg,image/webp"/>
                                     <div class="input-group col-xs-12">
-                                        <input type="text" class="form-control edit_image" value=""
-                                               placeholder="{{ __('image') }}"/>
+                                        <input type="text" class="form-control" value=""
+                                               placeholder="{{ __('image') }}" id="slider_edit_image_info"/>
                                         <span class="input-group-append">
-                                            <button class="file-upload-browse btn btn-theme"
-                                                    type="button">{{ __('upload') }}</button>
+                                            <button class="btn btn-theme" type="button" onclick="document.getElementById('slider_edit_image_input').click()">{{ __('upload') }}</button>
                                         </span>
                                     </div>
-                                    <br>
                                     <br>
                                     <div class="w-100 text-center">
                                         <img src="" id="edit_slider_image" class="w-100" alt="">
@@ -188,27 +190,127 @@
             </div>
         </div>
     </div>
+    {{-- Slider Crop Modal --}}
+    <div class="modal" id="sliderCropModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index:1060;display:none;">
+        <div class="modal-dialog" role="document" style="max-width:560px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Crop Image</h6>
+                    <button type="button" class="close" id="sliderCropClose"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-2 text-center">
+                    <img id="slider_crop_preview" src="" style="max-width:100%;max-height:360px;display:block;" alt="crop">
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" id="sliderCropClose2">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-theme btn-sm" id="sliderCropDone">Crop & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@endsection
+
+@section('css')
+    <link rel="stylesheet" href="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css' }}"/>
 @endsection
 
 @section('script')
-<script>
-    // Handle file input change event for image validation
-    $(document).ready(function () {
-        // Use event delegation to handle change events on dynamically added file inputs
-        $('.file-upload-default').on('change', function() {
-            
-            const file = this.files[0];
-            if (file) {
-                const fileType = file.type;
-                const validImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'];
-                
-                if (!validImageTypes.includes(fileType)) {
-                    alert('Please select a valid image file (JPEG, PNG, GIF, WEBP).');
-                    $(this).val(''); // Clear the input
-                    window.location.reload(); // Reload the page
+    <script src="{{ 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js' }}"></script>
+    <script>
+        var sliderCropper = null;
+        var sliderCropTarget = null;
+
+        function showSliderCropModal() {
+            var m = document.getElementById('sliderCropModal');
+            m.style.display = 'block';
+            document.body.classList.add('modal-open');
+            var bd = document.createElement('div');
+            bd.id = 'sliderCropBackdrop';
+            bd.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1059;';
+            document.body.appendChild(bd);
+        }
+
+        function hideSliderCropModal() {
+            var m = document.getElementById('sliderCropModal');
+            m.style.display = 'none';
+            var bd = document.getElementById('sliderCropBackdrop');
+            if (bd) bd.remove();
+            if (sliderCropTarget === 'edit') {
+                var editModal = document.getElementById('editModal');
+                if (editModal && editModal.classList.contains('show')) {
+                    var scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+                    document.body.classList.add('modal-open');
+                    document.body.style.paddingRight = (scrollbarWidth > 0 ? scrollbarWidth : 0) + 'px';
+                } else {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.paddingRight = '';
                 }
+            } else {
+                document.body.classList.remove('modal-open');
+                document.body.style.paddingRight = '';
             }
+        }
+
+        function openSliderCrop(file, target) {
+            sliderCropTarget = target;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = document.getElementById('slider_crop_preview');
+                if (sliderCropper) { sliderCropper.destroy(); sliderCropper = null; }
+                img.src = e.target.result;
+                showSliderCropModal();
+                setTimeout(function() {
+                    sliderCropper = new Cropper(img, {
+                        aspectRatio: NaN,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                        minContainerHeight: 280,
+                        maxContainerHeight: 320
+                    });
+                }, 150);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('slider_create_image_input').addEventListener('change', function() {
+                if (this.files && this.files[0]) openSliderCrop(this.files[0], 'create');
+            });
+            document.getElementById('slider_edit_image_input').addEventListener('change', function() {
+                if (this.files && this.files[0]) openSliderCrop(this.files[0], 'edit');
+            });
+            document.getElementById('sliderCropDone').addEventListener('click', function() {
+                if (!sliderCropper) return;
+                var canvas = sliderCropper.getCroppedCanvas();
+                var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                if (sliderCropTarget === 'create') {
+                    document.getElementById('slider_create_image_cropped').value = dataUrl;
+                    document.getElementById('slider_create_image_info').value = 'image_cropped.jpg';
+                    var prev = document.getElementById('slider_create_preview');
+                    prev.classList.remove('d-none');
+                    prev.querySelector('img').src = dataUrl;
+                    document.getElementById('slider_create_image_input').value = '';
+                } else {
+                    document.getElementById('slider_edit_image_cropped').value = dataUrl;
+                    document.getElementById('slider_edit_image_info').value = 'image_cropped.jpg';
+                    document.getElementById('edit_slider_image').src = dataUrl;
+                    document.getElementById('slider_edit_image_input').value = '';
+                }
+                sliderCropper.destroy(); sliderCropper = null;
+                hideSliderCropModal();
+            });
+            document.getElementById('sliderCropClose').addEventListener('click', function() {
+                if (sliderCropper) { sliderCropper.destroy(); sliderCropper = null; }
+                hideSliderCropModal();
+                if (sliderCropTarget === 'create') document.getElementById('slider_create_image_input').value = '';
+                else document.getElementById('slider_edit_image_input').value = '';
+            });
+            document.getElementById('sliderCropClose2').addEventListener('click', function() {
+                if (sliderCropper) { sliderCropper.destroy(); sliderCropper = null; }
+                hideSliderCropModal();
+                if (sliderCropTarget === 'create') document.getElementById('slider_create_image_input').value = '';
+                else document.getElementById('slider_edit_image_input').value = '';
+            });
         });
-    });
-</script>
-@endsection
+    </script>

@@ -91,9 +91,6 @@ Route::group(['prefix' => 'student'], static function () {
 
         // Teachers
         Route::get('teachers', [StudentApiController::class, 'getTeachers']);
-
-        // Location
-        Route::post('update-location', [StudentApiController::class, 'updateLocation']);
     });
 });
 
@@ -129,9 +126,9 @@ Route::group(['prefix' => 'parent'], static function () {
 
             // Fees
             Route::group(['prefix' => 'fees'], static function () {
-                Route::get('/', [ParentApiController::class, 'getFees']);
+                Route::get('/', [ParentApiController::class, 'getFees']); // Fee Payment Selection Screen
                 Route::get('/summary', [ParentApiController::class, 'getFeeSummary']); // Fee Summary
-                Route::get('/payment-details', [ParentApiController::class, 'getFeesForPayment']); // Fee Payment Selection Screen
+                // Route::get('/payment-details', [ParentApiController::class, 'getFeesForPayment']); 
                 Route::get('/children', [ParentApiController::class, 'getChildrenForFeePayment']); // Select Child for Payment
                 Route::get('/payment-history', [ParentApiController::class, 'getPaymentHistory']); // Payment History
 
@@ -178,6 +175,8 @@ Route::group(['prefix' => 'parent'], static function () {
             Route::post('apply-leave', [ParentApiController::class, 'applyLeave']);
             Route::get('get-leaves', [ParentApiController::class, 'getLeaves']);
             Route::post('submit-support', [ParentApiController::class, 'support']);
+            // Location
+            Route::post('update-location', [ParentApiController::class, 'updateLocation']);
         });
     });
     // });
