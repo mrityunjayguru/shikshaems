@@ -8,31 +8,42 @@ use Illuminate\Support\Facades\Auth;
 use App\Traits\DateFormatTrait;
 
 
-class FeesClassType extends Model {
+class FeesClassType extends Model
+{
     use HasFactory, DateFormatTrait;
 
     protected $fillable = [
         'class_id',
         'fees_id',
         'fees_class_id',
+        'fees_type_id',
         'amount',
         'optional',
+        'number_of_months',
+        'applicable_months',
         'school_id',
         'deleted_at'
+    ];
+
+    protected $casts = [
+        'applicable_months' => 'array',
     ];
     protected $appends = ['fees_type_name'];
 
 
-    public function fees_type() {
+    public function fees_type()
+    {
         return $this->belongsTo(FeesType::class, 'fees_type_id')->withTrashed();
     }
 
-    public function class() {
+    public function class()
+    {
         return $this->belongsTo(ClassSchool::class, 'class_id')->with('medium')->withTrashed();
     }
 
-    public function scopeOwner($query) {
-        if(Auth::user()) {
+    public function scopeOwner($query)
+    {
+        if (Auth::user()) {
             if (Auth::user()->hasRole('Super Admin')) {
                 return $query;
             }
@@ -49,17 +60,25 @@ class FeesClassType extends Model {
         return $query;
     }
 
-    public function optional_fees_paid() {
+    public function optional_fees_paid()
+    {
         return $this->hasMany(OptionalFee::class, 'fees_class_id')->withTrashed();
     }
 
-    public function getFeesTypeNameAttribute() {
+    public function compulsory_fee_months()
+    {
+        return $this->hasMany(CompulsoryFeeMonth::class, 'compulsory_fee_id');
+    }
+
+    public function getFeesTypeNameAttribute()
+    {
         if ($this->relationLoaded('fees_type')) {
             return $this->fees_type->name;
         }
     }
 
-    protected function setDueDateAttribute($value) {
+    protected function setDueDateAttribute($value)
+    {
         $this->attributes['due_date'] = $this->formatDateValue($value);
     }
 

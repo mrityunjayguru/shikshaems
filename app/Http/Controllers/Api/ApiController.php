@@ -6,15 +6,19 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Chat;
 use App\Models\ClassTeacher;
+use App\Models\CompulsoryFeeMonth;
+use App\Models\CompulsoryFee;
 use App\Models\Role;
 use App\Models\Students;
 use App\Models\SubjectTeacher;
+use App\Models\FeesAdvance;
 use App\Models\User;
 use App\Models\UserDevices;
 use App\Models\Events;
 use App\Models\Syllabus;
 use App\Models\TransportationPayment;
 use App\Models\TransportationFee;
+use App\Models\OptionalFee;
 use App\Repositories\Attachment\AttachmentInterface;
 use App\Repositories\Chat\ChatInterface;
 use App\Repositories\ClassSection\ClassSectionInterface;
@@ -397,13 +401,13 @@ class ApiController extends Controller
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
         }
-        
+
         try {
             $paymentTransaction = app(PaymentTransactionInterface::class)->builder()->where('id', $request->id)->first();
             if (empty($paymentTransaction)) {
                 ResponseService::errorResponse("No Data Found");
             }
-            
+
             // If payment is still pending, return transaction status without calling Razorpay
             if ($paymentTransaction->payment_status === 'pending' || $paymentTransaction->payment_status === 'Pending') {
                 $data = [
@@ -418,7 +422,7 @@ class ApiController extends Controller
                 ResponseService::successResponse("Payment is pending", $data, ['payment_transaction' => $paymentTransaction]);
                 return;
             }
-            
+
             // For completed/failed payments, retrieve from payment gateway
             try {
                 $data = PaymentService::create($paymentTransaction->payment_gateway, $paymentTransaction->school_id)->retrievePaymentIntent($paymentTransaction->order_id);
@@ -426,7 +430,7 @@ class ApiController extends Controller
             } catch (\Exception $e) {
                 // If Razorpay API fails, return local transaction data
                 \Log::warning("Failed to retrieve from payment gateway, returning local data: " . $e->getMessage());
-                
+
                 $data = [
                     'id' => $paymentTransaction->order_id,
                     'amount' => $paymentTransaction->amount * 100,
@@ -445,6 +449,305 @@ class ApiController extends Controller
             ResponseService::errorResponse();
         }
     }
+
+    // public function getPaymentConfirmation(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'id' => 'required'
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         ResponseService::validationError($validator->errors()->first());
+    //     }
+
+    //     try {
+    //         DB::beginTransaction();
+
+    //         $paymentTransaction = app(PaymentTransactionInterface::class)->builder()
+    //             ->where('id', $request->id)
+    //             ->first();
+
+    //         if (empty($paymentTransaction)) {
+    //             ResponseService::errorResponse("No Data Found");
+    //         }
+
+    //         if ($paymentTransaction->payment_status === 'pending' || $paymentTransaction->payment_status === 'Pending') {
+    //             $data = [
+    //                 'id' => $paymentTransaction->order_id,
+    //                 'amount' => $paymentTransaction->amount * 100,
+    //                 'amount_paid' => 0,
+    //                 'amount_due' => $paymentTransaction->amount * 100,
+    //                 'currency' => 'INR',
+    //                 'status' => 'created',
+    //                 'payment_status' => 'pending'
+    //             ];
+
+    //             ResponseService::successResponse("Payment is pending", $data, ['payment_transaction' => $paymentTransaction]);
+    //             return;
+    //         }
+
+    //         try {
+    //             $data = PaymentService::create($paymentTransaction->payment_gateway, $paymentTransaction->school_id)
+    //                 ->retrievePaymentIntent($paymentTransaction->order_id);
+
+    //             $data = PaymentService::formatPaymentIntent($paymentTransaction->payment_gateway, $data);
+    //         } catch (\Exception $e) {
+    //             \Log::warning("Failed to retrieve from payment gateway, returning local data: " . $e->getMessage());
+
+    //             $data = [
+    //                 'id' => $paymentTransaction->order_id,
+    //                 'amount' => $paymentTransaction->amount * 100,
+    //                 'amount_paid' => $paymentTransaction->payment_status === 'succeed' ? $paymentTransaction->amount * 100 : 0,
+    //                 'amount_due' => $paymentTransaction->payment_status === 'succeed' ? 0 : $paymentTransaction->amount * 100,
+    //                 'currency' => 'INR',
+    //                 'status' => $paymentTransaction->payment_status === 'succeed' ? 'paid' : ($paymentTransaction->payment_status === 'failed' ? 'failed' : 'created'),
+    //                 'payment_status' => $paymentTransaction->payment_status
+    //             ];
+    //         }
+
+    //         // Only process if success
+    //         if (
+    //             strtolower($paymentTransaction->payment_status) === 'succeed' ||
+    //             strtolower($data['payment_status'] ?? '') === 'succeed' ||
+    //             strtolower($data['status'] ?? '') === 'paid'
+    //         ) {
+    //             // Prevent duplicate storing
+    //             $alreadyStored = FeesPaid::whereHas('compulsory_fee', function ($q) use ($paymentTransaction) {
+    //                 $q->where('payment_transaction_id', $paymentTransaction->id);
+    //             })->orWhereHas('optional_fee', function ($q) use ($paymentTransaction) {
+    //                 $q->where('payment_transaction_id', $paymentTransaction->id);
+    //             })->exists();
+
+    //             if (!$alreadyStored) {
+    //                 $metadata = $data['metadata'] ?? [];
+
+    //                 if (empty($metadata['multiple_fees'])) {
+    //                     DB::commit();
+    //                     ResponseService::successResponse("Payment Details Fetched", $data, ['payment_transaction' => $paymentTransaction]);
+    //                     return;
+    //                 }
+
+    //                 $multipleFees = json_decode($metadata['multiple_fees'], true);
+    //                 $studentId = $metadata['student_id'] ?? null;
+    //                 $schoolId = $metadata['school_id'] ?? null;
+    //                 $sessionYearId = $metadata['session_year_id'] ?? null;
+    //                 $parentId = $metadata['parent_id'] ?? null;
+
+    //                 foreach ($multipleFees as $feeItem) {
+    //                     $feesId = $feeItem['fees_id'];
+    //                     $compulsoryAmountPaid = (float)($feeItem['compulsory_amount'] ?? 0);
+    //                     $optionalAmountPaid = (float)($feeItem['optional_amount'] ?? 0);
+    //                     $dueCharges = (float)($feeItem['due_charges'] ?? 0);
+
+    //                     // Create / update fees_paid
+    //                     $feesPaid = FeesPaid::where([
+    //                         'fees_id' => $feesId,
+    //                         'student_id' => $studentId
+    //                     ])->first();
+
+    //                     $previousPaid = $feesPaid->amount ?? 0;
+    //                     $newTotalPaid = $previousPaid + $compulsoryAmountPaid + $optionalAmountPaid + $dueCharges;
+
+    //                     $fees = Fees::with('fees_class_type')->find($feesId);
+
+    //                     $totalCompulsory = (float)($fees->fees_class_type->where('optional', 0)->sum('amount'));
+    //                     $totalOptional = (float)($fees->fees_class_type->where('optional', 1)->sum('amount'));
+    //                     $grandFeeTotal = $totalCompulsory + $totalOptional;
+
+    //                     $isFullyPaid = $newTotalPaid >= $grandFeeTotal;
+
+    //                     if (!$feesPaid) {
+    //                         $feesPaid = FeesPaid::create([
+    //                             'fees_id' => $feesId,
+    //                             'student_id' => $studentId,
+    //                             'amount' => $newTotalPaid,
+    //                             'date' => now()->format('Y-m-d'),
+    //                             'school_id' => $schoolId,
+    //                             'is_fully_paid' => $isFullyPaid,
+    //                             'is_used_installment' => 0,
+    //                         ]);
+    //                     } else {
+    //                         $feesPaid->update([
+    //                             'amount' => $newTotalPaid,
+    //                             'is_fully_paid' => $isFullyPaid,
+    //                             'date' => now()->format('Y-m-d'),
+    //                         ]);
+    //                     }
+
+    //                     /*
+    //                 |--------------------------------------------------------------------------
+    //                 | STORE COMPULSORY FEES + MONTHS
+    //                 |--------------------------------------------------------------------------
+    //                 */
+    //                     if (!empty($feeItem['compulsory_details']) && $compulsoryAmountPaid > 0) {
+    //                         $remainingCompulsory = $compulsoryAmountPaid;
+
+    //                         foreach ($feeItem['compulsory_details'] as $compulsoryRow) {
+    //                             if ($remainingCompulsory <= 0) {
+    //                                 break;
+    //                             }
+
+    //                             $monthlyAmount = (float)$compulsoryRow['monthly_amount'];
+    //                             $yearlyAmount = (float)$compulsoryRow['yearly_amount'];
+
+    //                             // Create compulsory fee row
+    //                             $compulsoryFee = CompulsoryFee::create([
+    //                                 'student_id' => $studentId,
+    //                                 'payment_transaction_id' => $paymentTransaction->id,
+    //                                 'type' => 'Full Payment',
+    //                                 'installment_id' => null,
+    //                                 'mode' => 'Online',
+    //                                 'cheque_no' => null,
+    //                                 'amount' => 0, // update later
+    //                                 'due_charges' => $dueCharges,
+    //                                 'fees_paid_id' => $feesPaid->id,
+    //                                 'status' => 'Success',
+    //                                 'date' => now()->format('Y-m-d H:i:s'),
+    //                                 'school_id' => $schoolId,
+    //                             ]);
+
+    //                             // Find already paid month numbers
+    //                             $alreadyPaidMonths = CompulsoryFeeMonth::whereHas('compulsory_fee', function ($q) use ($studentId, $feesId) {
+    //                                 $q->where('student_id', $studentId)
+    //                                     ->whereHas('fees_paid', function ($q2) use ($feesId) {
+    //                                         $q2->where('fees_id', $feesId);
+    //                                     });
+    //                             })->pluck('month_number')->toArray();
+
+    //                             $alreadyPaidMonths = array_values(array_unique($alreadyPaidMonths));
+
+    //                             // Build session months
+    //                             $sessionYear = $this->cache->getDefaultSessionYear($schoolId);
+    //                             $sessionStart = Carbon::parse($sessionYear->start_date)->startOfMonth();
+    //                             $sessionEnd = Carbon::parse($sessionYear->end_date)->endOfMonth();
+
+    //                             $monthMap = [];
+    //                             $cursor = $sessionStart->copy();
+
+    //                             while ($cursor->lte($sessionEnd)) {
+    //                                 $monthMap[] = [
+    //                                     'month_number' => (int)$cursor->month,
+    //                                     'month_name' => $cursor->format('F'),
+    //                                 ];
+    //                                 $cursor->addMonth();
+    //                             }
+
+    //                             $storedAmount = 0;
+
+    //                             foreach ($monthMap as $monthData) {
+    //                                 if ($remainingCompulsory <= 0) {
+    //                                     break;
+    //                                 }
+
+    //                                 if (in_array($monthData['month_number'], $alreadyPaidMonths)) {
+    //                                     continue;
+    //                                 }
+
+    //                                 if ($remainingCompulsory >= $monthlyAmount) {
+    //                                     CompulsoryFeeMonth::create([
+    //                                         'compulsory_fee_id' => $compulsoryFee->id,
+    //                                         'month_number' => $monthData['month_number'],
+    //                                         'month_name' => $monthData['month_name'],
+    //                                         'amount' => $monthlyAmount,
+    //                                         'is_partial' => false,
+    //                                     ]);
+
+    //                                     $remainingCompulsory = round($remainingCompulsory - $monthlyAmount, 2);
+    //                                     $storedAmount += $monthlyAmount;
+    //                                 } else {
+    //                                     CompulsoryFeeMonth::create([
+    //                                         'compulsory_fee_id' => $compulsoryFee->id,
+    //                                         'month_number' => $monthData['month_number'],
+    //                                         'month_name' => $monthData['month_name'],
+    //                                         'amount' => $remainingCompulsory,
+    //                                         'is_partial' => true,
+    //                                     ]);
+
+    //                                     $storedAmount += $remainingCompulsory;
+    //                                     $remainingCompulsory = 0;
+    //                                 }
+    //                             }
+
+    //                             $compulsoryFee->update([
+    //                                 'amount' => $storedAmount
+    //                             ]);
+
+    //                             /*
+    //                         |--------------------------------------------------------------------------
+    //                         | SAVE EXTRA AS ADVANCE
+    //                         |--------------------------------------------------------------------------
+    //                         */
+    //                             if ($remainingCompulsory > 0) {
+    //                                 FeesAdvance::create([
+    //                                     'compulsory_fee_id' => $compulsoryFee->id,
+    //                                     'student_id' => $studentId,
+    //                                     'parent_id' => $parentId,
+    //                                     'amount' => $remainingCompulsory,
+    //                                 ]);
+
+    //                                 $remainingCompulsory = 0;
+    //                             }
+    //                         }
+    //                     }
+
+    //                     /*
+    //                 |--------------------------------------------------------------------------
+    //                 | STORE OPTIONAL FEES
+    //                 |--------------------------------------------------------------------------
+    //                 */
+    //                     if (!empty($feeItem['optional_details'])) {
+    //                         foreach ($feeItem['optional_details'] as $optionalRow) {
+    //                             $alreadyOptional = OptionalFee::where([
+    //                                 'student_id' => $studentId,
+    //                                 'fees_paid_id' => $feesPaid->id,
+    //                                 'fees_class_id' => $optionalRow['id']
+    //                             ])->exists();
+
+    //                             if ($alreadyOptional) {
+    //                                 continue;
+    //                             }
+
+    //                             OptionalFee::create([
+    //                                 'student_id' => $studentId,
+    //                                 'payment_transaction_id' => $paymentTransaction->id,
+    //                                 'fees_class_id' => $optionalRow['id'],
+    //                                 'mode' => 'Online',
+    //                                 'cheque_no' => null,
+    //                                 'amount' => $optionalRow['amount'],
+    //                                 'fees_paid_id' => $feesPaid->id,
+    //                                 'status' => 'Success',
+    //                                 'date' => now()->format('Y-m-d H:i:s'),
+    //                                 'school_id' => $schoolId,
+    //                             ]);
+    //                         }
+    //                     }
+
+    //                     /*
+    //                 |--------------------------------------------------------------------------
+    //                 | SESSION TRACKING
+    //                 |--------------------------------------------------------------------------
+    //                 */
+    //                     $this->sessionYearsTrackingsService->storeSessionYearsTracking(
+    //                         'App\Models\FeesPaid',
+    //                         $feesPaid->id,
+    //                         $studentId,
+    //                         $sessionYearId,
+    //                         $schoolId,
+    //                         null
+    //                     );
+    //                 }
+    //             }
+    //         }
+
+    //         DB::commit();
+
+    //         ResponseService::successResponse("Payment Details Fetched", $data, ['payment_transaction' => $paymentTransaction]);
+    //     } catch (Throwable $e) {
+    //         DB::rollBack();
+    //         ResponseService::logErrorResponse($e);
+    //         ResponseService::errorResponse();
+    //     }
+    // }
 
     public function getPaymentTransactions(Request $request)
     {
@@ -671,7 +974,7 @@ class ApiController extends Controller
 
             $dates = collect($request->leave_details)
                 ->pluck('date')
-                ->map(fn($d) => \Carbon\Carbon::parse($d));
+                ->map(fn($d) => Carbon\Carbon::parse($d));
 
             $from_date = $dates->min()->toDateString();
             $to_date = $dates->max()->toDateString();

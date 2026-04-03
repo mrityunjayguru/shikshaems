@@ -674,7 +674,7 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="form-group col-sm-12 col-md-4">
+                                    {{-- <div class="form-group col-sm-12 col-md-4">
                                         <div class="d-flex">
                                             <div class="form-check w-fit-content">
                                                 <label class="form-check-label ml-4">
@@ -683,10 +683,10 @@
                                                 </label>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> --}}
 
                                     {{-- two factor verification --}}
-                                    <div class="d-flex">
+                                    {{-- <div class="d-flex">
                                         <div class="form-check w-fit-content">
                                             <label class="form-check-label ml-4">
                                                 <input type="checkbox" class="form-check-input"
@@ -694,7 +694,7 @@
                                                     value="0"> {{ __('two_factor_verification') }}
                                             </label>
                                         </div>
-                                    </div>
+                                    </div> --}}
                                 </div>
 
                             </div>

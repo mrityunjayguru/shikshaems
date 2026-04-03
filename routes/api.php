@@ -126,9 +126,9 @@ Route::group(['prefix' => 'parent'], static function () {
 
             // Fees
             Route::group(['prefix' => 'fees'], static function () {
-                Route::get('/', [ParentApiController::class, 'getFees']);
+                Route::get('/', [ParentApiController::class, 'getFees']); // Fee Payment Selection Screen
                 Route::get('/summary', [ParentApiController::class, 'getFeeSummary']); // Fee Summary
-                Route::get('/payment-details', [ParentApiController::class, 'getFeesForPayment']); // Fee Payment Selection Screen
+                // Route::get('/payment-details', [ParentApiController::class, 'getFeesForPayment']); 
                 Route::get('/children', [ParentApiController::class, 'getChildrenForFeePayment']); // Select Child for Payment
                 Route::get('/payment-history', [ParentApiController::class, 'getPaymentHistory']); // Payment History
 

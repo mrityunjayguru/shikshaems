@@ -1322,7 +1322,7 @@ class WebhookController extends Controller
                     }
                 } else {
                     // Full payment
-                    CompulsoryFee::create([
+                    $compulsoryFeeRecord = CompulsoryFee::create([
                         'student_id' => $metadata->student_id,
                         'payment_transaction_id' => $paymentTransaction->id,
                         'type' => 'Full Payment',
@@ -1332,10 +1332,22 @@ class WebhookController extends Controller
                         'amount' => $compulsoryAmount,
                         'due_charges' => $feeData['due_charges'] ?? 0,
                         'fees_paid_id' => $feesPaidResult->id,
-                        'status' => 1, // 1 = succeed, 2 = pending
+                        'status' => 1,
                         'date' => $current_date,
                         'school_id' => $metadata->school_id,
                     ]);
+
+                    // Month-wise breakdown
+                    if ($fees->total_compulsory_fees > 0 && $compulsoryAmount > 0) {
+                        $this->storeCompulsoryFeeMonths(
+                            $compulsoryFeeRecord->id,
+                            $metadata->student_id,
+                            $feesId,
+                            $compulsoryAmount,
+                            $fees->total_compulsory_fees,
+                            $metadata->school_id
+                        );
+                    }
                 }
             }
             
@@ -1360,6 +1372,113 @@ class WebhookController extends Controller
                     ]);
                 }
             }
+        }
+    }
+
+    /**
+     * Store month-wise breakdown for a compulsory fee payment.
+     * Session year ke start month se months count hote hain (1 = session start month).
+     */
+    private function storeCompulsoryFeeMonths(int $compulsoryFeeId, int $studentId, int $feesId, float $paidAmount, float $totalFees, int $schoolId): void
+    {
+        try {
+            $allMonthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+            // Session year fetch karo school ke liye
+            $sessionYear = \App\Models\SessionYear::where('school_id', $schoolId)
+                ->where('default', 1)
+                ->first();
+
+            $startMonthIdx = $sessionYear
+                ? (int) \Carbon\Carbon::parse($sessionYear->start_date)->format('n')
+                : 1; // fallback: January
+
+            // Session month map: 1 = session start month, 2 = next, ...
+            $sessionMonthMap = [];
+            for ($i = 0; $i < 12; $i++) {
+                $calMonth = (($startMonthIdx - 1 + $i) % 12) + 1;
+                $sessionMonthMap[$i + 1] = $allMonthNames[$calMonth - 1];
+            }
+
+            $monthlyFee = round($totalFees / 12, 2);
+
+            // Last stored month record se continue karo
+            $lastMonthRecord = \App\Models\CompulsoryFeeMonth::whereHas('compulsory_fee', function ($q) use ($studentId, $feesId) {
+                $q->where('student_id', $studentId)
+                  ->whereHas('fees_paid', function ($q2) use ($feesId) {
+                      $q2->where('fees_id', $feesId);
+                  });
+            })->where('compulsory_fee_id', '!=', $compulsoryFeeId) // exclude current record
+              ->orderBy('month_number', 'desc')
+              ->first();
+
+            if ($lastMonthRecord) {
+                $currentMonth       = $lastMonthRecord->month_number;
+                $partialAlreadyPaid = $lastMonthRecord->is_partial
+                    ? round($lastMonthRecord->amount, 2)
+                    : 0;
+
+                if (!$lastMonthRecord->is_partial) {
+                    $currentMonth++;
+                }
+            } else {
+                $currentMonth       = 1;
+                $partialAlreadyPaid = 0;
+            }
+
+            $remaining = round($paidAmount, 2);
+
+            // Partial month pehle complete karo
+            if ($partialAlreadyPaid > 0.01) {
+                $neededToComplete = round($monthlyFee - $partialAlreadyPaid, 2);
+
+                if ($remaining >= $neededToComplete - 0.01) {
+                    \App\Models\CompulsoryFeeMonth::create([
+                        'compulsory_fee_id' => $compulsoryFeeId,
+                        'month_number'      => $currentMonth,
+                        'month_name'        => $sessionMonthMap[$currentMonth] ?? '',
+                        'amount'            => $neededToComplete,
+                        'is_partial'        => false,
+                    ]);
+                    $remaining = round($remaining - $neededToComplete, 2);
+                    $currentMonth++;
+                } else {
+                    \App\Models\CompulsoryFeeMonth::create([
+                        'compulsory_fee_id' => $compulsoryFeeId,
+                        'month_number'      => $currentMonth,
+                        'month_name'        => $sessionMonthMap[$currentMonth] ?? '',
+                        'amount'            => $remaining,
+                        'is_partial'        => true,
+                    ]);
+                    $remaining = 0;
+                }
+            }
+
+            // Baaki months
+            while ($remaining > 0.01 && $currentMonth <= 12) {
+                if ($remaining >= $monthlyFee - 0.01) {
+                    \App\Models\CompulsoryFeeMonth::create([
+                        'compulsory_fee_id' => $compulsoryFeeId,
+                        'month_number'      => $currentMonth,
+                        'month_name'        => $sessionMonthMap[$currentMonth] ?? '',
+                        'amount'            => $monthlyFee,
+                        'is_partial'        => false,
+                    ]);
+                    $remaining = round($remaining - $monthlyFee, 2);
+                } else {
+                    \App\Models\CompulsoryFeeMonth::create([
+                        'compulsory_fee_id' => $compulsoryFeeId,
+                        'month_number'      => $currentMonth,
+                        'month_name'        => $sessionMonthMap[$currentMonth] ?? '',
+                        'amount'            => $remaining,
+                        'is_partial'        => true,
+                    ]);
+                    $remaining = 0;
+                }
+                $currentMonth++;
+            }
+        } catch (\Throwable $e) {
+            \Log::error("storeCompulsoryFeeMonths error: " . $e->getMessage());
         }
     }
 }

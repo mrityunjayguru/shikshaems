@@ -1533,30 +1533,41 @@ class FeesController extends Controller
                  *  MONTH-WISE BREAKDOWN
                  *  ---------------------------- */
                 if ($fees->total_compulsory_fees > 0 && $usedCurrentPayment > 0) {
-                    $monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                    // Session year se start month nikalo
+                    $sessionYear    = $this->cache->getDefaultSessionYear();
+                    $sessionStart   = \Carbon\Carbon::parse($sessionYear->start_date);
+                    $startMonthIdx  = (int) $sessionStart->format('n'); // 1-12, e.g. April = 4
+
+                    // Session year ke order me 12 months build karo
+                    // month_number 1 = session start month, 2 = next, ... 12 = last
+                    $allMonthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                    $sessionMonthMap = []; // [1 => 'April', 2 => 'May', ...]
+                    for ($i = 0; $i < 12; $i++) {
+                        $calMonth = (($startMonthIdx - 1 + $i) % 12) + 1; // actual calendar month number
+                        $sessionMonthMap[$i + 1] = $allMonthNames[$calMonth - 1];
+                    }
+
                     $monthlyFee = round($fees->total_compulsory_fees / 12, 2);
 
-                    // Get last month record from previous payments for this student+fees
-                    // This is the most reliable way — directly from stored month records
+                    // Last stored month record se continue karo
                     $lastMonthRecord = \App\Models\CompulsoryFeeMonth::whereHas('compulsory_fee', function ($q) use ($request) {
                         $q->where('student_id', $request->student_id)
-                            ->whereHas('fees_paid', function ($q2) use ($request) {
-                                $q2->where('fees_id', $request->fees_id);
-                            });
+                          ->whereHas('fees_paid', function ($q2) use ($request) {
+                              $q2->where('fees_id', $request->fees_id);
+                          });
                     })->orderBy('month_number', 'desc')->first();
 
                     if ($lastMonthRecord) {
                         $currentMonth       = $lastMonthRecord->month_number;
                         $partialAlreadyPaid = $lastMonthRecord->is_partial
-                            ? round($lastMonthRecord->amount, 2)  // partial month me kitna paid tha
-                            : 0;                                   // full month tha, next se shuru karo
+                            ? round($lastMonthRecord->amount, 2)
+                            : 0;
 
                         if (!$lastMonthRecord->is_partial) {
-                            $currentMonth++; // last month full tha, next month se shuru
+                            $currentMonth++;
                         }
                     } else {
-                        // Pehli payment hai
-                        $currentMonth       = 1;
+                        $currentMonth       = 1; // session ka pehla month
                         $partialAlreadyPaid = 0;
                     }
 
@@ -1571,7 +1582,7 @@ class FeesController extends Controller
                             \App\Models\CompulsoryFeeMonth::create([
                                 'compulsory_fee_id' => $compulsoryFee->id,
                                 'month_number'      => $currentMonth,
-                                'month_name'        => $monthNames[$currentMonth - 1],
+                                'month_name'        => $sessionMonthMap[$currentMonth],
                                 'amount'            => $neededToComplete,
                                 'is_partial'        => false,
                             ]);
@@ -1582,7 +1593,7 @@ class FeesController extends Controller
                             \App\Models\CompulsoryFeeMonth::create([
                                 'compulsory_fee_id' => $compulsoryFee->id,
                                 'month_number'      => $currentMonth,
-                                'month_name'        => $monthNames[$currentMonth - 1],
+                                'month_name'        => $sessionMonthMap[$currentMonth],
                                 'amount'            => $remaining,
                                 'is_partial'        => true,
                             ]);
@@ -1596,7 +1607,7 @@ class FeesController extends Controller
                             \App\Models\CompulsoryFeeMonth::create([
                                 'compulsory_fee_id' => $compulsoryFee->id,
                                 'month_number'      => $currentMonth,
-                                'month_name'        => $monthNames[$currentMonth - 1],
+                                'month_name'        => $sessionMonthMap[$currentMonth],
                                 'amount'            => $monthlyFee,
                                 'is_partial'        => false,
                             ]);
@@ -1605,7 +1616,7 @@ class FeesController extends Controller
                             \App\Models\CompulsoryFeeMonth::create([
                                 'compulsory_fee_id' => $compulsoryFee->id,
                                 'month_number'      => $currentMonth,
-                                'month_name'        => $monthNames[$currentMonth - 1],
+                                'month_name'        => $sessionMonthMap[$currentMonth],
                                 'amount'            => $remaining,
                                 'is_partial'        => true,
                             ]);
