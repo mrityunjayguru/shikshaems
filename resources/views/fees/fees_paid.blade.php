@@ -272,16 +272,8 @@
                 return;
             }
 
-            let parts = selected.split('|');
-            let type = parts[0];
-            let id = parts[1];
-
-            let urlTemplate = "{{ route('fees.paid.receipt.pdf', ['type' => '__type__', 'id' => '__id__']) }}";
-            let finalUrl = urlTemplate
-                .replace('__type__', type)
-                .replace('__id__', id);
-
-            window.open(finalUrl, '_blank');
+            // value is now a direct URL
+            window.open(selected, '_blank');
         });
     </script>
 @endsection

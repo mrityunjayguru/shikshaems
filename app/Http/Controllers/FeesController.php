@@ -923,38 +923,20 @@ class FeesController extends Controller
                     $tempRow['fees_status'] = 2;
                 }
 
-                $operate = '<div class="dropdown"><button class="btn btn-xs btn-gradient-success btn-rounded btn-icon dropdown-toggle" type="button" data-toggle="dropdown"><i class="fa fa-inr"></i></button><div class="dropdown-menu">';
-                $operate .= '<a href="' . route('fees.compulsory.index', [$fees->id, $row->id]) . '" class="compulsory-data dropdown-item" title="' . trans('Compulsory Fees') . '"><i class="fa fa-inr text-success mr-2"></i>' . trans('Compulsory Fees') . '</a>';
-
-                if (count($fees->optional_fees) > 0) {
-                    $operate .= '<div class="dropdown-divider"></div><a href="' . route('fees.optional.index', [$fees->id, $row->id]) . '" class="optional-data dropdown-item" title="' . trans('Optional Fees') . '"><i class="fa fa-inr text-success mr-2"></i>' . trans('Optional Fees') . '</a>';
-                }
-                $operate .= '</div></div>&nbsp;&nbsp;';
+                // Pay Fees — direct button (no dropdown)
+                $operate = '<a href="' . route('fees.unified.index', [$fees->id, $row->id]) . '" class="btn btn-xs btn-gradient-success btn-rounded btn-icon" title="' . trans('Pay Fees') . '"><i class="fa fa-inr"></i></a>&nbsp;&nbsp;';
 
                 if (!empty($row->fees_paid)) {
-                    $operate .= ($fees->session_year_id == $sessionYearId) ? $operate : "";
-                    // $operate .= BootstrapTableService::button('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    // <path d="M12 2V8L14 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    // <path d="M12 8L10 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    // <path d="M7 12C3 12 3 13.79 3 16V17C3 19.76 3 22 8 22H16C20 22 21 19.76 21 17V16C21 13.79 21 12 17 12C16 12 15.72 12.21 15.2 12.6L14.18 13.68C13 14.94 11 14.94 9.81 13.68L8.8 12.6C8.28 12.21 8 12 7 12Z" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                    // <path d="M5 12V8.00004C5 5.99004 5 4.33004 8 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                    // <path d="M19 12V8.00004C19 5.99004 19 4.33004 16 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                    // </svg>
-
-
-                    // ', route('fees.paid.receipt.pdf', $row->fees_paid->id), ['btn', 'btn-xs', 'btn-download', 'btn-rounded', 'btn-icon', 'generate-paid-fees-pdf'], ['target' => "_blank", 'data-id' => $row->fees_paid->id, 'title' => trans('generate_pdf') . ' ' . trans('fees')]);
                     $operate .= '<button 
                             class="btn btn-xs btn-download btn-rounded btn-icon open-receipt-modal"
                             data-student="' . $row->id . '" data-fees="' . $fees->id . '" 
                             data-url="' . route('get.receipts', ['studentId' => $row->id, 'feesId' => $fees->id]) . '"
                             title="View Receipts">
-                            
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <path d="M12 2V8L14 6" stroke="white" stroke-width="1.5"/>
                                 <path d="M12 8L10 6" stroke="white" stroke-width="1.5"/>
                                 <path d="M7 12C3 12 3 13.79 3 16V17C3 19.76 3 22 8 22H16C20 22 21 19.76 21 17V16C21 13.79 21 12 17 12" stroke="white" stroke-width="1.5"/>
                             </svg>
-
                         </button>';
 
                     $tempRow['fees_status'] = $row->fees_paid->is_fully_paid;
@@ -1007,13 +989,36 @@ class FeesController extends Controller
 
     public function getReceipts($studentId, $feesId)
     {
-        $receipts = FeesPaid::where('student_id', $studentId)
-            ->where('fees_id', $feesId)
-            ->select('id', 'date', 'is_fully_paid')
-            ->latest()
-            ->get();
+        // Har compulsory_fee record = ek payment session
+        $compFees = \App\Models\CompulsoryFee::whereHas('fees_paid', function ($q) use ($studentId, $feesId) {
+            $q->where('student_id', $studentId)->where('fees_id', $feesId);
+        })
+        ->where(fn($q) => $q->whereIn('status', [1, 'Success', 'succeed'])->orWhereNull('status'))
+        ->select('id', 'fees_paid_id', 'date', 'amount')
+        ->orderBy('id', 'desc')
+        ->get();
 
-        return response()->json($receipts);
+        $receipts = $compFees->map(function ($cf) {
+            $rawDate  = $cf->getRawOriginal('date') ?? $cf->date;
+
+            // Optional fees same fees_paid_id + same date
+            $optTotal = \App\Models\OptionalFee::where('fees_paid_id', $cf->fees_paid_id)
+                ->whereDate('date', $rawDate)
+                ->sum('amount');
+
+            // Transportation linked to same fees_paid_id
+            $transport  = \App\Models\TransportationPayment::where('fees_paid_id', $cf->fees_paid_id)->first();
+            $transTotal = $transport ? (float) $transport->amount : 0;
+
+            $total = $cf->amount + $optTotal + $transTotal;
+
+            return [
+                'label' => date('d-m-Y', strtotime($rawDate)) . ' — ₹' . number_format($total),
+                'url'   => route('fees.paid.receipt.pdf', ['type' => 'compulsory', 'id' => $cf->id]),
+            ];
+        });
+
+        return response()->json($receipts->values());
     }
 
     // public function feesPaidReceiptPDF($feesPaidId)
@@ -1105,14 +1110,24 @@ class FeesController extends Controller
                     ->firstOrFail();
 
                 $feesPaid = $payment->fees_paid;
-                $fees = $feesPaid->fees;
+                $fees     = $feesPaid->fees;
 
                 $compulsoryFees = collect([$payment]);
-                $optionalFees = collect(); // none in compulsory receipt
 
-                $advanceAmount = $payment->advance_fees()
-                    ->whereNull('used_at')
-                    ->sum('amount');
+                // Optional fees same fees_paid_id + same date
+                $rawDate      = $payment->getRawOriginal('date') ?? $payment->date;
+                $optionalFees = $this->optionalFee->builder()
+                    ->where('fees_paid_id', $feesPaid->id)
+                    ->whereDate('date', $rawDate)
+                    ->with(['fees_class_type' => fn($q) => $q->select('id', 'fees_type_id', 'applicable_months')->with('fees_type:id,name')])
+                    ->get();
+
+                $advanceAmount = $payment->advance_fees()->whereNull('used_at')->sum('amount');
+
+                // Transportation linked to same fees_paid_id
+                $transportPayment = \App\Models\TransportationPayment::where('fees_paid_id', $feesPaid->id)
+                    ->with(['pickupPoint', 'transportationFee', 'routeVehicle'])
+                    ->first();
             }
 
             // ----------------------------
@@ -1140,6 +1155,27 @@ class FeesController extends Controller
             }
 
             // ----------------------------
+            // Transportation Payment
+            // ----------------------------
+            $transportPayment = null;
+            if ($type === 'transportation') {
+                $transportPayment = \App\Models\TransportationPayment::where('id', $id)
+                    ->with(['pickupPoint', 'transportationFee', 'routeVehicle'])
+                    ->firstOrFail();
+
+                $feesPaid = new \stdClass();
+                $feesPaid->id = $transportPayment->id;
+                $feesPaid->student_id = $transportPayment->user_id;
+                $feesPaid->fees_id = null;
+                $feesPaid->date = $transportPayment->paid_at;
+                $feesPaid->amount = $transportPayment->amount;
+                $feesPaid->fees = null;
+
+                $compulsoryFees = collect();
+                $optionalFees   = collect();
+            }
+
+            // ----------------------------
             // Student
             // ----------------------------
             $student = $this->student->builder()
@@ -1160,13 +1196,14 @@ class FeesController extends Controller
             // ----------------------------
             $receiptData = new \stdClass();
             $receiptData->id = $feesPaid->id;
-            $receiptData->fees = $fees;
+            $receiptData->fees = $feesPaid->fees ?? null;
             $receiptData->compulsory_fee = $compulsoryFees;
             $receiptData->optional_fee = $optionalFees;
-            $receiptData->date = $payment->date;
+            $receiptData->date = $feesPaid->date ?? ($payment->date ?? now());
             $receiptData->student_id = $feesPaid->student_id;
-            $receiptData->fees_id = $feesPaid->fees_id;
-            $receiptData->amount = $payment->amount;
+            $receiptData->fees_id = $feesPaid->fees_id ?? null;
+            $receiptData->amount = $feesPaid->amount ?? 0;
+            $receiptData->transportation_payment = $transportPayment ?? null;
 
             $pdf = Pdf::loadView('fees.fees_receipt', [
                 'school' => $school,
@@ -1518,16 +1555,18 @@ class FeesController extends Controller
                     ]);
                 }
             } else {
-                $compulsoryFee = $this->compulsoryFee->create([
-                    'type'         => 'Full Payment',
-                    'student_id'   => $request->student_id,
-                    'mode'         => $request->mode,
-                    'cheque_no'    => $request->mode == 2 ? $request->cheque_no : null,
-                    'amount'       => $usedCurrentPayment,
-                    'due_charges'  => $request->due_charges_amount ?? null,
-                    'fees_paid_id' => $feesPaidResult->id,
-                    'date'         => date('Y-m-d', strtotime($request->date))
-                ]);
+                // Only create compulsory fee record if actual payment > 0
+                if ($usedCurrentPayment > 0) {
+                    $compulsoryFee = $this->compulsoryFee->create([
+                        'type'         => 'Full Payment',
+                        'student_id'   => $request->student_id,
+                        'mode'         => $request->mode,
+                        'cheque_no'    => $request->mode == 2 ? $request->cheque_no : null,
+                        'amount'       => $usedCurrentPayment,
+                        'due_charges'  => $request->due_charges_amount ?? null,
+                        'fees_paid_id' => $feesPaidResult->id,
+                        'date'         => date('Y-m-d', strtotime($request->date))
+                    ]);
 
                 /** ----------------------------
                  *  MONTH-WISE BREAKDOWN
@@ -1625,6 +1664,7 @@ class FeesController extends Controller
                         $currentMonth++;
                     }
                 }
+                } // end if ($usedCurrentPayment > 0)
             }
 
             /** ----------------------------
@@ -1662,7 +1702,7 @@ class FeesController extends Controller
              *  ---------------------------- */
             if ($newAdvance > 0) {
                 FeesAdvance::create([
-                    'compulsory_fee_id' => $compulsoryFee->id,
+                    'compulsory_fee_id' => $compulsoryFee->id ?? null,
                     'student_id'        => $request->student_id,
                     'parent_id'         => $request->parent_id ?? null,
                     'amount'            => $newAdvance
@@ -1672,15 +1712,17 @@ class FeesController extends Controller
             /** ----------------------------
              *  SESSION TRACKING
              *  ---------------------------- */
-            $sessionYear = $this->cache->getDefaultSessionYear();
-            $this->sessionYearsTrackingsService->storeSessionYearsTracking(
-                'App\Models\CompulsoryFee',
-                $feesPaidResult->id,
-                Auth::user()->id,
-                $sessionYear->id,
-                Auth::user()->school_id,
-                null
-            );
+            if (!empty($feesPaidResult)) {
+                $sessionYear = $this->cache->getDefaultSessionYear();
+                $this->sessionYearsTrackingsService->storeSessionYearsTracking(
+                    'App\Models\CompulsoryFee',
+                    $feesPaidResult->id,
+                    Auth::user()->id,
+                    $sessionYear->id,
+                    Auth::user()->school_id,
+                    null
+                );
+            }
 
             DB::commit();
             ResponseService::successResponse("Fees Paid Successfully");
@@ -1809,6 +1851,371 @@ class FeesController extends Controller
         }
     }
     /* END : Fees Paid Module */
+
+    public function payUnifiedFeesIndex($feesID, $studentID)
+    {
+        ResponseService::noFeatureThenRedirect('Fees Management');
+
+        $fees = $this->fees->findById($feesID, ['*'], [
+            'fees_class_type.fees_type:id,name',
+            'installments:id,name,due_date,due_charges,due_charges_type,fees_id'
+        ]);
+
+        $student = $this->user->builder()->role('Student')->select('id', 'first_name', 'last_name')
+            ->withSum([
+                'fees_advances as fees_advances_sum_amount' => function ($q) {
+                    $q->whereNull('used_at');
+                }
+            ], 'amount')
+            ->with([
+                'student' => function ($query) {
+                    $query->select('id', 'class_section_id', 'user_id', 'guardian_id', 'session_year_id')->with([
+                        'class_section' => function ($query) {
+                            $query->select('id', 'class_id', 'section_id', 'medium_id')
+                                ->with('class:id,name', 'section:id,name', 'medium:id,name');
+                        }
+                    ]);
+                },
+                'fees_paid' => function ($q) use ($feesID) {
+                    $q->where('fees_id', $feesID)->withSum('compulsory_fee', 'amount')->with('compulsory_fee');
+                },
+                'compulsory_fees.advance_fees'
+            ])->findOrFail($studentID);
+
+        // Optional fees
+        $optionalFeesData = $this->feesClassType->builder()
+            ->where('fees_id', $feesID)
+            ->where(['class_id' => $student->student->class_section->class_id, 'optional' => 1])
+            ->with([
+                'fees_type',
+                'optional_fees_paid' => function ($query) use ($student) {
+                    $query->where('student_id', $student->id)
+                        ->whereHas('fees_paid', function ($q) use ($student) {
+                            $q->whereHas('fees', function ($q2) use ($student) {
+                                $q2->where('session_year_id', $student->student->session_year_id);
+                            });
+                        });
+                }
+            ])->get();
+
+        // Transportation request for this student
+        $sessionYear = $this->cache->getDefaultSessionYear();
+        $transportRequest = \App\Models\TransportationRequest::where('user_id', $studentID)
+            ->where('session_year_id', $sessionYear->id)
+            ->whereNotIn('status', [2, 'cancelled', 'rejected'])
+            ->with(['pickupPoint', 'transportationFee', 'routeVehicle'])
+            ->first();
+
+        // Transportation already paid?
+        $transportPaid = \App\Models\TransportationPayment::where('user_id', $studentID)
+            ->where('session_year_id', $sessionYear->id)
+            ->where('status', 'paid')
+            ->first();
+
+        $isFullyPaid = !empty($student->fees_paid) && $student->fees_paid->is_fully_paid;
+        $currencySymbol = $this->cache->getSchoolSettings('currency_symbol');
+
+        return view('fees.pay-unified', compact(
+            'fees', 'student', 'optionalFeesData',
+            'transportRequest', 'transportPaid',
+            'currencySymbol', 'isFullyPaid', 'sessionYear'
+        ));
+    }
+
+    public function payUnifiedFeesStore(Request $request)
+    { 
+        ResponseService::noFeatureThenRedirect('Fees Management');
+        ResponseService::noPermissionThenRedirect('fees-paid');
+
+        $request->validate([
+            'fees_id'    => 'required|numeric',
+            'student_id' => 'required|numeric',
+            // 'date'       => 'required|date',
+            'mode'       => 'required|in:Cash,Cheque',
+            'enter_amount' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $fees = $this->fees->findById($request->fees_id, ['*'], ['fees_class_type.fees_type:id,name']);
+            $sessionYear = $this->cache->getDefaultSessionYear();
+
+            $enteredAmount = (float) $request->enter_amount;
+
+            // Advance amount — add to entered amount
+            $availableAdvance = FeesAdvance::where('student_id', $request->student_id)
+                ->whereNull('used_at')
+                ->sum('amount');
+            $usedAdvance = 0;
+
+            $remaining = $enteredAmount + $availableAdvance;
+            $date      = date('Y-m-d');
+            $mode      = $request->mode;
+            $chequeNo  = $mode === 'Cheque' ? $request->cheque_no : null;
+
+            // -----------------------------------------------
+            // 1. COMPULSORY FEES — apply first
+            // -----------------------------------------------
+            $feesPaid = $this->feesPaid->builder()->where([
+                'fees_id'    => $request->fees_id,
+                'student_id' => $request->student_id,
+            ])->first();
+
+            $totalCompulsory = $fees->total_compulsory_fees;
+
+            // Actual paid amount from compulsory_fee records
+            $alreadyPaid = \App\Models\CompulsoryFee::where('student_id', $request->student_id)
+                ->whereHas('fees_paid', fn($q) => $q->where('fees_id', $request->fees_id))
+                ->where(fn($q) => $q->whereIn('status', [1, 'Success', 'succeed'])->orWhereNull('status'))
+                ->sum('amount');
+
+            $compulsoryDue   = max(0, round($totalCompulsory - $alreadyPaid, 2));
+
+            $compulsoryPayment = min($remaining, $compulsoryDue);
+            $remaining -= $compulsoryPayment;
+
+            // fees_paid — existing update ya naya create (unique constraint hai)
+            if (empty($feesPaid)) {
+                $feesPaidResult = $this->feesPaid->create([
+                    'date'                => $date,
+                    'fees_id'             => $request->fees_id,
+                    'student_id'          => $request->student_id,
+                    'amount'              => $compulsoryPayment,
+                    'is_fully_paid'       => $compulsoryPayment >= $totalCompulsory,
+                    'is_used_installment' => 0,
+                ]);
+            } else {
+                $newTotal    = $alreadyPaid + $compulsoryPayment;
+                $isFullyPaid = $newTotal >= $totalCompulsory;
+                $this->feesPaid->update($feesPaid->id, [
+                    'amount'        => $newTotal,
+                    'is_fully_paid' => $isFullyPaid,
+                ]);
+                // Always use existing fees_paid object for linking
+                $feesPaidResult = $feesPaid;
+            }
+
+            if ($compulsoryPayment > 0) {
+                $compulsoryFeeRecord = $this->compulsoryFee->create([
+                    'type'         => 'Full Payment',
+                    'student_id'   => $request->student_id,
+                    'mode'         => $mode,
+                    'cheque_no'    => $chequeNo,
+                    'amount'       => $compulsoryPayment,
+                    'fees_paid_id' => $feesPaidResult->id,
+                    'date'         => $date,
+                    'status'       => 'Success',
+                    'school_id'    => Auth::user()->school_id,
+                ]);
+
+                $this->storeCompulsoryMonths($compulsoryFeeRecord->id, $request->student_id, $request->fees_id, $compulsoryPayment, $totalCompulsory, $sessionYear);
+
+                $this->sessionYearsTrackingsService->storeSessionYearsTracking(
+                    'App\Models\CompulsoryFee', $feesPaidResult->id,
+                    Auth::user()->id, $sessionYear->id, Auth::user()->school_id, null
+                );
+            }
+
+            // -----------------------------------------------
+            // 2. TRANSPORTATION FEE — apply next
+            // -----------------------------------------------
+            $transportRequest = \App\Models\TransportationRequest::where('user_id', $request->student_id)
+                ->where('session_year_id', $sessionYear->id)
+                ->whereNotIn('status', [2, 'cancelled', 'rejected']) // 0=pending, 1=approved, ''=pending
+                ->with('transportationFee')
+                ->first();
+    
+            $transportPaid = \App\Models\TransportationPayment::where('user_id', $request->student_id)
+                ->where('session_year_id', $sessionYear->id)
+                ->where('status', 'paid')
+                ->first();
+
+            if ($transportRequest && !$transportPaid && $remaining > 0) {
+                $transportFeeAmount = (float) ($transportRequest->transportationFee->fee_amount ?? 0);
+
+                if ($transportFeeAmount > 0 && $remaining >= $transportFeeAmount) {
+                    $remaining -= $transportFeeAmount;
+
+                    \App\Models\TransportationPayment::create([
+                        'user_id'               => $request->student_id,
+                        'pickup_point_id'        => $transportRequest->pickup_point_id,
+                        'route_vehicle_id'       => $transportRequest->route_vehicle_id,
+                        'shift_id'               => $transportRequest->shift_id,
+                        'transportation_fee_id'  => $transportRequest->transportation_fee_id,
+                        'amount'                 => $transportFeeAmount,
+                        'status'                 => 'paid',
+                        'paid_at'                => now(),
+                        'session_year_id'        => $sessionYear->id,
+                        'expiry_date'            => $sessionYear->end_date,
+                        'fees_paid_id'           => $feesPaidResult->id,
+                    ]);
+
+                    $transportRequest->update(['status' => 1]);
+                }
+            }
+
+            // -----------------------------------------------
+            // 3. OPTIONAL FEES — apply remaining amount
+            // -----------------------------------------------
+            $selectedOptional = $request->optional_fees ?? [];
+
+            if (!empty($selectedOptional) && $remaining > 0) {
+                foreach ($selectedOptional as $optId) {
+                    $alreadyPaidOptional = $this->optionalFee->builder()
+                        ->where(['student_id' => $request->student_id, 'fees_class_id' => $optId])
+                        ->whereHas('fees_paid', fn($q) => $q->where('fees_id', $request->fees_id))
+                        ->exists();
+
+                    if ($alreadyPaidOptional) continue;
+
+                    $optFeeData = $this->feesClassType->findById($optId);
+                    if (!$optFeeData) continue;
+
+                    $optAmount = (float) $optFeeData->amount;
+                    if ($remaining < $optAmount) break;
+
+                    $remaining -= $optAmount;
+
+                    $this->optionalFee->create([
+                        'student_id'    => $request->student_id,
+                        'class_id'      => $fees->class_id,
+                        'fees_class_id' => $optId,
+                        'mode'          => $mode,
+                        'cheque_no'     => $chequeNo,
+                        'amount'        => $optAmount,
+                        'fees_paid_id'  => $feesPaidResult->id,
+                        'date'          => $date,
+                        'school_id'     => Auth::user()->school_id,
+                    ]);
+                }
+            }
+
+            // -----------------------------------------------
+            // -----------------------------------------------
+            // 4. MARK ADVANCE AS USED
+            // -----------------------------------------------
+            if ($availableAdvance > 0) {
+                $actualAdvanceUsed = $availableAdvance - max(0, $remaining - $enteredAmount);
+                // remaining me se jo advance use hua = availableAdvance - jo bacha
+                // Simple: jo amount spend hua = (enteredAmount + availableAdvance) - remaining
+                $actualAdvanceUsed = round(($enteredAmount + $availableAdvance) - $remaining - $enteredAmount, 2);
+                // Actually: total_spent = (enteredAmount + availableAdvance) - remaining
+                // advance_used = total_spent - enteredAmount
+                $totalSpent        = round(($enteredAmount + $availableAdvance) - $remaining, 2);
+                $actualAdvanceUsed = max(0, round($totalSpent - $enteredAmount, 2));
+
+                if ($actualAdvanceUsed > 0.01) {
+                    $advanceRemaining = $actualAdvanceUsed;
+                    $advances = FeesAdvance::where('student_id', $request->student_id)
+                        ->whereNull('used_at')
+                        ->orderBy('id')
+                        ->get();
+
+                    foreach ($advances as $adv) {
+                        if ($advanceRemaining <= 0) break;
+                        if ($adv->amount <= $advanceRemaining) {
+                            $advanceRemaining -= $adv->amount;
+                            $adv->used_at = now();
+                        } else {
+                            // Split — partial use
+                            $remaining_adv = $adv->amount - $advanceRemaining;
+                            $adv->amount   = $advanceRemaining;
+                            $adv->used_at  = now();
+                            FeesAdvance::create([
+                                'student_id' => $request->student_id,
+                                'amount'     => $remaining_adv,
+                                'parent_id'  => $adv->parent_id,
+                            ]);
+                            $advanceRemaining = 0;
+                        }
+                        $adv->save();
+                    }
+                }
+            }
+
+            // -----------------------------------------------
+            // 5. SAVE LEFTOVER AS ADVANCE
+            // -----------------------------------------------
+            if ($remaining > 0.01) {
+                $studentRecord = $this->student->builder()
+                    ->where('user_id', $request->student_id)
+                    ->select('id', 'guardian_id')
+                    ->first();
+
+                FeesAdvance::create([
+                    'compulsory_fee_id' => $compulsoryFeeRecord->id ?? null,
+                    'student_id'        => $request->student_id,
+                    'parent_id'         => $studentRecord->guardian_id ?? $request->student_id,
+                    'amount'            => round($remaining, 2),
+                ]);
+            }
+
+            DB::commit();
+            ResponseService::successResponse('Fees Paid Successfully');
+        } catch (Throwable $e) {
+            DB::rollback();
+            ResponseService::logErrorResponse($e, 'FeesController -> payUnifiedFeesStore');
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * Helper: store month-wise breakdown for compulsory fee
+     */
+    private function storeCompulsoryMonths(int $compulsoryFeeId, int $studentId, int $feesId, float $paidAmount, float $totalFees, $sessionYear): void
+    {
+        if ($totalFees <= 0 || $paidAmount <= 0) return;
+
+        $allMonthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        $startMonthIdx = (int) \Carbon\Carbon::parse($sessionYear->start_date)->format('n');
+        $sessionMonthMap = [];
+        for ($i = 0; $i < 12; $i++) {
+            $calMonth = (($startMonthIdx - 1 + $i) % 12) + 1;
+            $sessionMonthMap[$i + 1] = $allMonthNames[$calMonth - 1];
+        }
+
+        $monthlyFee = round($totalFees / 12, 2);
+
+        $lastRecord = \App\Models\CompulsoryFeeMonth::whereHas('compulsory_fee', function ($q) use ($studentId, $feesId) {
+            $q->where('student_id', $studentId)
+              ->whereHas('fees_paid', fn($q2) => $q2->where('fees_id', $feesId));
+        })->where('compulsory_fee_id', '!=', $compulsoryFeeId)
+          ->orderBy('month_number', 'desc')->first();
+
+        if ($lastRecord) {
+            $currentMonth       = $lastRecord->is_partial ? $lastRecord->month_number : $lastRecord->month_number + 1;
+            $partialAlreadyPaid = $lastRecord->is_partial ? round($lastRecord->amount, 2) : 0;
+        } else {
+            $currentMonth       = 1;
+            $partialAlreadyPaid = 0;
+        }
+
+        $remaining = round($paidAmount, 2);
+
+        if ($partialAlreadyPaid > 0.01) {
+            $needed = round($monthlyFee - $partialAlreadyPaid, 2);
+            if ($remaining >= $needed - 0.01) {
+                \App\Models\CompulsoryFeeMonth::create(['compulsory_fee_id' => $compulsoryFeeId, 'month_number' => $currentMonth, 'month_name' => $sessionMonthMap[$currentMonth] ?? '', 'amount' => $needed, 'is_partial' => false]);
+                $remaining = round($remaining - $needed, 2);
+                $currentMonth++;
+            } else {
+                \App\Models\CompulsoryFeeMonth::create(['compulsory_fee_id' => $compulsoryFeeId, 'month_number' => $currentMonth, 'month_name' => $sessionMonthMap[$currentMonth] ?? '', 'amount' => $remaining, 'is_partial' => true]);
+                $remaining = 0;
+            }
+        }
+
+        while ($remaining > 0.01 && $currentMonth <= 12) {
+            if ($remaining >= $monthlyFee - 0.01) {
+                \App\Models\CompulsoryFeeMonth::create(['compulsory_fee_id' => $compulsoryFeeId, 'month_number' => $currentMonth, 'month_name' => $sessionMonthMap[$currentMonth] ?? '', 'amount' => $monthlyFee, 'is_partial' => false]);
+                $remaining = round($remaining - $monthlyFee, 2);
+            } else {
+                \App\Models\CompulsoryFeeMonth::create(['compulsory_fee_id' => $compulsoryFeeId, 'month_number' => $currentMonth, 'month_name' => $sessionMonthMap[$currentMonth] ?? '', 'amount' => $remaining, 'is_partial' => true]);
+                $remaining = 0;
+            }
+            $currentMonth++;
+        }
+    }
 
     public function optionalFees(Request $request)
     {

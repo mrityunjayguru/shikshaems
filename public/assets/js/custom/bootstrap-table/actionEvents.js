@@ -712,78 +712,25 @@ window.feesPaidEvents = {
     // },
 
    'click .open-receipt-modal': function (e, value, row) {
-        console.log(row);
+        var url = $(e.currentTarget).data('url');
 
-        let receipts = [];
+        $.get(url, function (receipts) {
+            let options = '<option value="">Select Receipt</option>';
 
-        // ----------------------------
-        // Compulsory Fees
-        // ----------------------------
-        if (row.compulsory_fees && row.compulsory_fees.length > 0) {
-            row.compulsory_fees.forEach(function (item) {
-                if (row.fees && item.fees_paid_id == row.fees_paid?.id) {
-                    receipts.push({
-                        id: item.id,
-                        type: 'compulsory',
-                        date: item.date,
-                        amount: item.amount
-                    });
-                }
-            });
-        }
-
-        // ----------------------------
-        // Optional Fees
-        // ----------------------------
-        if (row.optional_fees && row.optional_fees.length > 0) {
-            row.optional_fees.forEach(function (item) {
-                receipts.push({
-                    id: item.id,
-                    type: 'optional',
-                    date: item.date,
-                    amount: item.amount
+            if (receipts && receipts.length > 0) {
+                receipts.forEach(function (item) {
+                    options += `<option value="${item.url}">${item.label}</option>`;
                 });
-            });
-        }
-
-        // ----------------------------
-        // Sort latest first
-        // ----------------------------
-        receipts.sort((a, b) => {
-            function parseDate(str) {
-                if (!str) return new Date(0);
-
-                let onlyDate = str.split(' ')[0]; // remove time
-                let parts = onlyDate.split('-');
-
-                // if format is DD-MM-YYYY
-                return new Date(parts[2], parts[1] - 1, parts[0]);
+            } else {
+                options = '<option value="">No Receipts Found</option>';
             }
 
-            return parseDate(b.date) - parseDate(a.date);
+            $('#receiptDropdown').html(options);
+            $('#receiptModal').modal('show');
+        }).fail(function () {
+            $('#receiptDropdown').html('<option value="">Error loading receipts</option>');
+            $('#receiptModal').modal('show');
         });
-
-        let options = '<option value="">Select Receipt</option>';
-
-        if (receipts.length > 0) {
-            receipts.forEach(function (item) {
-                let onlyDate = item.date ? item.date.split(' ')[0] : '';
-
-                let label = `receipt_${onlyDate}_${item.amount}`;
-                if (item.type === 'optional') {
-                    label += '_optional';
-                }
-
-                options += `<option value="${item.type}|${item.id}">
-                    ${label}
-                </option>`;
-            });
-        } else {
-            options = '<option value="">No Receipts Found</option>';
-        }
-
-        $('#receiptDropdown').html(options);
-        $('#receiptModal').modal('show');
     },
 
     'click .optional-data': function (e, value, row) {

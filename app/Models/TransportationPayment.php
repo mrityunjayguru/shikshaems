@@ -20,7 +20,8 @@ class TransportationPayment extends Model
         'session_year_id',
         'route_vehicle_id',
         'expiry_date',
-        'shift_id'
+        'shift_id',
+        'fees_paid_id',
     ];
 
     /**

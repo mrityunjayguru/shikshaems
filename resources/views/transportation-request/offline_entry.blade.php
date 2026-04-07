@@ -126,7 +126,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="row mode-container d-none" id="mode">
+                            {{-- <div class="row mode-container d-none" id="mode">
                                 <div class="form-group col-sm-12 col-md-12">
                                     <label>{{ __('Mode') }} <span class="text-danger">*</span></label>
                                     <div class="d-flex">
@@ -146,7 +146,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
                             <div class="form-group cheque-no-container" style="display: none">
                                 <label for="cheque_no">{{ __('cheque_no') }} <span class="text-danger">*</span></label>
                                 <input type="number" id="cheque_no" name="cheque_no" placeholder="{{ __('cheque_no') }}"

@@ -1948,14 +1948,12 @@ class ParentApiController extends Controller
      */
     private function getTransportationFeeData(int $userId, int $sessionYearId): array
     {
-        // Active transportation request for this student & session year
+        // Transportation request — pending (0) ya approved (1) dono fetch karo
         $transportRequest = \App\Models\TransportationRequest::where('user_id', $userId)
             ->where('session_year_id', $sessionYearId)
-            ->where('status', 1) // approved
-            ->with([
-                'pickupPoint',
-                'transportationFee',
-            ])
+            ->whereNotIn('status', [2, 'cancelled', 'rejected'])
+            ->with(['pickupPoint', 'transportationFee', 'routeVehicle'])
+            ->latest()
             ->first();
 
         if (!$transportRequest) {
@@ -1966,19 +1964,19 @@ class ParentApiController extends Controller
         $payment = \App\Models\TransportationPayment::where('user_id', $userId)
             ->where('session_year_id', $sessionYearId)
             ->where('status', 'paid')
-            ->with('pickupPoint', 'routeVehicle')
             ->latest()
             ->first();
 
         return [
-            // 'pickup_point'       => $transportRequest->pickupPoint,
-            'fee_amount'         => $transportRequest->transportationFee->fee_amount ?? 0,
-            'duration'           => $transportRequest->transportationFee->duration ?? null,
-            'is_paid'            => !empty($payment),
-            'paid_at'            => $payment?->paid_at ?? null,
-            'expiry_date'        => $payment?->expiry_date ?? null,
-            'payment_status'     => $payment?->status ?? 'unpaid',
-            // 'route_vehicle'      => $payment?->routeVehicle ?? null,
+            'pickup_point'   => $transportRequest->pickupPoint?->name,
+            'fee_amount'     => $transportRequest->transportationFee->fee_amount ?? 0,
+            'duration'       => $transportRequest->transportationFee->duration ?? null,
+            'route_vehicle'  => $transportRequest->routeVehicle?->id,
+            'request_status' => $transportRequest->status == 0 ? 'pending' : 'approved',
+            'is_paid'        => !empty($payment),
+            'paid_at'        => $payment?->paid_at ?? null,
+            'expiry_date'    => $payment?->expiry_date ?? null,
+            'payment_status' => $payment?->status ?? 'unpaid',
         ];
     }
 
@@ -2589,11 +2587,21 @@ class ParentApiController extends Controller
         | Dummy object for Blade (same as Admin format)
         |--------------------------------------------------------------------------
         */
+            // Transportation payment for this transaction
+            $transportationPayment = \App\Models\TransportationPayment::where('payment_transaction_id', $paymentTransactionId)
+                ->with(['pickupPoint', 'transportationFee', 'routeVehicle.vehicle'])
+                ->first();
+
+            if ($transportationPayment) {
+                $receiptAmount += (float) $transportationPayment->amount;
+            }
+
             $receiptData = new \stdClass();
             $receiptData->id = $receiptId ?? $paymentTransactionId;
             $receiptData->fees = $mainFees;
             $receiptData->compulsory_fee = $allCompulsoryFees;
             $receiptData->optional_fee = $allOptionalFees;
+            $receiptData->transportation_payment = $transportationPayment;
             $receiptData->date = $receiptDate;
             $receiptData->student_id = $studentId;
             $receiptData->fees_id = $feesId;
@@ -3856,6 +3864,7 @@ class ParentApiController extends Controller
             'payments.*.installment_ids.*' => 'integer',
             'payments.*.advance' => 'nullable|numeric',
             'payment_method' => 'required|in:Stripe,Razorpay,Flutterwave,Paystack',
+            'pay_transportation' => 'nullable|boolean', // new: include transportation fee
         ]);
 
         if ($validator->fails()) {
@@ -4095,6 +4104,34 @@ class ParentApiController extends Controller
                 ResponseService::errorResponse("Total amount must be greater than 0");
             }
 
+            // Transportation fee — add to grand total if requested
+            $transportationData = null;
+            if ($request->pay_transportation) {
+                $transportRequest = \App\Models\TransportationRequest::where('user_id', $studentData->user_id)
+                    ->where('session_year_id', $sessionYear->id)
+                    ->whereIn('status', [0, 1])
+                    ->with('transportationFee')
+                    ->first();
+
+                $transportPaid = \App\Models\TransportationPayment::where('user_id', $studentData->user_id)
+                    ->where('session_year_id', $sessionYear->id)
+                    ->where('status', 'paid')
+                    ->first();
+
+                if ($transportRequest && !$transportPaid && $transportRequest->transportationFee) {
+                    $transportAmount = (float) $transportRequest->transportationFee->fee_amount;
+                    $grandTotal += $transportAmount;
+                    $transportationData = [
+                        'transportation_request_id' => $transportRequest->id,
+                        'amount'                    => $transportAmount,
+                        'pickup_point_id'           => $transportRequest->pickup_point_id,
+                        'route_vehicle_id'          => $transportRequest->route_vehicle_id,
+                        'shift_id'                  => $transportRequest->shift_id,
+                        'transportation_fee_id'     => $transportRequest->transportation_fee_id,
+                    ];
+                }
+            }
+
             // Create Payment Transaction
             $paymentTransactionData = $this->paymentTransaction->create([
                 'user_id' => $parentId,
@@ -4118,6 +4155,7 @@ class ParentApiController extends Controller
                 'type' => 'fees',
                 'fees_type' => 'multiple',
                 'multiple_fees' => json_encode($feesBreakdown, JSON_THROW_ON_ERROR),
+                'transportation' => $transportationData ? json_encode($transportationData, JSON_THROW_ON_ERROR) : null,
                 'name' => Auth::user()->full_name,
                 'email' => Auth::user()->email,
                 'mobile' => Auth::user()->mobile

@@ -108,6 +108,8 @@ function transportationRequestQueryParams(p) {
         show_deleted: tableListType,
         pickup_point_id: $('#filter_pickup_point_id').val(),
         shift_id: $('#filter_shift_id').val(),
+        status_filter: $('#filter_status').val() || 'paid',
+        route_vehicle_id: $('#filter_vehicle_route_id').val(),
     };
 }
 

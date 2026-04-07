@@ -1255,6 +1255,37 @@ class WebhookController extends Controller
             \Log::info("Multiple fees already processed for transaction ID: {$paymentTransaction->id}");
             return;
         }
+
+        // Process transportation fee if included in metadata
+        if (!empty($metadata->transportation)) {
+            $transportData = json_decode($metadata->transportation, true);
+            if ($transportData) {
+                $alreadyTransportPaid = \App\Models\TransportationPayment::where('user_id', $metadata->student_id)
+                    ->where('session_year_id', $metadata->session_year_id)
+                    ->where('status', 'paid')
+                    ->exists();
+
+                if (!$alreadyTransportPaid) {
+                    \App\Models\TransportationPayment::create([
+                        'user_id'               => $metadata->student_id,
+                        'pickup_point_id'        => $transportData['pickup_point_id'],
+                        'route_vehicle_id'       => $transportData['route_vehicle_id'] ?? null,
+                        'shift_id'               => $transportData['shift_id'] ?? null,
+                        'transportation_fee_id'  => $transportData['transportation_fee_id'],
+                        'payment_transaction_id' => $paymentTransaction->id,
+                        'amount'                 => $transportData['amount'],
+                        'status'                 => 'paid',
+                        'paid_at'                => now(),
+                        'session_year_id'        => $metadata->session_year_id,
+                        'school_id'              => $metadata->school_id,
+                        'expiry_date'            => \App\Models\SessionYear::find($metadata->session_year_id)?->end_date,
+                    ]);
+
+                    \App\Models\TransportationRequest::where('id', $transportData['transportation_request_id'])
+                        ->update(['status' => 1]);
+                }
+            }
+        }
         
         foreach ($multipleFees as $feeData) {
             $feesId = $feeData['fees_id'];

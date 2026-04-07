@@ -9,6 +9,7 @@ use App\Models\Shift;
 use App\Models\PickupPoint;
 use App\Models\RouteVehicle;
 use App\Models\TransportationFee;
+use App\Models\TransportationRequest;
 use App\Models\PaymentTransaction;
 use App\Repositories\User\UserInterface;
 use App\Services\ResponseService;
@@ -45,16 +46,66 @@ class TransportationRequestController extends Controller
     public function show()
     {
         ResponseService::noPermissionThenRedirect('transportationRequests-list');
-        $today = now();
-        $offset = request('offset', 0);
-        $limit = request('limit', 10);
-        $sort = request('sort', 'id');
-        $order = request('order', 'desc');
-        $search = request('search');
-        $showDeleted = request('show_deleted');
-        $pickupPointId = request('pickup_point_id');
-        $shiftId = request('shift_id');
+        $today      = now();
+        $offset     = request('offset', 0);
+        $limit      = request('limit', 10);
+        $sort       = request('sort', 'id');
+        $order      = request('order', 'desc');
+        $search     = request('search');
+        $showDeleted      = request('show_deleted');   // assigned/unassigned (existing)
+        $pickupPointId    = request('pickup_point_id');
+        $shiftId          = request('shift_id');
+        $statusFilter     = request('status_filter', 'paid');   // paid | unpaid
+        $routeVehicleId   = request('route_vehicle_id');
 
+        // -----------------------------------------------
+        // UNPAID — from transportation_requests table
+        // -----------------------------------------------
+        if ($statusFilter === 'unpaid') {
+            $sql = TransportationRequest::with(['user', 'pickupPoint', 'transportationFee'])
+                ->where('status', 0)
+                ->when(!empty($pickupPointId), fn($q) => $q->where('pickup_point_id', $pickupPointId));
+
+            if (!empty($search)) {
+                $sql->where(function ($q) use ($search) {
+                    $q->orWhereHas('user', function ($d) use ($search) {
+                        $d->where('first_name', 'LIKE', "%$search%")
+                          ->orWhere('last_name', 'LIKE', "%$search%")
+                          ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%$search%'");
+                    })->orWhereHas('pickupPoint', fn($d) => $d->where('name', 'LIKE', "%$search%"));
+                });
+            }
+
+            $total = $sql->count();
+            if ($offset >= $total && $total > 0) {
+                $offset = floor(($total - 1) / $limit) * $limit;
+            }
+            $res = $sql->orderBy($sort, $order)->skip($offset)->take($limit)->get();
+
+            $rows = [];
+            $no   = $offset + 1;
+            foreach ($res as $row) {
+                $role = 'Student';
+                if ($row->user) {
+                    if ($row->user->hasRole('Teacher')) $role = 'Teacher';
+                    elseif (!$row->user->hasRole('Student')) $role = 'Staff';
+                }
+                $tempRow                  = $row->toArray();
+                $tempRow['no']            = $no++;
+                $tempRow['role']          = $role;
+                $tempRow['status']        = 'Unpaid';
+                $tempRow['route_vehicle'] = null;
+                $tempRow['shift']         = null;
+                $tempRow['operate']       = '';
+                $rows[] = $tempRow;
+            }
+
+            return response()->json(['total' => $total, 'rows' => $rows]);
+        }
+
+        // -----------------------------------------------
+        // PAID — from transportation_payments table (existing logic)
+        // -----------------------------------------------
         $sql = TransportationPayment::with([
             'user',
             'pickupPoint',
@@ -64,46 +115,40 @@ class TransportationRequestController extends Controller
             'pickupPoint.routePickupPoints.route.routeVehicle.vehicle',
             'transportationFee'
         ])->where('expiry_date', '>', $today)
-            ->where('status', 'paid')->when(!empty($showDeleted), function ($query) {
-                $query->whereNotNull('route_vehicle_id');
-            })->when(empty($showDeleted), function ($query) {
-                $query->whereNull('route_vehicle_id');
-            })->when(!empty($pickupPointId), function ($query) use ($pickupPointId) {
-                $query->where('pickup_point_id', $pickupPointId);
-            })->when(!empty($shiftId), function ($query) use ($shiftId) {
-                $query->where('shift_id', $shiftId);
-            });
+            ->where('status', 'paid')
+            ->when(!empty($showDeleted), fn($q) => $q->whereNotNull('route_vehicle_id'))
+            ->when(empty($showDeleted),  fn($q) => $q->whereNull('route_vehicle_id'))
+            ->when(!empty($pickupPointId),  fn($q) => $q->where('pickup_point_id', $pickupPointId))
+            ->when(!empty($shiftId),        fn($q) => $q->where('shift_id', $shiftId))
+            ->when(!empty($routeVehicleId), fn($q) => $q->where('route_vehicle_id', $routeVehicleId));
 
         if (!empty($search)) {
             $sql->where(function ($q) use ($search) {
                 $q->orWhereHas('user', function ($d) use ($search) {
                     $d->where('first_name', 'LIKE', "%$search%")
-                        ->orWhere('last_name', 'LIKE', "%$search%")
-                        ->orWhere('email', 'LIKE', "%$search%")
-                        ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                      ->orWhere('last_name', 'LIKE', "%$search%")
+                      ->orWhere('email', 'LIKE', "%$search%")
+                      ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%$search%'");
                 });
-                $q->orWhereHas('pickupPoint', function ($d) use ($search) {
-                    $d->where('name', 'LIKE', "%$search%");
-                });
+                $q->orWhereHas('pickupPoint', fn($d) => $d->where('name', 'LIKE', "%$search%"));
             });
         }
 
         $total = $sql->count();
         if ($offset >= $total && $total > 0) {
-            $lastPage = floor(($total - 1) / $limit) * $limit; // calculate last page offset
-            $offset = $lastPage;
+            $offset = floor(($total - 1) / $limit) * $limit;
         }
         $sql->orderBy($sort, $order)->skip($offset)->take($limit);
         $res = $sql->get();
 
-        $bulkData = array();
+        $bulkData          = [];
         $bulkData['total'] = $total;
-        $rows = array();
-        $no = $offset + 1;
+        $rows              = [];
+        $no                = $offset + 1;
 
-        $baseUrl = url('/');
-        $baseUrlWithoutScheme = preg_replace("(^https?://)", "", $baseUrl);
-        $baseUrlWithoutScheme = str_replace("www.", "", $baseUrlWithoutScheme);
+        $baseUrl                = url('/');
+        $baseUrlWithoutScheme   = preg_replace("(^https?://)", "", $baseUrl);
+        $baseUrlWithoutScheme   = str_replace("www.", "", $baseUrlWithoutScheme);
 
         foreach ($res as $row) {
             $operate = BootstrapTableService::editButton(route('transportation-requests.update', $row->id));
@@ -113,38 +158,33 @@ class TransportationRequestController extends Controller
 <path d="M9.16992 14.8299L14.8299 9.16992" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M14.8299 14.8299L9.16992 9.16992" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-',
+</svg>',
                     route('transportation-requests.cancel', $row->id),
                     ['btn', 'btn-xs', 'btn-gradient-dark', 'btn-rounded', 'btn-icon', 'cancel-service'],
                     ['data-id' => $row->id, 'title' => trans('end_transportation_service')]
                 );
             } else {
-                $operate .= BootstrapTableService::button('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                $operate .= BootstrapTableService::button(
+                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M12 2V8L14 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M12 8L10 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M7 12C3 12 3 13.79 3 16V17C3 19.76 3 22 8 22H16C20 22 21 19.76 21 17V16C21 13.79 21 12 17 12C16 12 15.72 12.21 15.2 12.6L14.18 13.68C13 14.94 11 14.94 9.81 13.68L8.8 12.6C8.28 12.21 8 12 7 12Z" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M5 12V8.00004C5 5.99004 5 4.33004 8 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M19 12V8.00004C19 5.99004 19 4.33004 16 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-
-
-
-
-', route('transportation-requests.fee-receipt', $row->id), ['btn', 'btn-xs', 'btn-gradient-info', 'btn-rounded', 'btn-icon', 'generate-paid-fees-pdf'], ['target' => "_blank", 'data-id' => $row->id, 'title' => trans('generate_pdf') . ' ' . trans('fees')]);
+</svg>',
+                    route('transportation-requests.fee-receipt', $row->id),
+                    ['btn', 'btn-xs', 'btn-gradient-info', 'btn-rounded', 'btn-icon', 'generate-paid-fees-pdf'],
+                    ['target' => "_blank", 'data-id' => $row->id, 'title' => trans('generate_pdf') . ' ' . trans('fees')]
+                );
             }
 
-            if ($row->user->hasrole('Student')) {
-                $role = "Student";
-            } else if ($row->user->hasrole('Teacher')) {
-                $role = "Teacher";
-            } else {
-                $role = 'Staff';
-            }
+            $role = 'Staff';
+            if ($row->user->hasrole('Student'))      $role = 'Student';
+            elseif ($row->user->hasrole('Teacher'))  $role = 'Teacher';
 
-            $tempRow = $row->toArray();
-            $tempRow['role'] = $role;
-            $tempRow['no'] = $no++;
+            $tempRow           = $row->toArray();
+            $tempRow['role']   = $role;
+            $tempRow['no']     = $no++;
             $tempRow['operate'] = $operate;
             $rows[] = $tempRow;
         }
@@ -391,32 +431,20 @@ class TransportationRequestController extends Controller
     {
         ResponseService::noPermissionThenRedirect('transportationRequests-create');
 
-        $validator = Validator::make(
-            $request->all(),
-            [
-                'user_id' => 'required|numeric|exists:users,id',
-                // Remove shift_id from validation, as we will get it from routes table
-                // 'shift_id' => 'nullable|numeric|exists:shifts,id',
-                'pickup_point_id' => 'required|numeric|exists:pickup_points,id',
-                'fee_id' => 'nullable|numeric|exists:transportation_fees,id',
-                'route_vehicle_id' => 'required|numeric|exists:route_vehicles,id',
-                'amount' => 'nullable|numeric',
-                'mode' => 'nullable|in:1,2',
-                'cheque_no' => 'required_if:mode,2',
-            ],
-            [
-                'user_id.required' => 'Please select a user.',
-                'user_id.exists' => 'Selected user does not exist.',
-                // 'shift_id.exists' => 'Selected shift does not exist.',
-                'pickup_point_id.required' => 'Please select a pickup point.',
-                'pickup_point_id.exists' => 'Selected pickup point does not exist.',
-                'fee_id.exists' => 'Selected fee does not exist.',
-                'route_vehicle_id.required' => 'Please select a vehicle route.',
-                'route_vehicle_id.exists' => 'Selected route vehicle does not exist.',
-                'mode.in' => 'Invalid payment mode selected.',
-                'cheque_no.required_if' => 'Cheque number is required when payment mode is Cheque.',
-            ]
-        );
+        $validator = Validator::make($request->all(), [
+            'user_id'          => 'required|numeric|exists:users,id',
+            'pickup_point_id'  => 'required|numeric|exists:pickup_points,id',
+            'route_vehicle_id' => 'required|numeric|exists:route_vehicles,id',
+            'fee_id'           => 'nullable|numeric|exists:transportation_fees,id',
+        ], [
+            'user_id.required'          => 'Please select a user.',
+            'user_id.exists'            => 'Selected user does not exist.',
+            'pickup_point_id.required'  => 'Please select a pickup point.',
+            'pickup_point_id.exists'    => 'Selected pickup point does not exist.',
+            'route_vehicle_id.required' => 'Please select a vehicle route.',
+            'route_vehicle_id.exists'   => 'Selected route vehicle does not exist.',
+            'fee_id.exists'             => 'Selected fee does not exist.',
+        ]);
 
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
@@ -424,86 +452,34 @@ class TransportationRequestController extends Controller
 
         try {
             DB::beginTransaction();
+
             $sessionYear = $this->cache->getDefaultSessionYear();
-            $today = now();
-            $existingPayment = TransportationPayment::where('user_id', $request->user_id)
-                ->whereNotNull('route_vehicle_id')
+
+            // Check if request already exists for this user in current session year
+            $existing = TransportationRequest::where('user_id', $request->user_id)
                 ->where('session_year_id', $sessionYear->id)
-                ->where('expiry_date', '>', $today)
-                ->where('status', 'paid')
                 ->first();
 
-            if ($existingPayment) {
-                ResponseService::errorResponse('This user already has an active paid record in the current session year.');
+            if ($existing) {
+                ResponseService::errorResponse('Transportation request already exists for this user in current session year.');
             }
 
-            // Get the RouteVehicle and its related Route (to get shift_id from routes table)
-            $routeVehicle = RouteVehicle::with(['vehicle', 'route'])->where('id', $request->route_vehicle_id)->first();
+            // Get shift_id from route vehicle's route
+            $routeVehicle = RouteVehicle::with('route')->find($request->route_vehicle_id);
+            $shiftId = $routeVehicle?->route?->shift_id;
 
-            // Get shift_id from the related route
-            $shiftId = $routeVehicle && $routeVehicle->route ? $routeVehicle->route->shift_id : null;
-
-            $assignedCounts = TransportationPayment::selectRaw('route_vehicle_id, COUNT(*) as assigned_students')
-                ->where('route_vehicle_id', $request->route_vehicle_id)
-                ->where('status', 'paid')
-                ->where('expiry_date', '>', $today)
-                ->groupBy('route_vehicle_id')->first();
-
-            if (!empty($assignedCounts)) {
-                if (!empty($routeVehicle) && ((int) $routeVehicle->vehicle->capacity - (int) $assignedCounts->assigned_students) == 0) {
-                    ResponseService::errorResponse("No seats left in this vehicle");
-                }
-            }
-
-            if ($request->fee_id) {
-                $transportationFee = TransportationFee::where('id', $request->fee_id)->first();
-                $expiryDate = null;
-                if ($transportationFee) {
-                    if (!empty($transportationFee->duration)) {
-                        $expiryDate = now()->addDays($transportationFee->duration);
-                    }
-                }
-
-                $mode = (int) $request->mode;
-                $paymentTransactionData = [
-                    'user_id' => $request->user_id,
-                    'amount' => $request->amount,
-                    'payment_gateway' => $mode === 1
-                        ? 'cash'
-                        : ($mode === 2 ? 'cheque' : null),
-                    'order_id' => $request->cheque_no,
-                    'payment_status' => 'succeed',
-                    'type' => 'transportation_fee',
-                    'school_id' => Auth::user()->school_id
-                ];
-
-                $paymentTransaction = PaymentTransaction::create($paymentTransactionData);
-            } else {
-                $expiryDate = $sessionYear->end_date;
-            }
-
-            if ($expiryDate == $today->format('Y-m-d') || $expiryDate < $today->format('Y-m-d')) {
-                ResponseService::errorResponse('Cannot add Staff/Teacher on last date of session year.');
-            }
-
-            $transportationPaymentData = [
-                'route_vehicle_id' => $request->route_vehicle_id,
-                'shift_id' => $shiftId, // Use shift_id from routes table
-                'pickup_point_id' => $request->pickup_point_id,
-                'user_id' => $request->user_id,
-                'payment_transaction_id' => $paymentTransaction->id ?? null,
+            TransportationRequest::create([
+                'user_id'               => $request->user_id,
+                'pickup_point_id'       => $request->pickup_point_id,
+                'route_vehicle_id'      => $request->route_vehicle_id,
+                'shift_id'              => $shiftId,
                 'transportation_fee_id' => $request->fee_id ?? null,
-                'amount' => $request->amount ?? 0,
-                'paid_at' => now(),
-                'session_year_id' => $sessionYear->id,
-                'status' => 'paid',
-                'expiry_date' => $expiryDate ?? null
-            ];
-
-            TransportationPayment::create($transportationPaymentData);
+                'status'                => 0,
+                'session_year_id'       => $sessionYear->id,
+            ]);
 
             DB::commit();
-            ResponseService::successResponse('Data stored successfully');
+            ResponseService::successResponse('Transportation request created successfully.');
         } catch (Throwable $e) {
             DB::rollBack();
             ResponseService::logErrorResponse($e, 'TransportationRequestController -> offlineEntryStore');

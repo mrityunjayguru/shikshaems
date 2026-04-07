@@ -231,7 +231,8 @@
                             $optionalMonths = collect();
 
                             foreach ($feesPaid->optional_fee ?? [] as $optionalFee) {
-                                $months = json_decode($optionalFee->fees_class_type->applicable_months ?? '[]', true);
+                                $rawMonths = $optionalFee->fees_class_type->applicable_months ?? '[]';
+                                $months = is_array($rawMonths) ? $rawMonths : json_decode($rawMonths, true);
 
                                 if (!empty($months)) {
                                     foreach ($months as $monthNo) {
@@ -366,7 +367,8 @@
                             <span class="small-text">(Optional)</span><br>
                             <span class="small-text">Mode : ({{ $optionalFee->mode }})</span>
                             @php
-                                $months = json_decode($optionalFee->fees_class_type->applicable_months, true);
+                                $rawMonths = $optionalFee->fees_class_type->applicable_months ?? null;
+                                $months = is_array($rawMonths) ? $rawMonths : json_decode($rawMonths, true);
                                 $monthNames = [
                                     1 => 'January',
                                     2 => 'February',
@@ -407,6 +409,30 @@
                         $total_fees += $optionalFee->amount;
                     @endphp
                 @endforeach
+
+                {{-- Transportation Fee --}}
+                @if(!empty($feesPaid->transportation_payment))
+                @php
+                    $tp = $feesPaid->transportation_payment;
+                    $total_fees += $tp->amount;
+                @endphp
+                <tr>
+                    <td colspan="2">
+                        <strong>Transportation Fee</strong><br>
+                        @if($tp->pickupPoint)
+                            <span class="small-text">Pickup Point: {{ $tp->pickupPoint->name }}</span><br>
+                        @endif
+                        @if($tp->routeVehicle)
+                            <span class="small-text">Vehicle/Route: {{ $tp->routeVehicle->vehicle->name ?? '' }}</span><br>
+                        @endif
+                        <span class="small-text">Date: {{ $tp->paid_at ? date('d-m-Y', strtotime($tp->paid_at)) : '-' }}</span>
+                    </td>
+                    <td class="amount">
+                        {{ $school['currency_symbol'] ?? '' }}
+                        {{ number_format($tp->amount) }}
+                    </td>
+                </tr>
+                @endif
 
                 {{-- Total --}}
                 <tr class="total-row">

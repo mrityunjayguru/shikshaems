@@ -783,6 +783,10 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status', 'SwitchDat
             Route::get('/pay/compulsory/{feesID}/{studentID}', [FeesController::class, 'payCompulsoryFeesIndex'])->name('fees.compulsory.index');
             Route::post('pay/compulsory', [FeesController::class, 'payCompulsoryFeesStore'])->name('fees.compulsory.store');
 
+            // Unified payment page (compulsory + optional + transportation)
+            Route::get('/pay/unified/{feesID}/{studentID}', [FeesController::class, 'payUnifiedFeesIndex'])->name('fees.unified.index');
+            Route::post('/pay/unified', [FeesController::class, 'payUnifiedFeesStore'])->name('fees.unified.store');
+
             // Optional Fees Payment Offline
             Route::get('/optional-fees', [FeesController::class, 'optionalFees'])->name('fees.optional');
             Route::get('/optional-fees/list', [FeesController::class, 'optionalFeesList'])->name('fees.optional.list');

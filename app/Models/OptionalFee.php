@@ -21,6 +21,7 @@ class OptionalFee extends Model
         'mode',
         'cheque_no',
         'amount',
+        'status',
         'fees_paid_id',
         'date',
         'session_year_id',

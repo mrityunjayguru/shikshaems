@@ -38,14 +38,12 @@
                                 $pickupPoints = $transportationRequests->pluck('pickupPoint')->unique('id');
                             @endphp
                             <div class="form-group mb-2 mr-3" style="min-width: 150px;">
-                                <label for="filter_pickup_point_id" class="filter-menu ">{{ __('pickup_point') }}</label>
+                                <label for="filter_pickup_point_id" class="filter-menu">{{ __('pickup_point') }}</label>
                                 <select name="filter_pickup_point_id" id="filter_pickup_point_id"
                                     class="form-control select2-dropdown select2-hidden-accessible">
                                     <option value=""> {{ __('select_pickup_point') }}</option>
                                     @foreach ($pickupPoints as $request)
-                                        <option value="{{ $request->id }}">
-                                            {{ $request->name }}
-                                        </option>
+                                        <option value="{{ $request->id }}">{{ $request->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -54,14 +52,12 @@
                             @endphp
                             @if ($shifts->isNotEmpty())
                                 <div class="form-group mb-2 mr-3">
-                                    <label for="filter_shift_id" class="filter-menu ">{{ __('Shift') }}</label>
+                                    <label for="filter_shift_id" class="filter-menu">{{ __('Shift') }}</label>
                                     <select name="filter_shift_id" id="filter_shift_id"
                                         class="form-control select2-dropdown select2-hidden-accessible">
                                         <option value=""> {{ __('Select Shift') }}</option>
                                         @foreach ($shifts as $shift)
-                                            <option value="{{ $shift->id ?? "" }}">
-                                                {{ $shift->name ?? "" }}
-                                            </option>
+                                            <option value="{{ $shift->id ?? '' }}">{{ $shift->name ?? '' }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -73,6 +69,14 @@
                                     <option value=""> {{ __('select_vehicle/route') }}</option>
                                 </select>
                             </div>
+                            {{-- Status Filter --}}
+                            <div class="form-group mb-2 mr-3" style="min-width: 130px;">
+                                <label for="filter_status" class="filter-menu">{{ __('Status') }}</label>
+                                <select id="filter_status" class="form-control select2-dropdown">
+                                    <option value="paid">{{ __('Paid') }}</option>
+                                    <option value="unpaid">{{ __('Unpaid') }}</option>
+                                </select>
+                            </div>
                             <div class="form-group mb-2">
                                 <button id="update-status" class="btn btn-success" disabled>
                                     <span class="update-status-btn-name">{{ __('assign') }}</span>
@@ -80,9 +84,7 @@
                             </div>
                         </div>
                         <div class="col-12 text-right">
-                            <b><a href="#" class="table-list-type active mr-2 text-danger"
-                                    data-id="0">{{__('unassigned')}}</a></b> | <a href="#"
-                                class="ml-2 table-list-type text-success" data-id="1">{{__("assigned")}}</a>
+                            <b><a href="#" class="table-list-type active mr-2 text-danger" data-id="0">{{__('unassigned')}}</a></b> | <a href="#" class="ml-2 table-list-type text-success" data-id="1">{{__("assigned")}}</a>
                         </div>
                         <table aria-describedby="mydesc" class='table' id='table_list' data-toggle="table"
                             data-url="{{ route('transportation-requests.show', [1]) }}" data-click-to-select="true"
@@ -118,6 +120,8 @@
                 </div>
             </div>
         </div>
+
+        {{-- Pending table removed — shown in main table with status filter --}}
         <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editTransportationRequestLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
@@ -239,6 +243,15 @@
         })
         const selectVehicleRouteText = @json(__('select_vehicle/route'));
         $(document).ready(function () {
+            // Status filter change — refresh table
+            $('#filter_status').on('change', function () {
+                $('#table_list').bootstrapTable('refresh');
+            });
+
+            // Route vehicle filter change — refresh table
+            $('#filter_vehicle_route_id').on('change', function () {
+                $('#table_list').bootstrapTable('refresh');
+            });
             const shiftSelect = document.getElementById("filter_shift_id");
             if (shiftSelect) {
                 $('#filter_pickup_point_id').on('select2:select', function (e) {
