@@ -1,0 +1,1515 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\CompulsoryFee;
+use App\Models\Fee;
+use App\Models\FeesAdvance;
+use App\Models\FeesPaid;
+use App\Models\OptionalFee;
+use App\Models\PaymentConfiguration;
+use App\Models\PaymentTransaction;
+use App\Models\School;
+use App\Models\User;
+use App\Models\TransportationFee;
+use App\Models\TransportationPayment;
+use App\Repositories\User\UserInterface;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Razorpay\Api\Api;
+use Stripe\Exception\SignatureVerificationException;
+use Stripe\Webhook;
+use Throwable;
+use UnexpectedValueException;
+use Carbon\Carbon;
+
+class WebhookController extends Controller
+{
+
+    public function __construct(UserInterface $user)
+    {
+    }
+
+    public function stripe()
+    {
+        $payload = @file_get_contents('php://input');
+        Log::info(PHP_EOL . "----------------------------------------------------------------------------------------------------------------------");
+        try {
+            // Verify webhook signature and extract the event.
+            // See https://stripe.com/docs/webhooks/signatures for more information.
+            $data = json_decode($payload, false, 512, JSON_THROW_ON_ERROR);
+
+            $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'];
+
+            $school_id = $data->data->object->metadata->school_id;
+            $school = School::on('mysql')->where('id', $school_id)->first();
+
+            Config::set('database.connections.school.database', $school->database_name);
+            DB::purge('school');
+            DB::connection('school')->reconnect();
+            DB::setDefaultConnection('school');
+
+            // You can find your endpoint's secret in your webhook settings
+            $paymentConfiguration = PaymentConfiguration::select('webhook_secret_key')->where('payment_method', 'stripe')->where('school_id', $data->data->object->metadata->school_id ?? null)->first();
+            $endpoint_secret = $paymentConfiguration['webhook_secret_key'];
+            $event = Webhook::constructEvent(
+                $payload,
+                $sig_header,
+                $endpoint_secret
+            );
+
+            $metadata = $event->data->object->metadata;
+            // Log::info("School ID : ", $metadata['school_id']);
+
+
+
+
+            // Use this lines to Remove Signature verification for debugging purpose
+            //    $event = json_decode($payload, false, 512, JSON_THROW_ON_ERROR);
+            //    $metadata = (array)$event->data->object->metadata;
+
+
+            //get the current today's date
+            $current_date = date('Y-m-d');
+
+            Log::info("Stripe Webhook : ", [$event->type]);
+
+            // handle the events
+            switch ($event->type) {
+                case 'payment_intent.succeeded':
+                    $paymentTransactionData = PaymentTransaction::where('id', $metadata['payment_transaction_id'])->first();
+                    if ($paymentTransactionData == null) {
+                        Log::error("Stripe Webhook : Payment Transaction id not found");
+                        break;
+                    }
+
+                    if ($paymentTransactionData->status == "succeed") {
+                        Log::info("Stripe Webhook : Transaction Already Successes");
+                        break;
+                    }
+                    if ($metadata['fees_type'] != "transportation_fee") {
+                        $fees = Fee::where('id', $metadata['fees_id'])->with(['fees_class_type', 'fees_class_type.fees_type'])->firstOrFail();
+                    }
+
+                    DB::beginTransaction();
+                    try {
+                        // Update payment transaction status
+                        PaymentTransaction::find($metadata['payment_transaction_id'])->update(['payment_status' => "succeed"]);
+
+                        if ($metadata['fees_type'] == "transportation_fee") {
+                            $fee_id = Transportationpayment::where('payment_transaction_id', $paymentTransactionData->id)->first();
+                            $transportationFee = TransportationFee::where('id', $fee_id->transportation_fee_id)->first();
+                            $expiryDate = null;
+                            if ($transportationFee) {
+                                if (!empty($transportationFee->duration)) {
+                                    $expiryDate = now()->addDays($transportationFee->duration);
+                                }
+                            }
+                            TransportationPayment::where('payment_transaction_id', $paymentTransactionData->id)
+                                ->update([
+                                    'status' => "paid",
+                                    'paid_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                                    'expiry_date' => $expiryDate
+                                ]);
+                        } else {
+
+                            // Get or create fees_paid record
+                            $feesPaidDB = FeesPaid::where([
+                                'fees_id' => $metadata['fees_id'],
+                                'student_id' => $metadata['student_id'],
+                                'school_id' => $metadata['school_id']
+                            ])->first();
+
+                            // Calculate total amount including any existing payments
+                            $totalAmount = !empty($feesPaidDB) ? $feesPaidDB->amount + $paymentTransactionData->amount : $paymentTransactionData->amount;
+
+                            // Prepare fees_paid data
+                            $feesPaidData = array(
+                                'amount' => $totalAmount,
+                                'date' => date('Y-m-d', strtotime($current_date)),
+                                "school_id" => $metadata['school_id'],
+                                'fees_id' => $metadata['fees_id'],
+                                'student_id' => $metadata['student_id'],
+                                'is_fully_paid' => $totalAmount >= $fees->total_compulsory_fees,
+                                'is_used_installment' => !empty($metadata['installment_details'])
+                            );
+
+                            // Update or create fees_paid record
+                            $feesPaidResult = FeesPaid::updateOrCreate(
+                                ['id' => $feesPaidDB->id ?? null],
+                                $feesPaidData
+                            );
+
+                            if ($metadata['fees_type'] == "compulsory") {
+                                $installments = json_decode($metadata['installment_details'], true);
+                                if (!empty($installments)) {
+                                    foreach ($installments as $installment) {
+                                        CompulsoryFee::create([
+                                            'student_id' => $metadata['student_id'],
+                                            'payment_transaction_id' => $paymentTransactionData->id,
+                                            'type' => 'Installment Payment',
+                                            'installment_id' => $installment['id'],
+                                            'mode' => 'Online',
+                                            'cheque_no' => null,
+                                            'amount' => $installment['amount'],
+                                            'due_charges' => $installment['dueChargesAmount'],
+                                            'fees_paid_id' => $feesPaidResult->id,
+                                            'status' => 1, // 1 = succeed, 2 = pending
+                                            'date' => date('Y-m-d'),
+                                            'school_id' => $metadata['school_id'],
+                                        ]);
+                                    }
+                                } else {
+                                    // Full payment
+                                    CompulsoryFee::create([
+                                        'student_id' => $metadata['student_id'],
+                                        'payment_transaction_id' => $paymentTransactionData->id,
+                                        'type' => 'Full Payment',
+                                        'installment_id' => null,
+                                        'mode' => 'Online',
+                                        'cheque_no' => null,
+                                        'amount' => $paymentTransactionData->amount,
+                                        'due_charges' => $metadata['dueChargesAmount'] ?? 0,
+                                        'fees_paid_id' => $feesPaidResult->id,
+                                        'status' => 1, // 1 = succeed, 2 = pending
+                                        'date' => date('Y-m-d'),
+                                        'school_id' => $metadata['school_id'],
+                                    ]);
+                                }
+
+                                // Handle advance payment if any
+                                if (!empty($metadata['advance_amount']) && $metadata['advance_amount'] > 0) {
+                                    $updateCompulsoryFees = CompulsoryFee::where('student_id', $metadata['student_id'])
+                                        ->with('fees_paid')
+                                        ->whereHas('fees_paid', function ($q) use ($metadata) {
+                                            $q->where('fees_id', $metadata['fees_id']);
+                                        })
+                                        ->orderBy('id', 'DESC')
+                                        ->first();
+
+                                    if ($updateCompulsoryFees) {
+                                        $updateCompulsoryFees->amount += $metadata['advance_amount'];
+                                        $updateCompulsoryFees->save();
+
+                                        FeesAdvance::create([
+                                            'compulsory_fee_id' => $updateCompulsoryFees->id,
+                                            'student_id' => $metadata['student_id'],
+                                            'parent_id' => $metadata['parent_id'],
+                                            'amount' => $metadata['advance_amount']
+                                        ]);
+                                    }
+                                }
+                            } else if ($metadata['fees_type'] == "optional") {
+                                $optionalFees = json_decode($metadata['optional_fees_id'], true);
+                                foreach ($optionalFees as $optionalFee) {
+                                    OptionalFee::create([
+                                        'student_id' => $metadata['student_id'],
+                                        'class_id' => $metadata['class_id'],
+                                        'payment_transaction_id' => $paymentTransactionData->id,
+                                        'fees_class_id' => $optionalFee['id'],
+                                        'amount' => $optionalFee['amount'],
+                                        'fees_paid_id' => $feesPaidResult->id,
+                                        'status' => 1, // 1 = succeed, 2 = pending
+                                        'date' => date('Y-m-d'),
+                                        'school_id' => $metadata['school_id'],
+                                    ]);
+                                }
+                            }
+                        }
+
+                        // Send success notification
+                        \Log::info("Success Notification in Stripe");
+                        $user = User::where('id', $metadata['parent_id'])->first();
+                        \Log::info("User ID : ", [$user]);
+                        $body = 'Amount :- ' . $paymentTransactionData->amount;
+                        $type = 'payment';
+                        DB::commit();
+
+                        send_notification([$user->id], 'Fees Payment Successful', $body, $type, ['is_payment_success' => "true"]);
+                        \Log::info("send_notification", [$user->id]);
+
+                        Log::info("Payment processed successfully for transaction ID: " . $metadata['payment_transaction_id']);
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        Log::error("Error processing payment: " . $e->getMessage());
+                        throw $e;
+                    }
+                    break;
+                case
+                'payment_intent.payment_failed':
+                    $paymentTransactionData = PaymentTransaction::find($metadata['payment_transaction_id']);
+                    if (!$paymentTransactionData) {
+                        Log::error("Stripe Webhook : Payment Transaction id not found --->");
+                        break;
+                    }
+
+                    PaymentTransaction::find($metadata['payment_transaction_id'])->update(['payment_status' => "0"]);
+
+                    if ($metadata['fees_type'] == "transportation_fee") {
+                        TransportationPayment::where('payment_transaction_id', $paymentTransactionData->id)
+                            ->update([
+                                'status' => "cancelled"
+                            ]);
+                    } else {
+                        if ($metadata['fees_type'] == "compulsory") {
+                            CompulsoryFee::where('payment_transaction_id', $paymentTransactionData->id)->update([
+                                'status' => "failed",
+                            ]);
+                        } else if ($metadata['fees_type'] == "optional") {
+                            OptionalFee::where('payment_transaction_id', $paymentTransactionData->id)->update([
+                                'status' => "failed",
+                            ]);
+                        }
+                    }
+
+                    http_response_code(400);
+                    \Log::info("Failed Notification in Stripe");
+                    $user = User::where('id', $metadata['parent_id'])->first();
+                    \Log::info("User ID : ", [$user]);
+                    $body = 'Amount :- ' . $paymentTransactionData->amount;
+                    $type = 'payment';
+
+                    DB::commit();
+
+                    send_notification([$user->id], 'Fees Payment Failed', $body, $type, ['is_payment_success' => "false"]);
+                    \Log::info("send_notification", [$user->id]);
+                    break;
+                default:
+                    Log::error('Stripe Webhook : Received unknown event type');
+            }
+        } catch (UnexpectedValueException) {
+            // Invalid payload
+            echo "Stripe Webhook : Payload Mismatch";
+            Log::error("Stripe Webhook : Payload Mismatch");
+            http_response_code(400);
+            exit();
+        } catch (SignatureVerificationException) {
+            // Invalid signature
+            echo "Stripe Webhook : Signature Verification Failed";
+            Log::error("Stripe Webhook : Signature Verification Failed");
+            http_response_code(400);
+            exit();
+        } catch (Throwable $e) {
+            DB::rollBack();
+            Log::error("Stripe Webhook : Error occurred", [$e->getMessage() . ' --> ' . $e->getFile() . ' At Line : ' . $e->getLine()]);
+            http_response_code(400);
+            exit();
+        }
+    }
+
+    public function razorpay()
+    {
+        $webhookBody = file_get_contents('php://input');
+        Log::info(PHP_EOL . "----------------------------------------------------------------------------------------------------------------------");
+        Log::info("=== NEW RAZORPAY WEBHOOK RECEIVED ===");
+        try {
+            // Parse webhook data
+            $data = json_decode($webhookBody);
+            Log::info("Razorpay Webhook Data:", ['data' => $data]);
+
+            if (!$data || !isset($data->payload->payment->entity)) {
+                throw new \Exception('Invalid webhook payload structure');
+            }
+
+            // Extract transaction data from the correct path in payload
+            $webhookData = $data->payload->payment->entity;
+            $metadata = $webhookData->notes;
+
+            if (!$metadata || !isset($metadata->school_id)) {
+                throw new \Exception('Invalid metadata in webhook payload');
+            }
+
+            $schoolId = $metadata->school_id;
+            $school = School::on('mysql')->where('id', $schoolId)->first();
+            if (!$school) {
+                throw new \Exception('School not found for ID: ' . $schoolId);
+            }
+
+            // Switch to school database
+            Config::set('database.connections.school.database', $school->database_name);
+            DB::purge('school');
+            DB::connection('school')->reconnect();
+            DB::setDefaultConnection('school');
+
+            // Get payment configuration
+            $paymentConfiguration = PaymentConfiguration::select(['webhook_secret_key', 'api_key'])
+                ->where('payment_method', 'Razorpay')
+                ->where('school_id', $schoolId)
+                ->first();
+
+            if (!$paymentConfiguration) {
+                throw new \Exception('Payment configuration not found');
+            }
+
+            // Find payment transaction using order_id or payment_id
+            $paymentTransaction = PaymentTransaction::where('order_id', $webhookData->order_id)
+                ->orWhere('payment_id', $webhookData->id)
+                ->first();
+
+            if (!$paymentTransaction) {
+                throw new \Exception('Payment transaction not found for order: ' . $webhookData->order_id);
+            }
+
+            Log::info("Payment Transaction:", ['transaction' => $paymentTransaction]);
+
+            // Verify webhook signature using Razorpay SDK
+            $webhookSignature = $_SERVER['HTTP_X_RAZORPAY_SIGNATURE'] ?? null;
+            if (!$webhookSignature) {
+                throw new \Exception('Webhook signature not found in request headers');
+            }
+
+            $api = new Api($paymentConfiguration->api_key, $paymentConfiguration->webhook_secret_key);
+            $api->utility->verifyWebhookSignature($webhookBody, $webhookSignature, $paymentConfiguration->webhook_secret_key);
+
+            // Process based on transaction status
+            $status = $webhookData->status ?? '';
+            Log::info("Transaction Status:", ['status' => $status]);
+
+            if ($status === 'captured' || $status === 'authorized') {
+                // handleRazorpaySuccess will send notification only if payment wasn't already processed
+                return $this->handleRazorpaySuccess($paymentTransaction, $webhookData, $metadata);
+            } else if ($status === 'failed') {
+                return $this->handleRazorpayFailed($paymentTransaction, $webhookData, $metadata);
+            }
+
+            Log::info("Unhandled transaction status:", ['status' => $status]);
+            return response()->json(['status' => 'unhandled_status'], 200);
+        } catch (\Exception $e) {
+            Log::error("Razorpay Webhook Error:", [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function paystack()
+    {
+        $webhookBody = file_get_contents('php://input');
+        Log::info(PHP_EOL . "----------------------------------------------------------------------------------------------------------------------");
+        try {
+            $data = json_decode($webhookBody, false, 512, JSON_THROW_ON_ERROR);
+            Log::info("Paystack Webhook : ", [$data]);
+
+            // Get metadata from the webhook payload
+            $metadata = $data->data->metadata;
+            $school_id = $metadata->school_id;
+            $school = School::on('mysql')->where('id', $school_id)->first();
+
+            // Set up database connection for the school
+            Config::set('database.connections.school.database', $school->database_name);
+            DB::purge('school');
+            DB::connection('school')->reconnect();
+            DB::setDefaultConnection('school');
+
+            // Get payment configuration
+            $paymentConfiguration = PaymentConfiguration::select('secret_key')
+                ->where('payment_method', 'Paystack')
+                ->where('school_id', $school_id)
+                ->first();
+
+            $webhookSecret = $paymentConfiguration['secret_key'];
+
+            // Verify webhook signature
+            $expectedSignature = $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'];
+            $calculatedSignature = hash_hmac('sha512', $webhookBody, $webhookSecret);
+
+            $paymentTransactionData = PaymentTransaction::where('order_id', $data->data->reference)->first();
+            if ($expectedSignature !== $calculatedSignature) {
+
+                // send notification
+                \Log::info("Failed Notification in Paystack");
+                $user = User::where('id', $metadata->parent_id)->first();
+                \Log::info("User ID : ", [$user]);
+                $body = 'Amount :- ' . $paymentTransactionData->amount;
+                $type = 'payment';
+                send_notification([$user->id], 'Fees Payment Failed', $body, $type, ['is_payment_success' => 'false']);
+                \Log::info("send_notification", [$user->id]);
+                throw new SignatureVerificationException('Invalid signature');
+            }
+
+            // Get the payment transaction dat
+
+            if (!$paymentTransactionData) {
+                // Create a new payment transaction
+                // $paymentTransactionData = new PaymentTransaction();
+                $paymentTransactionData = PaymentTransaction::create([
+                    'user_id' => $data->data->metadata->parent_id,
+                    'amount' => $data->data->metadata->total_amount,
+                    'payment_gateway' => 'Paystack',
+                    'order_id' => $data->data->reference,
+                    'payment_status' => 'pending',
+                ]);
+            }
+
+            $current_date = date('Y-m-d');
+
+            if ($data->event === 'charge.success') {
+                Log::info('Payment successful');
+                \Log::info("Payment reference :- " . $data->data->reference);
+                $paymentTransactionData = PaymentTransaction::where('order_id', $data->data->reference)->first();
+
+                if (!$paymentTransactionData) {
+                    Log::error("Paystack Webhook : Payment Transaction id not found");
+                    return response()->json(['error' => 'Transaction not found'], 404);
+                }
+
+                if ($paymentTransactionData->payment_status === "succeed") {
+                    Log::info("Paystack Webhook : Transaction Already Succeed");
+                    return response()->json(['status' => 'success'], 200);
+                }
+                if ($metadata->fees_type != "transportation_fee") {
+                    $fees = Fee::where('id', $metadata->fees_id)
+                        ->with(['fees_class_type', 'fees_class_type.fees_type'])
+                        ->firstOrFail();
+                }
+
+                DB::beginTransaction();
+                // Update payment transaction status
+                PaymentTransaction::where('order_id', $data->data->reference)
+                    ->update(['payment_status' => "succeed"]);
+
+                if ($metadata->fees_type == "transportation_fee") {
+                    $fee_id = Transportationpayment::where('payment_transaction_id', $paymentTransactionData->id)->first();
+                    $transportationFee = TransportationFee::where('id', $fee_id->transportation_fee_id)->first();
+                    $expiryDate = null;
+                    if ($transportationFee) {
+                        if (!empty($transportationFee->duration)) {
+                            $expiryDate = now()->addDays($transportationFee->duration);
+                        }
+                    }
+                    TransportationPayment::where('payment_transaction_id', $paymentTransactionData->id)
+                        ->update([
+                            'status' => "paid",
+                            'paid_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                            'expiry_date' => $expiryDate
+                        ]);
+                } else {
+                    // Get or create fees paid record
+                    $feesPaidDB = FeesPaid::where([
+                        'fees_id' => $metadata->fees_id,
+                        'student_id' => $metadata->student_id,
+                        'school_id' => $metadata->school_id
+                    ])->first();
+
+                    $totalAmount = !empty($feesPaidDB)
+                        ? $feesPaidDB->amount + $paymentTransactionData->amount
+                        : $paymentTransactionData->amount;
+
+                    $feesPaidData = [
+                        'amount' => $totalAmount,
+                        'date' => $current_date,
+                        'school_id' => $metadata->school_id,
+                        'fees_id' => $metadata->fees_id,
+                        'student_id' => $metadata->student_id,
+                    ];
+
+                    $feesPaidResult = FeesPaid::updateOrCreate(
+                        ['id' => $feesPaidDB->id ?? null],
+                        $feesPaidData
+                    );
+
+                    if ($metadata->fees_type === "compulsory") {
+                        $installments = json_decode($metadata->installment, true, 512, JSON_THROW_ON_ERROR);
+
+                        if (count($installments) > 0) {
+                            foreach ($installments as $installment) {
+                                CompulsoryFee::create([
+                                    'student_id' => $metadata->student_id,
+                                    'payment_transaction_id' => $paymentTransactionData->id,
+                                    'type' => 'Installment Payment',
+                                    'installment_id' => $installment['id'],
+                                    'mode' => 'Online',
+                                    'cheque_no' => null,
+                                    'amount' => $installment['amount'],
+                                    'due_charges' => $installment['dueChargesAmount'],
+                                    'fees_paid_id' => $feesPaidResult->id,
+                                    'status' => 1, // 1 = succeed, 2 = pending
+                                    'date' => $current_date,
+                                    'school_id' => $metadata->school_id,
+                                ]);
+                            }
+                        } else if ($metadata->advance_amount == 0) {
+
+                            CompulsoryFee::create([
+                                'student_id' => $metadata->student_id,
+                                'payment_transaction_id' => $paymentTransactionData->id,
+                                'type' => 'Full Payment',
+                                'installment_id' => null,
+                                'mode' => 'Online',
+                                'cheque_no' => null,
+                                'amount' => $paymentTransactionData->amount,
+                                'due_charges' => $metadata->dueChargesAmount,
+                                'fees_paid_id' => $feesPaidResult->id,
+                                'status' => 1, // 1 = succeed, 2 = pending
+                                'date' => $current_date,
+                                'school_id' => $metadata->school_id,
+                            ]);
+                        }
+
+                        // Add advance amount in installment
+                        if ($metadata->advance_amount > 0) {
+                            $updateCompulsoryFees = CompulsoryFee::where('student_id', $metadata->student_id)
+                                ->with('fees_paid')
+                                ->whereHas('fees_paid', function ($q) use ($metadata) {
+                                    $q->where('fees_id', $metadata->fees_id);
+                                })
+                                ->orderBy('id', 'DESC')
+                                ->first();
+
+                            $updateCompulsoryFees->amount += $metadata->advance_amount;
+                            $updateCompulsoryFees->save();
+
+                            FeesAdvance::create([
+                                'compulsory_fee_id' => $updateCompulsoryFees->id,
+                                'student_id' => $metadata->student_id,
+                                'parent_id' => $metadata->parent_id,
+                                'amount' => $metadata->advance_amount
+                            ]);
+                        }
+
+                        $feesPaidResult->is_fully_paid = $totalAmount >= $fees->total_compulsory_fees;
+                        $feesPaidResult->is_used_installment = !empty($metadata->installment);
+                        $feesPaidResult->save();
+                    } else if ($metadata->fees_type === "optional") {
+                        $optional_fees = json_decode($metadata->optional_fees_id, false, 512, JSON_THROW_ON_ERROR);
+                        foreach ($optional_fees as $optional_fee) {
+                            OptionalFee::create([
+                                'student_id' => $metadata->student_id,
+                                'class_id' => $metadata->class_id,
+                                'payment_transaction_id' => $paymentTransactionData->id,
+                                'fees_class_id' => $optional_fee->id,
+                                'mode' => 'Online',
+                                'cheque_no' => null,
+                                'amount' => $optional_fee->amount,
+                                'fees_paid_id' => $feesPaidResult->id,
+                                'date' => $current_date,
+                                'school_id' => $metadata->school_id,
+                                'status' => 1, // 1 = succeed, 2 = pending
+                            ]);
+                        }
+                    }
+                }
+
+                // Send notification
+                \Log::info("Send Notification in Paystack");
+                $user = User::where('id', $metadata->parent_id)->first();
+                \Log::info("User ID : ", [$user]);
+                $body = 'Amount :- ' . $paymentTransactionData->amount;
+                $type = 'payment';
+
+                DB::commit();
+
+                send_notification([$user->id], 'Fees Payment Successful', $body, $type, ['is_payment_success' => "true"]);
+                \Log::info("send_notification", [$user->id]);
+                return response()->json(['status' => 'success'], 200);
+            } else if ($data->event === 'charge.failed') {
+                $paymentTransactionData = PaymentTransaction::where('order_id', $data->data->reference)->first();
+
+                if (!$paymentTransactionData) {
+                    Log::error("Paystack Webhook : Payment Transaction id not found");
+                    return response()->json(['error' => 'Transaction not found'], 404);
+                }
+
+                DB::beginTransaction();
+
+                PaymentTransaction::find($metadata->payment_transaction_id)
+                    ->update(['payment_status' => "failed"]);
+
+                if ($metadata->fees_type == "transportation_fee") {
+                    TransportationPayment::where('payment_transaction_id', $paymentTransactionData->id)
+                        ->update([
+                            'status' => "cancelled"
+                        ]);
+                } else {
+
+                    if ($metadata->fees_type === "compulsory") {
+                        CompulsoryFee::where('payment_transaction_id', $paymentTransactionData->id)
+                            ->update(['status' => "failed"]);
+                    } else if ($metadata->fees_type === "optional") {
+                        OptionalFee::where('payment_transaction_id', $paymentTransactionData->id)
+                            ->update(['status' => "failed"]);
+                    }
+                }
+
+                // Send notification
+                \Log::info("Send Notification in Paystack");
+                $user = User::where('id', $metadata->parent_id)->first();
+                \Log::info("User ID : ", [$user]);
+                DB::commit();
+                if ($user) {
+                    $body = 'Amount: ' . $paymentTransactionData->amount;
+                    send_notification([$user->id], 'Fees Payment Failed', $body, 'payment', ['is_payment_success' => 'false']);
+                    \Log::info("send_notification", [$user->id]);
+                }
+
+
+                return response()->json(['status' => 'failed'], 400);
+            }
+
+            return response()->json(['status' => 'ignored'], 200);
+        } catch (UnexpectedValueException $e) {
+            Log::error("Paystack Webhook : Invalid payload", [$e->getMessage()]);
+            return response()->json(['error' => 'Invalid payload'], 400);
+        } catch (SignatureVerificationException $e) {
+            Log::error("Paystack Webhook : Invalid signature", [$e->getMessage()]);
+            return response()->json(['error' => 'Invalid signature'], 400);
+        } catch (Throwable $e) {
+            DB::rollBack();
+            Log::error("Paystack Webhook Error: " . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
+    }
+
+    public function flutterwave()
+    {
+        $webhookBody = file_get_contents('php://input');
+        Log::info(PHP_EOL . "----------------------------------------------------------------------------------------------------------------------");
+
+        try {
+
+            $data = json_decode($webhookBody, false, 512, JSON_THROW_ON_ERROR);
+            
+            $school_id = $data->meta_data->school_id;
+            $school = School::on('mysql')->where('id', $school_id)->first();
+
+            Config::set('database.connections.school.database', $school->database_name);
+            DB::purge('school');
+            DB::connection('school')->reconnect();
+            DB::setDefaultConnection('school');
+
+            // You can find your endpoint's secret in your webhook settings
+            $paymentConfiguration = PaymentConfiguration::select(['secret_key', 'api_key'])->where('payment_method', 'flutterwave')->where('school_id', $school_id ?? null)->first();
+
+
+            $webhookSecret = $paymentConfiguration['secret_key'];
+            $webhookPublic = $paymentConfiguration['api_key'];
+
+
+            $api = new Api($webhookPublic, $webhookSecret);
+
+
+            //get the current today's date
+            $current_date = date('Y-m-d');
+
+            if (isset($data->event) && $data->event == 'charge.completed') {
+
+                Log::info('Payment completed');
+
+                //checks the signature
+                $expectedSignature = hash_hmac("SHA256", $webhookBody, $webhookSecret);
+
+                $api->utility->verifyWebhookSignature($webhookBody, $expectedSignature, $webhookSecret);
+                $paymentTransactionData = PaymentTransaction::where('order_id', $data->data->tx_ref)->first();
+
+                if ($paymentTransactionData == null) {
+                    Log::error("Flutterwave Webhook : Payment Transaction id not found");
+                }
+
+                if ($paymentTransactionData->status == "succeed") {
+                    Log::info("Flutterwave Webhook : Transaction Already Succeed");
+                }
+                $fees = Fee::where('id', $data->meta_data->fees_id)->with(['fees_class_type', 'fees_class_type.fees_type'])->firstOrFail();
+
+                DB::beginTransaction();
+                PaymentTransaction::where('id', $paymentTransactionData->id)->update(['payment_status' => "succeed"]);
+
+                if ($data->meta_data->fees_type == "transportation_fee") {
+                    $fee_id = Transportationpayment::where('payment_transaction_id', $paymentTransactionData->id)->first();
+                    $transportationFee = TransportationFee::where('id', $fee_id->transportation_fee_id)->first();
+                    $expiryDate = null;
+                    if ($transportationFee) {
+                        if (!empty($transportationFee->duration)) {
+                            $expiryDate = now()->addDays($transportationFee->duration);
+                        }
+                    }
+                    TransportationPayment::where('payment_transaction_id', $paymentTransactionData->id)
+                        ->update([
+                            'status' => "paid",
+                            'paid_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                            'expiry_date' => $expiryDate
+                        ]);
+                } else {
+                    $feesPaidDB = FeesPaid::where([
+                        'fees_id' => $data->meta_data->fees_id,
+                        'student_id' => $data->meta_data->student_id,
+                        'school_id' => $data->meta_data->school_id
+                    ])->first();
+
+                    // Check if Fees Paid Exists Then Add The optional Fees Amount with Fess Paid Amount
+                    $totalAmount = !empty($feesPaidDB) ? $feesPaidDB->amount + $data->data->amount : $data->data->amount;
+                    // Fees Paid Array
+                    $feesPaidData = array(
+                        'amount' => $totalAmount,
+                        'date' => date('Y-m-d', strtotime($current_date)),
+                        "school_id" => $data->meta_data->school_id,
+                        'fees_id' => $data->meta_data->fees_id,
+                        'student_id' => $data->meta_data->student_id,
+                    );
+
+                    $feesPaidResult = FeesPaid::updateOrCreate(['id' => $feesPaidDB->id ?? null], $feesPaidData);
+
+                    if ($data->meta_data->fees_type == "compulsory") {
+                        $installments = json_decode($data->meta_data->installment, true, 512, JSON_THROW_ON_ERROR);
+                        if (count($installments) > 0) {
+                            foreach ($installments as $installment) {
+                                \Log::info("data.meta_data.dueChargesAmount - ");
+                                \Log::info($data->meta_data);
+
+                                CompulsoryFee::create([
+                                    'student_id' => $data->meta_data->student_id,
+                                    'payment_transaction_id' => $paymentTransactionData->id,
+                                    'type' => 'Installment Payment',
+                                    'installment_id' => $installment['id'],
+                                    'mode' => 'Online',
+                                    'cheque_no' => null,
+                                    'amount' => $installment['amount'],
+                                    'due_charges' => $data->meta_data->dueChargesAmount ?? 0,
+                                    'fees_paid_id' => $feesPaidResult->id,
+                                    'status' => 1, // 1 = succeed, 2 = pending
+                                    'date' => date('Y-m-d'),
+                                    'school_id' => $data->meta_data->school_id,
+                                ]);
+                            }
+                        } else if ($data->meta_data->advance_amount == 0) {
+
+
+                            CompulsoryFee::create([
+                                'student_id' => $data->meta_data->student_id,
+                                'payment_transaction_id' => $paymentTransactionData->id,
+                                'type' => 'Full Payment',
+                                'installment_id' => null,
+                                'mode' => 'Online',
+                                'cheque_no' => null,
+                                'amount' => $paymentTransactionData->amount,
+                                'due_charges' => $data->meta_data->dueChargesAmount ?? 0,
+                                'fees_paid_id' => $feesPaidResult->id,
+                                'status' => 1, // 1 = succeed, 2 = pending
+                                'date' => date('Y-m-d'),
+                                'school_id' => $data->meta_data->school_id,
+                            ]);
+                        }
+
+                        // Add advance amount in installment
+                        if ($data->meta_data->advance_amount > 0) {
+                            $updateCompulsoryFees = CompulsoryFee::where('student_id', $data->meta_data->student_id)->with('fees_paid')->whereHas('fees_paid', function ($q) use ($data) {
+                                $q->where('fees_id', $data->meta_data->fees_id);
+                            })->orderBy('id', 'DESC')->first();
+
+                            $updateCompulsoryFees->amount += $data->meta_data->advance_amount;
+                            $updateCompulsoryFees->save();
+
+                            FeesAdvance::create([
+                                'compulsory_fee_id' => $updateCompulsoryFees->id,
+                                'student_id' => $data->meta_data->student_id,
+                                'parent_id' => $data->meta_data->parent_id,
+                                'amount' => $data->meta_data->advance_amount
+                            ]);
+                        }
+                        $feesPaidResult->is_fully_paid = $totalAmount >= $fees->total_compulsory_fees;
+                        $feesPaidResult->is_used_installment = !empty($data->meta_data->installment);
+                        $feesPaidResult->save();
+                    } else if ($data->meta_data->fees_type == "optional") {
+                        $optional_fees = json_decode($data->data->meta_data->optional_fees_id, false, 512, JSON_THROW_ON_ERROR);
+                        foreach ($optional_fees as $optional_fee) {
+                            OptionalFee::create([
+                                'student_id' => $data->data->meta_data->student_id,
+                                'class_id' => $data->data->meta_data->class_id,
+                                'payment_transaction_id' => $paymentTransactionData->id,
+                                'fees_class_id' => $optional_fee->id,
+                                'mode' => 'Online',
+                                'cheque_no' => null,
+                                'amount' => $optional_fee->amount,
+                                'fees_paid_id' => $feesPaidResult->id,
+                                'date' => date('Y-m-d'),
+                                'school_id' => $data->data->meta_data->school_id,
+                                'status' => 1, // 1 = succeed, 2 = pending
+                            ]);
+                        }
+                    }
+                }
+
+                Log::info("payment_intent.succeeded called successfully");
+                \Log::info("Send Notification in Flutterwave");
+                $user = User::where('id', $data->meta_data->parent_id)->first();
+                \Log::info("User ID : ", [$user]);
+                $body = 'Amount :- ' . $paymentTransactionData->amount;
+                $type = 'payment';
+                DB::commit();
+
+                send_notification([$user->id], 'Fees Payment Successful', $body, $type, ['is_payment_success' => 'true']);
+                \Log::info("send_notification", [$user->id]);
+                http_response_code(200);
+            } elseif (isset($data->event) && $data->event == 'charge.failed') {
+                $paymentTransactionData = PaymentTransaction::find($data->data->id);
+                if (!$paymentTransactionData) {
+                    Log::error("Flutterwave Webhook : Payment Transaction id not found --->");
+                }
+
+                PaymentTransaction::find($data->data->id)->update(['payment_status' => "failed"]);
+                if ($data->meta_data->fees_type == "transportation_fee") {
+                    TransportationPayment::where('payment_transaction_id', $paymentTransactionData->id)
+                        ->update([
+                            'status' => "cancelled"
+                        ]);
+                } else {
+                    if ($data->data->meta_data->fees_type == "compulsory") {
+                        CompulsoryFee::where('payment_transaction_id', $paymentTransactionData->id)
+                            ->update([
+                                'status' => "failed",
+                            ]);
+                    } else if ($data->data->meta_data->fees_type == "optional") {
+                        OptionalFee::where('payment_transaction_id', $paymentTransactionData->id)
+                            ->update([
+                                'status' => "failed",
+                            ]);
+                    }
+                }
+
+                http_response_code(400);
+                \Log::info("Failed Notification in Flutterwave");
+                $user = User::where('id', $data->data->meta_data->parent_id)->first();
+                \Log::info("User ID : ", [$user]);
+                $body = 'Amount :- ' . $paymentTransactionData->amount;
+                $type = 'payment';
+                DB::commit();
+                send_notification([$user->id], 'Fees Payment Failed', $body, $type, ['is_payment_success' => 'false']);
+                \Log::info("send_notification", [$user->id]);
+            } elseif (isset($data->event) && $data->event == 'charge.authorized') {
+                http_response_code(200);
+            } else {
+                Log::error('Flutterwave Webhook : Received unknown event type');
+            }
+        } catch (UnexpectedValueException) {
+            // Invalid payload
+            echo "Flutterwave Webhook : Payload Mismatch";
+            Log::error("Flutterwave  : Payload Mismatch");
+            http_response_code(400);
+            exit();
+        } catch (SignatureVerificationException) {
+            // Invalid signature
+            echo "Flutterwave  Webhook : Signature Verification Failed";
+            Log::error("Flutterwave  Webhook : Signature Verification Failed");
+            http_response_code(400);
+            exit();
+        } catch (Throwable $e) {
+            DB::rollBack();
+            Log::error("Flutterwave Webhook : Error occurred", [$e->getMessage() . ' --> ' . $e->getFile() . ' At Line : ' . $e->getLine()]);
+            http_response_code(400);
+            exit();
+        }
+    }
+
+
+    private function handleRazorpaySuccess($paymentTransaction, $webhookData, $metadata)
+    {
+        Log::info("=== handleRazorpaySuccess called ===", [
+            'transaction_id' => $paymentTransaction->id,
+            'current_status' => $paymentTransaction->payment_status,
+            'order_id' => $webhookData->order_id ?? 'N/A',
+            'payment_id' => $webhookData->id ?? 'N/A'
+        ]);
+        
+        // Use database locking to prevent race conditions from multiple webhook calls
+        DB::beginTransaction();
+        
+        try {
+            // Lock the row for update to prevent concurrent processing
+            $lockedTransaction = PaymentTransaction::where('id', $paymentTransaction->id)
+                ->lockForUpdate()
+                ->first();
+            
+            // Check if already processed (use payment_status field)
+            if ($lockedTransaction->payment_status === "succeed") {
+                DB::rollBack();
+                Log::info("❌ Transaction already processed successfully - ID: {$lockedTransaction->id} - SKIPPING");
+                return response()->json(['status' => 'success', 'message' => 'Transaction already processed']);
+            }
+
+            // Update payment transaction status FIRST to prevent race conditions
+            $lockedTransaction->payment_status = "succeed";
+            $lockedTransaction->save();
+            
+            // Commit immediately to lock the status and prevent duplicate processing
+            DB::commit();
+            
+            Log::info("✓ First time processing - will send notification");
+            
+            // Start new transaction for fee processing
+            DB::beginTransaction();
+
+            if ($metadata->fees_type == "transportation_fee") {
+                $fee_id = Transportationpayment::where('payment_transaction_id', $metadata->payment_transaction_id)->first();
+                $transportationFee = TransportationFee::where('id', $fee_id->transportation_fee_id)->first();
+                $expiryDate = null;
+                if ($transportationFee) {
+                    if (!empty($transportationFee->duration)) {
+                        $expiryDate = now()->addDays($transportationFee->duration);
+                    }
+                }
+                TransportationPayment::where('payment_transaction_id', $metadata->payment_transaction_id)
+                    ->update([
+                        'status' => "paid",
+                        'paid_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                        'expiry_date' => $expiryDate
+                    ]);
+                $amount = (int) $webhookData->amount / 100;
+            } else {
+                // Convert amount to integer
+                $amount = (int) $webhookData->amount / 100; // Razorpay amount is in paise
+
+                // Process fees based on type
+                if ($metadata->fees_type == "multiple") {
+                    // Process multiple fees with different fees_id
+                    // No need to create single fees_paid record here
+                    $this->processMultipleFees($paymentTransaction, $metadata);
+                } else {
+                    // Single fees_id payment (compulsory, optional, or mixed)
+                    
+                    // Get fees details
+                    $fees = Fee::where('id', $metadata->fees_id)
+                        ->with(['fees_class_type', 'fees_class_type.fees_type'])
+                        ->firstOrFail();
+
+                    // Update fees paid record
+                    $feesPaidDB = FeesPaid::where([
+                        'fees_id' => $metadata->fees_id,
+                        'student_id' => $metadata->student_id,
+                        'school_id' => $metadata->school_id
+                    ])->first();
+
+                    $totalAmount = !empty($feesPaidDB) ?
+                        $feesPaidDB->amount + $amount :
+                        $amount;
+
+                    $feesPaidData = [
+                        'amount' => $totalAmount,
+                        'date' => date('Y-m-d'),
+                        'school_id' => $metadata->school_id,
+                        'fees_id' => $metadata->fees_id,
+                        'student_id' => $metadata->student_id,
+                        'is_fully_paid' => $totalAmount >= $fees->total_compulsory_fees,
+                        'is_used_installment' => !empty($paymentTransaction->installment_details)
+                    ];
+
+                    $feesPaidResult = FeesPaid::updateOrCreate(
+                        ['id' => $feesPaidDB->id ?? null],
+                        $feesPaidData
+                    );
+
+                    // Process based on fees type
+                    if ($metadata->fees_type == "compulsory") {
+                        $this->processCompulsoryFees($paymentTransaction, $feesPaidResult, $metadata);
+                    } else if ($metadata->fees_type == "optional") {
+                        $this->processOptionalFees($paymentTransaction, $feesPaidResult, $metadata);
+                    } else if ($metadata->fees_type == "mixed") {
+                        // Process both compulsory and optional fees
+                        $this->processCompulsoryFees($paymentTransaction, $feesPaidResult, $metadata);
+                        $this->processOptionalFees($paymentTransaction, $feesPaidResult, $metadata);
+                    }
+                }
+            }
+            DB::commit();
+            
+            // Send success notification only once after successful processing
+            $user = User::find($metadata->parent_id ?? $paymentTransaction->user_id);
+            if ($user) {
+                $body = 'Payment successful. Amount: ₹' . $amount;
+                Log::info("📧 SENDING NOTIFICATION to user: {$user->id}", [
+                    'transaction_id' => $paymentTransaction->id,
+                    'amount' => $amount,
+                    'order_id' => $webhookData->order_id ?? 'N/A'
+                ]);
+                send_notification([$user->id], 'Fees Payment Successful', $body, 'payment', ['is_payment_success' => 'true']);
+                Log::info("✓ Notification sent successfully");
+            } else {
+                Log::warning("⚠️ User not found - notification not sent", [
+                    'parent_id' => $metadata->parent_id ?? 'N/A',
+                    'user_id' => $paymentTransaction->user_id ?? 'N/A'
+                ]);
+            }
+
+            return response()->json(['status' => 'success'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error in fee processing:", [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            throw $e;
+        }
+    }
+
+    private function handleRazorpayFailed($paymentTransaction, $webhookData, $metadata)
+    {
+        DB::beginTransaction();
+        try {
+            Log::info("🔴 FAILED PAYMENT HANDLER STARTED", [
+                'transaction_id' => $paymentTransaction->id,
+                'current_status' => $paymentTransaction->payment_status,
+                'order_id' => $webhookData->order_id ?? 'N/A'
+            ]);
+
+            // Lock the payment transaction row to prevent race conditions
+            $paymentTransaction = PaymentTransaction::where('id', $paymentTransaction->id)
+                ->lockForUpdate()
+                ->first();
+
+            // Idempotency check - if already failed, skip processing
+            if ($paymentTransaction->payment_status === "failed") {
+                DB::commit();
+                Log::info("⚠️ DUPLICATE FAILED WEBHOOK - Already processed, skipping", [
+                    'transaction_id' => $paymentTransaction->id,
+                    'status' => $paymentTransaction->payment_status
+                ]);
+                return response()->json(['status' => 'already_processed'], 200);
+            }
+
+            Log::info("🔄 Processing failed payment", [
+                'transaction_id' => $paymentTransaction->id,
+                'fees_type' => $metadata->fees_type ?? 'N/A'
+            ]);
+
+            $paymentTransaction->payment_status = "failed";
+            $paymentTransaction->save();
+
+            if ($metadata->fees_type == "transportation_fee") {
+                TransportationPayment::where('payment_transaction_id', $metadata->payment_transaction_id)
+                    ->update([
+                        'status' => "cancelled"
+                    ]);
+            } else {
+
+                if ($metadata->fees_type == "compulsory") {
+                    CompulsoryFee::where('payment_transaction_id', $paymentTransaction->id)
+                        ->update(['status' => "failed"]);
+                } else if ($metadata->fees_type == "optional") {
+                    OptionalFee::where('payment_transaction_id', $paymentTransaction->id)
+                        ->update(['status' => "failed"]);
+                }
+            }
+            
+            DB::commit();
+            
+            // Send failure notification ONCE after successful status update
+            $user = User::find($metadata->parent_id);
+            if ($user) {
+                $amount = ((int) $webhookData->amount / 100);
+                $body = 'Payment failed. Amount: ₹' . $amount;
+                Log::info("📧 SENDING FAILED NOTIFICATION to user: {$user->id}", [
+                    'transaction_id' => $paymentTransaction->id,
+                    'amount' => $amount,
+                    'order_id' => $webhookData->order_id ?? 'N/A'
+                ]);
+                send_notification([$user->id], 'Fees Payment Failed', $body, 'payment', ['is_payment_success' => 'false']);
+                Log::info("✓ Failed notification sent successfully");
+            } else {
+                Log::warning("⚠️ User not found - failed notification not sent", [
+                    'parent_id' => $metadata->parent_id ?? 'N/A'
+                ]);
+            }
+            
+            return response()->json(['status' => 'failed'], 400);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("❌ Error in failed payment processing:", [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'transaction_id' => $paymentTransaction->id ?? 'N/A'
+            ]);
+            throw $e;
+        }
+    }
+
+    public function processCompulsoryFees($paymentTransaction, $feesPaidResult, $metadata)
+    {
+        // Check if already processed
+        $alreadyProcessed = CompulsoryFee::where('payment_transaction_id', $paymentTransaction->id)
+            ->where('fees_paid_id', $feesPaidResult->id)
+            ->exists();
+        
+        if ($alreadyProcessed) {
+            \Log::info("Compulsory fees already processed for transaction ID: {$paymentTransaction->id}");
+            return;
+        }
+        
+        $installments = json_decode($paymentTransaction->installment_details ?? '[]', true);
+        $current_date = date('Y-m-d');
+        
+        // For mixed payments, use compulsory_amount; otherwise use transaction amount
+        $compulsoryAmount = isset($metadata->compulsory_amount) ? $metadata->compulsory_amount : $paymentTransaction->amount;
+
+        if (!empty($installments)) {
+            // Process installment payments
+            foreach ($installments as $installment) {
+                CompulsoryFee::create([
+                    'student_id' => $metadata->student_id,
+                    'payment_transaction_id' => $paymentTransaction->id,
+                    'type' => 'Installment Payment',
+                    'installment_id' => $installment['id'],
+                    'mode' => 'Online',
+                    'cheque_no' => null,
+                    'amount' => $installment['amount'],
+                    'due_charges' => $installment['dueChargesAmount'] ?? 0,
+                    'fees_paid_id' => $feesPaidResult->id,
+                    'status' => 1, // 1 = succeed, 2 = pending
+                    'date' => $current_date,
+                    'school_id' => $metadata->school_id,
+                ]);
+            }
+        } else if (($metadata->advance_amount ?? 0) == 0) {
+            // Process full payment
+            CompulsoryFee::create([
+                'student_id' => $metadata->student_id,
+                'payment_transaction_id' => $paymentTransaction->id,
+                'type' => 'Full Payment',
+                'installment_id' => null,
+                'mode' => 'Online',
+                'cheque_no' => null,
+                'amount' => $compulsoryAmount,
+                'due_charges' => $metadata->dueChargesAmount ?? 0,
+                'fees_paid_id' => $feesPaidResult->id,
+                'status' => 1, // 1 = succeed, 2 = pending
+                'date' => $current_date,
+                'school_id' => $metadata->school_id,
+            ]);
+        }
+
+        // Handle advance payment if any
+        if (($metadata->advance_amount ?? 0) > 0) {
+            $updateCompulsoryFees = CompulsoryFee::where('student_id', $metadata->student_id)
+                ->with('fees_paid')
+                ->whereHas('fees_paid', function ($q) use ($metadata) {
+                    $q->where('fees_id', $metadata->fees_id);
+                })
+                ->orderBy('id', 'DESC')
+                ->first();
+
+            if ($updateCompulsoryFees) {
+                $updateCompulsoryFees->amount += $metadata->advance_amount;
+                $updateCompulsoryFees->save();
+
+                FeesAdvance::create([
+                    'compulsory_fee_id' => $updateCompulsoryFees->id,
+                    'student_id' => $metadata->student_id,
+                    'parent_id' => $metadata->parent_id,
+                    'amount' => $metadata->advance_amount
+                ]);
+            }
+        }
+    }
+
+    public function processOptionalFees($paymentTransaction, $feesPaidResult, $metadata)
+    {
+        // Check if already processed
+        $alreadyProcessed = OptionalFee::where('payment_transaction_id', $paymentTransaction->id)
+            ->where('fees_paid_id', $feesPaidResult->id)
+            ->exists();
+        
+        if ($alreadyProcessed) {
+            \Log::info("Optional fees already processed for transaction ID: {$paymentTransaction->id}");
+            return;
+        }
+        
+        $optional_fees = json_decode($metadata->optional_fees_id ?? '[]', true);
+        $current_date = date('Y-m-d');
+
+        foreach ($optional_fees as $optional_fee) {
+            OptionalFee::create([
+                'student_id' => $metadata->student_id,
+                'class_id' => $metadata->class_id,
+                'payment_transaction_id' => $paymentTransaction->id,
+                'fees_class_id' => $optional_fee['id'],
+                'mode' => 'Online',
+                'cheque_no' => null,
+                'amount' => $optional_fee['amount'],
+                'fees_paid_id' => $feesPaidResult->id,
+                'date' => $current_date,
+                'school_id' => $metadata->school_id,
+                'status' => 1, // 1 = succeed, 2 = pending
+            ]);
+        }
+    }
+
+    /**
+     * Process multiple fees payment (different fees_id in single transaction)
+     */
+    private function processMultipleFees($paymentTransaction, $metadata)
+    {
+        $multipleFees = json_decode($metadata->multiple_fees, true);
+        
+        // Check if already processed by checking if CompulsoryFee/OptionalFee records exist
+        $alreadyProcessed = CompulsoryFee::where('payment_transaction_id', $paymentTransaction->id)->exists()
+            || OptionalFee::where('payment_transaction_id', $paymentTransaction->id)->exists();
+        
+        if ($alreadyProcessed) {
+            \Log::info("Multiple fees already processed for transaction ID: {$paymentTransaction->id}");
+            return;
+        }
+
+        // Process transportation fee if included in metadata
+        if (!empty($metadata->transportation)) {
+            $transportData = json_decode($metadata->transportation, true);
+            if ($transportData) {
+                $alreadyTransportPaid = \App\Models\TransportationPayment::where('user_id', $metadata->student_id)
+                    ->where('session_year_id', $metadata->session_year_id)
+                    ->where('status', 'paid')
+                    ->exists();
+
+                if (!$alreadyTransportPaid) {
+                    \App\Models\TransportationPayment::create([
+                        'user_id'               => $metadata->student_id,
+                        'pickup_point_id'        => $transportData['pickup_point_id'],
+                        'route_vehicle_id'       => $transportData['route_vehicle_id'] ?? null,
+                        'shift_id'               => $transportData['shift_id'] ?? null,
+                        'transportation_fee_id'  => $transportData['transportation_fee_id'],
+                        'payment_transaction_id' => $paymentTransaction->id,
+                        'amount'                 => $transportData['amount'],
+                        'status'                 => 'paid',
+                        'paid_at'                => now(),
+                        'session_year_id'        => $metadata->session_year_id,
+                        'school_id'              => $metadata->school_id,
+                        'expiry_date'            => \App\Models\SessionYear::find($metadata->session_year_id)?->end_date,
+                    ]);
+
+                    \App\Models\TransportationRequest::where('id', $transportData['transportation_request_id'])
+                        ->update(['status' => 1]);
+                }
+            }
+        }
+        
+        foreach ($multipleFees as $feeData) {
+            $feesId = $feeData['fees_id'];
+            $compulsoryAmount = $feeData['compulsory_amount'] ?? 0;
+            $optionalAmount = $feeData['optional_amount'] ?? 0;
+            
+            // Get fees details
+            $fees = Fee::where('id', $feesId)
+                ->with(['fees_class_type', 'fees_class_type.fees_type'])
+                ->first();
+            
+            if (!$fees) {
+                \Log::error("Fees not found for ID: {$feesId}");
+                continue;
+            }
+            
+            // Update or create fees paid record
+            $feesPaidDB = FeesPaid::where([
+                'fees_id' => $feesId,
+                'student_id' => $metadata->student_id,
+                'school_id' => $metadata->school_id
+            ])->first();
+            
+            $feeTotal = $compulsoryAmount + $optionalAmount;
+            $totalAmount = !empty($feesPaidDB) ? $feesPaidDB->amount + $feeTotal : $feeTotal;
+            
+            $feesPaidData = [
+                'amount' => $totalAmount,
+                'date' => date('Y-m-d'),
+                'school_id' => $metadata->school_id,
+                'fees_id' => $feesId,
+                'student_id' => $metadata->student_id,
+                'is_fully_paid' => $totalAmount >= ($fees->total_compulsory_fees ?? 0),
+                'is_used_installment' => !empty($feeData['installment_details'])
+            ];
+            
+            $feesPaidResult = FeesPaid::updateOrCreate(
+                ['id' => $feesPaidDB->id ?? null],
+                $feesPaidData
+            );
+            
+            // Process compulsory fees
+            if ($compulsoryAmount > 0) {
+                $compulsoryDetails = $feeData['compulsory_details'] ?? [];
+                $installmentDetails = $feeData['installment_details'] ?? [];
+                $current_date = date('Y-m-d');
+                
+                if (!empty($installmentDetails)) {
+                    // Process installments
+                    foreach ($installmentDetails as $installment) {
+                        CompulsoryFee::create([
+                            'student_id' => $metadata->student_id,
+                            'payment_transaction_id' => $paymentTransaction->id,
+                            'type' => 'Installment Payment',
+                            'installment_id' => $installment['id'],
+                            'mode' => 'Online',
+                            'cheque_no' => null,
+                            'amount' => $installment['amount'],
+                            'due_charges' => $installment['dueChargesAmount'] ?? 0,
+                            'fees_paid_id' => $feesPaidResult->id,
+                            'status' => 1, // 1 = succeed, 2 = pending
+                            'date' => $current_date,
+                            'school_id' => $metadata->school_id,
+                        ]);
+                    }
+                } else {
+                    // Full payment
+                    $compulsoryFeeRecord = CompulsoryFee::create([
+                        'student_id' => $metadata->student_id,
+                        'payment_transaction_id' => $paymentTransaction->id,
+                        'type' => 'Full Payment',
+                        'installment_id' => null,
+                        'mode' => 'Online',
+                        'cheque_no' => null,
+                        'amount' => $compulsoryAmount,
+                        'due_charges' => $feeData['due_charges'] ?? 0,
+                        'fees_paid_id' => $feesPaidResult->id,
+                        'status' => 1,
+                        'date' => $current_date,
+                        'school_id' => $metadata->school_id,
+                    ]);
+
+                    // Month-wise breakdown
+                    if ($fees->total_compulsory_fees > 0 && $compulsoryAmount > 0) {
+                        $this->storeCompulsoryFeeMonths(
+                            $compulsoryFeeRecord->id,
+                            $metadata->student_id,
+                            $feesId,
+                            $compulsoryAmount,
+                            $fees->total_compulsory_fees,
+                            $metadata->school_id
+                        );
+                    }
+                }
+            }
+            
+            // Process optional fees
+            if ($optionalAmount > 0) {
+                $optionalDetails = $feeData['optional_details'] ?? [];
+                $current_date = date('Y-m-d');
+                
+                foreach ($optionalDetails as $optional_fee) {
+                    OptionalFee::create([
+                        'student_id' => $metadata->student_id,
+                        'payment_transaction_id' => $paymentTransaction->id,
+                        'class_id' => $metadata->class_id,
+                        'fees_class_id' => $optional_fee['id'],
+                        'mode' => 'Online',
+                        'cheque_no' => null,
+                        'amount' => $optional_fee['amount'],
+                        'fees_paid_id' => $feesPaidResult->id,
+                        'date' => $current_date,
+                        'school_id' => $metadata->school_id,
+                        'status' => 1, // 1 = succeed, 2 = pending
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Store month-wise breakdown for a compulsory fee payment.
+     * Session year ke start month se months count hote hain (1 = session start month).
+     */
+    private function storeCompulsoryFeeMonths(int $compulsoryFeeId, int $studentId, int $feesId, float $paidAmount, float $totalFees, int $schoolId): void
+    {
+        try {
+            $allMonthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+            // Session year fetch karo school ke liye
+            $sessionYear = \App\Models\SessionYear::where('school_id', $schoolId)
+                ->where('default', 1)
+                ->first();
+
+            $startMonthIdx = $sessionYear
+                ? (int) \Carbon\Carbon::parse($sessionYear->start_date)->format('n')
+                : 1; // fallback: January
+
+            // Session month map: 1 = session start month, 2 = next, ...
+            $sessionMonthMap = [];
+            for ($i = 0; $i < 12; $i++) {
+                $calMonth = (($startMonthIdx - 1 + $i) % 12) + 1;
+                $sessionMonthMap[$i + 1] = $allMonthNames[$calMonth - 1];
+            }
+
+            $monthlyFee = round($totalFees / 12, 2);
+
+            // Last stored month record se continue karo
+            $lastMonthRecord = \App\Models\CompulsoryFeeMonth::whereHas('compulsory_fee', function ($q) use ($studentId, $feesId) {
+                $q->where('student_id', $studentId)
+                  ->whereHas('fees_paid', function ($q2) use ($feesId) {
+                      $q2->where('fees_id', $feesId);
+                  });
+            })->where('compulsory_fee_id', '!=', $compulsoryFeeId) // exclude current record
+              ->orderBy('month_number', 'desc')
+              ->first();
+
+            if ($lastMonthRecord) {
+                $currentMonth       = $lastMonthRecord->month_number;
+                $partialAlreadyPaid = $lastMonthRecord->is_partial
+                    ? round($lastMonthRecord->amount, 2)
+                    : 0;
+
+                if (!$lastMonthRecord->is_partial) {
+                    $currentMonth++;
+                }
+            } else {
+                $currentMonth       = 1;
+                $partialAlreadyPaid = 0;
+            }
+
+            $remaining = round($paidAmount, 2);
+
+            // Partial month pehle complete karo
+            if ($partialAlreadyPaid > 0.01) {
+                $neededToComplete = round($monthlyFee - $partialAlreadyPaid, 2);
+
+                if ($remaining >= $neededToComplete - 0.01) {
+                    \App\Models\CompulsoryFeeMonth::create([
+                        'compulsory_fee_id' => $compulsoryFeeId,
+                        'month_number'      => $currentMonth,
+                        'month_name'        => $sessionMonthMap[$currentMonth] ?? '',
+                        'amount'            => $neededToComplete,
+                        'is_partial'        => false,
+                    ]);
+                    $remaining = round($remaining - $neededToComplete, 2);
+                    $currentMonth++;
+                } else {
+                    \App\Models\CompulsoryFeeMonth::create([
+                        'compulsory_fee_id' => $compulsoryFeeId,
+                        'month_number'      => $currentMonth,
+                        'month_name'        => $sessionMonthMap[$currentMonth] ?? '',
+                        'amount'            => $remaining,
+                        'is_partial'        => true,
+                    ]);
+                    $remaining = 0;
+                }
+            }
+
+            // Baaki months
+            while ($remaining > 0.01 && $currentMonth <= 12) {
+                if ($remaining >= $monthlyFee - 0.01) {
+                    \App\Models\CompulsoryFeeMonth::create([
+                        'compulsory_fee_id' => $compulsoryFeeId,
+                        'month_number'      => $currentMonth,
+                        'month_name'        => $sessionMonthMap[$currentMonth] ?? '',
+                        'amount'            => $monthlyFee,
+                        'is_partial'        => false,
+                    ]);
+                    $remaining = round($remaining - $monthlyFee, 2);
+                } else {
+                    \App\Models\CompulsoryFeeMonth::create([
+                        'compulsory_fee_id' => $compulsoryFeeId,
+                        'month_number'      => $currentMonth,
+                        'month_name'        => $sessionMonthMap[$currentMonth] ?? '',
+                        'amount'            => $remaining,
+                        'is_partial'        => true,
+                    ]);
+                    $remaining = 0;
+                }
+                $currentMonth++;
+            }
+        } catch (\Throwable $e) {
+            \Log::error("storeCompulsoryFeeMonths error: " . $e->getMessage());
+        }
+    }
+}

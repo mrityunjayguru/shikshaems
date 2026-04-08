@@ -1,0 +1,432 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Gallery;
+use App\Repositories\Files\FilesInterface;
+use App\Repositories\Gallery\GalleryInterface;
+use App\Repositories\SessionYear\SessionYearInterface;
+use App\Services\BootstrapTableService;
+use App\Services\CachingService;
+use App\Services\ResponseService;
+use App\Services\SessionYearsTrackingsService;
+use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Storage;
+use Throwable;
+use Illuminate\Support\Facades\Auth;
+
+class GalleryController extends Controller
+{
+    private SessionYearInterface $sessionYear;
+    private CachingService $cache;
+    private GalleryInterface $gallery;
+    private FilesInterface $files;
+    private SessionYearsTrackingsService $sessionYearsTrackingsService;
+
+    public function __construct(SessionYearInterface $sessionYear, CachingService $cache, GalleryInterface $gallery, FilesInterface $files, SessionYearsTrackingsService $sessionYearsTrackingsService)
+    {
+        $this->sessionYear = $sessionYear;
+        $this->cache = $cache;
+        $this->gallery = $gallery;
+        $this->files = $files;
+        $this->sessionYearsTrackingsService = $sessionYearsTrackingsService;
+    }
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        //
+        ResponseService::noFeatureThenRedirect("School Gallery Management");
+        ResponseService::noAnyPermissionThenRedirect(['gallery-create', 'gallery-list']);
+
+        $sessionYears = $this->sessionYear->all();
+        return view('gallery.index', compact('sessionYears'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        //
+        ResponseService::noFeatureThenRedirect("School Gallery Management");
+        ResponseService::noPermissionThenSendJson('gallery-create');
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'required',
+            'thumbnail' => $request->filled('thumbnail_cropped') ? 'nullable' : 'required|mimes:jpg,svg,jpeg,png',
+            'images.*' => 'mimes:jpg,svg,jpeg,png'
+        ]);
+        if ($validator->fails()) {
+            ResponseService::errorResponse($validator->errors()->first());
+        }
+
+        try {
+            DB::beginTransaction();
+            if ($request->youtube_links) {
+                $links = explode(",", $request->youtube_links);
+                $status = 1;
+                foreach ($links as $key => $link) {
+                    if (preg_match("/^(?:http(?:s)?:\/\/)?(?:www\.)?(?:m\.)?(?:youtu\.be\/|youtube\.com\/((?:watch)\?(?:.*&)?v(?:i)?=|(?:embed|v|vi|user)\/))([^\?&\"'>]{11})/", $link, $matches)) {
+                        $status = 1;
+                    } else {
+                        $status = 0;
+                        break;
+                    }
+                }
+
+                if ($status == 0) {
+                    ResponseService::errorResponse('Please Enter Valid Youtube Link');
+                }
+
+            }
+            $data = [
+                'title' => $request->title,
+                'description' => $request->description,
+                'thumbnail' => $this->resolveImageUpload($request, 'thumbnail', 'thumbnail_cropped'),
+                'session_year_id' => $request->session_year_id
+            ];
+
+            $gallery = $this->gallery->create($data);
+            $sessionYear = $this->cache->getDefaultSessionYear();
+            $this->sessionYearsTrackingsService->storeSessionYearsTracking('App\Models\Gallery', $gallery->id, Auth::user()->id, $sessionYear->id, Auth::user()->school_id, null);
+
+            // Initialize the Empty Array
+            $galleryFileData = array();
+
+            // Create A File Model Instance
+            $galleryFile = $this->files->model();
+
+            // Get the Association Values of File with gallery
+            $galleryModelAssociate = $galleryFile->modal()->associate($gallery);
+
+            if (!empty($request->images_cropped)) {
+                foreach ($request->images_cropped as $key => $base64) {
+                    if (!$base64) continue;
+                    // Convert base64 to UploadedFile
+                    $b64 = str_contains($base64, ',') ? explode(',', $base64)[1] : $base64;
+                    $decoded = base64_decode($b64);
+                    if (!$decoded) continue;
+                    $tmpPath = tempnam(sys_get_temp_dir(), 'gal_img_') . '.jpg';
+                    \Illuminate\Support\Facades\File::put($tmpPath, $decoded);
+                    $uploadedFile = new \Illuminate\Http\UploadedFile($tmpPath, 'gallery_image_' . ($key + 1) . '.jpg', 'image/jpeg', null, true);
+
+                    $galleryFileData[] = [
+                        'modal_type' => $galleryModelAssociate->modal_type,
+                        'modal_id'   => $galleryModelAssociate->modal_id,
+                        'file_name'  => 'gallery_image_' . ($key + 1),
+                        'type'       => 1,
+                        'file_thumbnail' => null,
+                        'file_url'   => $uploadedFile,
+                    ];
+                }
+            }
+            // YouTube links
+            if ($request->youtube_links) {
+
+
+                foreach ($links as $key => $link) {
+                    $tempFileData = array(
+                        'modal_type' => $galleryModelAssociate->modal_type,
+                        'modal_id' => $galleryModelAssociate->modal_id,
+                        'file_name' => 'YouTube Link',
+                    );
+
+                    $tempFileData['type'] = 2;
+                    $tempFileData['file_thumbnail'] = null;
+                    $tempFileData['file_url'] = $link;
+
+                    $galleryFileData[] = $tempFileData;
+                }
+            }
+
+            // Original (skipped) images
+            if (!empty($request->images)) {
+                foreach ($request->images as $key => $image) {
+                    $galleryFileData[] = [
+                        'modal_type' => $galleryModelAssociate->modal_type,
+                        'modal_id'   => $galleryModelAssociate->modal_id,
+                        'file_name'  => basename($image->getClientOriginalName(), '.' . $image->getClientOriginalExtension()),
+                        'type'       => 1,
+                        'file_thumbnail' => null,
+                        'file_url'   => $image,
+                    ];
+                }
+            }
+
+            if (!empty($request->images_cropped) || !empty($request->images) || $request->youtube_links) {
+                $this->files->createBulk($galleryFileData);
+            }
+
+            DB::commit();
+            ResponseService::successResponse('Data Stored Successfully');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            ResponseService::logErrorResponse($th, "Gallery Controller -> Store Method");
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show($id)
+    {
+        //
+        ResponseService::noFeatureThenRedirect("School Gallery Management");
+        ResponseService::noPermissionThenSendJson('gallery-list');
+
+        $offset = request('offset', 0);
+        $limit = request('limit', 10);
+        $sort = request('sort', 'id');
+        $order = request('order', 'DESC');
+        $search = request('search');
+        $session_year_id = request('session_year_id');
+
+        $sql = $this->gallery->builder()->with('file')
+            ->where(function ($query) use ($search) {
+                $query->when($search, function ($query) use ($search) {
+                    $query->where(function ($query) use ($search) {
+                        $query->where('id', 'LIKE', "%$search%")
+                            ->orwhere('title', 'LIKE', "%$search%")
+                            ->orwhere('description', 'LIKE', "%$search%");
+                    });
+                });
+            })
+            ->where(function ($query) use ($session_year_id) {
+                $query->when($session_year_id, function ($query) use ($session_year_id) {
+                    $query->where(function ($query) use ($session_year_id) {
+                        $query->where('session_year_id', $session_year_id);
+                    });
+                });
+            });
+
+
+        $total = $sql->count();
+        if ($offset >= $total && $total > 0) {
+            $lastPage = floor(($total - 1) / $limit) * $limit; // calculate last page offset
+            $offset = $lastPage;
+        }
+        $sql->orderBy($sort, $order)->skip($offset)->take($limit);
+        $res = $sql->get();
+
+        $bulkData = array();
+        $bulkData['total'] = $total;
+        $rows = array();
+        $no = 1;
+        foreach ($res as $row) {
+            $operate = '';
+            $operate = BootstrapTableService::button('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M15.5799 11.9999C15.5799 13.9799 13.9799 15.5799 11.9999 15.5799C10.0199 15.5799 8.41992 13.9799 8.41992 11.9999C8.41992 10.0199 10.0199 8.41992 11.9999 8.41992C13.9799 8.41992 15.5799 10.0199 15.5799 11.9999Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.0001 20.27C15.5301 20.27 18.8201 18.19 21.1101 14.59C22.0101 13.18 22.0101 10.81 21.1101 9.39997C18.8201 5.79997 15.5301 3.71997 12.0001 3.71997C8.47009 3.71997 5.18009 5.79997 2.89009 9.39997C1.99009 10.81 1.99009 13.18 2.89009 14.59C5.18009 18.19 8.47009 20.27 12.0001 20.27Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+', route('gallery.edit', $row->id), ['btn-eye'], ['title' => trans("view")]);
+
+            $operate .= BootstrapTableService::editButton(route('gallery.update', $row->id));
+            $operate .= BootstrapTableService::deleteButton(route('gallery.destroy', $row->id));
+
+            $tempRow = $row->toArray();
+            $tempRow['no'] = $no++;
+            $tempRow['files'] = $row->file;
+            $tempRow['operate'] = $operate;
+            $rows[] = $tempRow;
+        }
+        $bulkData['rows'] = $rows;
+        return response()->json($bulkData);
+
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit($id)
+    {
+        //
+        ResponseService::noFeatureThenRedirect("School Gallery Management");
+        ResponseService::noPermissionThenSendJson('gallery-edit');
+
+        $gallery = $this->gallery->builder()->with('file')->where('id', $id)->first();
+        $sessionYears = $this->sessionYear->builder()->pluck('name', 'id');
+        return view('gallery.edit', compact('gallery', 'sessionYears'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, $id)
+    {
+        //
+        ResponseService::noFeatureThenRedirect("School Gallery Management");
+        ResponseService::noPermissionThenSendJson('gallery-edit');
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'required',
+            'thumbnail' => 'mimes:jpg,svg,jpeg,png'
+        ]);
+        if ($validator->fails()) {
+            ResponseService::errorResponse($validator->errors()->first());
+        }
+
+        try {
+            DB::beginTransaction();
+
+            if ($request->youtube_links) {
+                $links = explode(",", $request->youtube_links);
+                $status = 1;
+                foreach ($links as $key => $link) {
+                    if (preg_match("/^(?:http(?:s)?:\/\/)?(?:www\.)?(?:m\.)?(?:youtu\.be\/|youtube\.com\/((?:watch)\?(?:.*&)?v(?:i)?=|(?:embed|v|vi|user)\/))([^\?&\"'>]{11})/", $link, $matches)) {
+                        $status = 1;
+                    } else {
+                        $status = 0;
+                        break;
+                    }
+                }
+
+                if ($status == 0) {
+                    ResponseService::errorResponse('Please Enter Valid Youtube Link');
+                }
+
+            }
+            $data = [
+                'title' => $request->title,
+                'description' => $request->description,
+                'session_year_id' => $request->session_year_id,
+            ];
+
+            if ($request->hasFile('thumbnail') || $request->filled('thumbnail_cropped')) {
+                $data['thumbnail'] = $this->resolveImageUpload($request, 'thumbnail', 'thumbnail_cropped');
+            }
+
+            $gallery = $this->gallery->update($id, $data);
+
+            // Initialize the Empty Array
+            $galleryFileData = array();
+
+            // Create A File Model Instance
+            $galleryFile = $this->files->model();
+
+            // Get the Association Values of File with gallery
+            $galleryModelAssociate = $galleryFile->modal()->associate($gallery);
+            if (!empty($request->images)) {
+                foreach ($request->images as $key => $image) {
+
+                    $tempFileData = array(
+                        'modal_type' => $galleryModelAssociate->modal_type,
+                        'modal_id' => $galleryModelAssociate->modal_id,
+                        'file_name' => basename($image->getClientOriginalName(), '.' . $image->getClientOriginalExtension()),
+                    );
+
+                    $tempFileData['type'] = 1;
+                    $tempFileData['file_thumbnail'] = null;
+                    $tempFileData['file_url'] = $image;
+
+                    $galleryFileData[] = $tempFileData;
+                }
+            }
+
+            // YouTube links
+            if ($request->youtube_links) {
+
+                $links = explode(",", $request->youtube_links);
+                foreach ($links as $key => $link) {
+                    $tempFileData = array(
+                        'modal_type' => $galleryModelAssociate->modal_type,
+                        'modal_id' => $galleryModelAssociate->modal_id,
+                        'file_name' => 'YouTube Link',
+                    );
+
+                    $tempFileData['type'] = 2;
+                    $tempFileData['file_thumbnail'] = null;
+                    $tempFileData['file_url'] = $link;
+
+                    $galleryFileData[] = $tempFileData;
+                }
+            }
+            if (!empty($request->images) || $request->youtube_links) {
+                $this->files->createBulk($galleryFileData);
+            }
+
+            DB::commit();
+            ResponseService::successResponse('Data Updated Successfully');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            ResponseService::logErrorResponse($th, "Gallery Controller -> Update Method");
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($id)
+    {
+        //
+        ResponseService::noFeatureThenRedirect('School Gallery Management');
+        ResponseService::noPermissionThenSendJson('gallery-delete');
+        try {
+            DB::beginTransaction();
+
+            // Find the Data by FindByID
+            $gallery = $this->gallery->findById($id);
+            if (Storage::disk('public')->exists($gallery->getRawOriginal('thumbnail'))) {
+                Storage::disk('public')->delete($gallery->getRawOriginal('thumbnail'));
+            }
+
+            foreach ($gallery->file as $key => $file) {
+                if (Storage::disk('public')->exists($file->getRawOriginal('file_url'))) {
+                    Storage::disk('public')->delete($file->getRawOriginal('file_url'));
+                }
+            }
+
+            $gallery->file()->delete();
+            $gallery->delete();
+
+            $sessionYear = $this->cache->getDefaultSessionYear();
+            $this->sessionYearsTrackingsService->storeSessionYearsTracking('App\Models\Gallery', $id, Auth::user()->id, $sessionYear->id, Auth::user()->school_id, null);
+
+            DB::commit();
+            ResponseService::successResponse('Data Deleted Successfully');
+        } catch (Throwable $e) {
+            DB::rollBack();
+            ResponseService::logErrorResponse($e, "Gallery Controller -> destroy Method");
+            ResponseService::errorResponse();
+        }
+    }
+
+    public function deleteFile($id)
+    {
+        ResponseService::noFeatureThenRedirect('School Gallery Management');
+        ResponseService::noPermissionThenSendJson('gallery-delete');
+        try {
+            DB::beginTransaction();
+
+            // Find the Data by FindByID
+            $file = $this->files->findById($id);
+            if (Storage::disk('public')->exists($file->getRawOriginal('file_url'))) {
+                Storage::disk('public')->delete($file->getRawOriginal('file_url'));
+            }
+
+            // Delete the file data
+            $file->delete();
+
+            DB::commit();
+            ResponseService::successResponse('Data Deleted Successfully');
+        } catch (Throwable $e) {
+            DB::rollBack();
+            ResponseService::logErrorResponse($e, "Gallery Controller -> deleteFile Method");
+            ResponseService::errorResponse();
+        }
+    }
+}

@@ -1,0 +1,55 @@
+/vendor/
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Laravel 4 specific
+bootstrap/compiled.php
+app/storage/
+
+# Laravel 5 & Lumen specific
+public/storage
+public/hot
+
+# Laravel 5 & Lumen specific with changed public path
+public_html/storage
+public_html/hot
+storage/*.json
+storage/log
+
+storage/*.key
+.env
+Homestead.yaml
+Homestead.json
+/.vagrant
+.phpunit.result.cache
+/.idea/*
+/storage/installed
+
+# Firebase / Google credentials
+*.json
+firebase-adminsdk*.json
+shiksha-ems-firebase-adminsdk*.json
+
+
+#/.phpstorm.meta.php
+#/_ide_helper.php
+#/_ide_helper_models.php
+.vscode
+/qodana.yaml
+
+.cursor/rules/my-laravel-rules.mdc
+
+# Markdown files
+*.md
+*.sh
+
+# Cache folders
+/cache
+/bootstrap/cache/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# Log files
+*.log
