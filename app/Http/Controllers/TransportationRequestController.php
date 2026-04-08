@@ -40,97 +40,63 @@ class TransportationRequestController extends Controller
             ->where('status', 'paid')
             ->get();
 
-        return view('transportation-request.index', compact('transportationRequests'));
+        $pickupPoints  = \App\Models\PickupPoint::where('status', 1)->get(['id', 'name']);
+        $routeVehicles = \App\Models\RouteVehicle::with(['vehicle:id,name', 'route:id,name'])->get();
+        $shifts        = \App\Models\Shift::where('status', 1)->get(['id', 'name']);
+
+        return view('transportation-request.index', compact('transportationRequests', 'pickupPoints', 'routeVehicles', 'shifts'));
     }
 
     public function show()
     {
         ResponseService::noPermissionThenRedirect('transportationRequests-list');
-        $today      = now();
-        $offset     = request('offset', 0);
-        $limit      = request('limit', 10);
-        $sort       = request('sort', 'id');
-        $order      = request('order', 'desc');
-        $search     = request('search');
-        $showDeleted      = request('show_deleted');   // assigned/unassigned (existing)
-        $pickupPointId    = request('pickup_point_id');
-        $shiftId          = request('shift_id');
-        $statusFilter     = request('status_filter', 'paid');   // paid | unpaid
-        $routeVehicleId   = request('route_vehicle_id');
+        $today          = now();
+        $offset         = request('offset', 0);
+        $limit          = request('limit', 10);
+        $sort           = request('sort', 'id');
+        $order          = request('order', 'desc');
+        $search         = request('search');
+        $pickupPointId  = request('pickup_point_id');
+        $shiftId        = request('shift_id');
+        $routeVehicleId = request('route_vehicle_id');
+        $paymentStatus  = request('payment_status'); // paid | unpaid | partial
 
         // -----------------------------------------------
-        // UNPAID — from transportation_requests table
+        // Unified: TransportationRequest (all requests)
+        // with payment status from TransportationPayment
         // -----------------------------------------------
-        if ($statusFilter === 'unpaid') {
-            $sql = TransportationRequest::with(['user', 'pickupPoint', 'transportationFee'])
-                ->where('status', 0)
-                ->when(!empty($pickupPointId), fn($q) => $q->where('pickup_point_id', $pickupPointId));
-
-            if (!empty($search)) {
-                $sql->where(function ($q) use ($search) {
-                    $q->orWhereHas('user', function ($d) use ($search) {
-                        $d->where('first_name', 'LIKE', "%$search%")
-                          ->orWhere('last_name', 'LIKE', "%$search%")
-                          ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%$search%'");
-                    })->orWhereHas('pickupPoint', fn($d) => $d->where('name', 'LIKE', "%$search%"));
-                });
-            }
-
-            $total = $sql->count();
-            if ($offset >= $total && $total > 0) {
-                $offset = floor(($total - 1) / $limit) * $limit;
-            }
-            $res = $sql->orderBy($sort, $order)->skip($offset)->take($limit)->get();
-
-            $rows = [];
-            $no   = $offset + 1;
-            foreach ($res as $row) {
-                $role = 'Student';
-                if ($row->user) {
-                    if ($row->user->hasRole('Teacher')) $role = 'Teacher';
-                    elseif (!$row->user->hasRole('Student')) $role = 'Staff';
-                }
-                $tempRow                  = $row->toArray();
-                $tempRow['no']            = $no++;
-                $tempRow['role']          = $role;
-                $tempRow['status']        = 'Unpaid';
-                $tempRow['route_vehicle'] = null;
-                $tempRow['shift']         = null;
-                $tempRow['operate']       = '';
-                $rows[] = $tempRow;
-            }
-
-            return response()->json(['total' => $total, 'rows' => $rows]);
-        }
-
-        // -----------------------------------------------
-        // PAID — from transportation_payments table (existing logic)
-        // -----------------------------------------------
-        $sql = TransportationPayment::with([
+        $sql = TransportationRequest::with([
             'user',
             'pickupPoint',
+            'transportationFee',
+            'routeVehicle.vehicle',
+            'routeVehicle.route',
             'shift',
-            'pickupPoint.routePickupPoints.route',
-            'pickupPoint.routePickupPoints.route.routeVehicle',
-            'pickupPoint.routePickupPoints.route.routeVehicle.vehicle',
-            'transportationFee'
-        ])->where('expiry_date', '>', $today)
-            ->where('status', 'paid')
-            ->when(!empty($showDeleted), fn($q) => $q->whereNotNull('route_vehicle_id'))
-            ->when(empty($showDeleted),  fn($q) => $q->whereNull('route_vehicle_id'))
-            ->when(!empty($pickupPointId),  fn($q) => $q->where('pickup_point_id', $pickupPointId))
-            ->when(!empty($shiftId),        fn($q) => $q->where('shift_id', $shiftId))
-            ->when(!empty($routeVehicleId), fn($q) => $q->where('route_vehicle_id', $routeVehicleId));
+        ])
+        ->when(!empty($pickupPointId),  fn($q) => $q->where('pickup_point_id', $pickupPointId))
+        ->when(!empty($routeVehicleId), fn($q) => $q->where('route_vehicle_id', $routeVehicleId))
+        ->when(!empty($shiftId),        fn($q) => $q->where('shift_id', $shiftId));
+
+        // Payment status filter
+        if ($paymentStatus === 'paid') {
+            $paidUserIds = TransportationPayment::where('status', 'paid')->pluck('user_id');
+            $sql->whereIn('user_id', $paidUserIds);
+        } elseif ($paymentStatus === 'partial') {
+            $partialUserIds = TransportationPayment::where('status', 'partial')->pluck('user_id');
+            $paidUserIds    = TransportationPayment::where('status', 'paid')->pluck('user_id');
+            $sql->whereIn('user_id', $partialUserIds)->whereNotIn('user_id', $paidUserIds);
+        } elseif ($paymentStatus === 'unpaid') {
+            $anyPaidUserIds = TransportationPayment::whereIn('status', ['paid', 'partial'])->pluck('user_id');
+            $sql->whereNotIn('user_id', $anyPaidUserIds);
+        }
 
         if (!empty($search)) {
             $sql->where(function ($q) use ($search) {
-                $q->orWhereHas('user', function ($d) use ($search) {
+                $q->whereHas('user', function ($d) use ($search) {
                     $d->where('first_name', 'LIKE', "%$search%")
                       ->orWhere('last_name', 'LIKE', "%$search%")
-                      ->orWhere('email', 'LIKE', "%$search%")
                       ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%$search%'");
-                });
-                $q->orWhereHas('pickupPoint', fn($d) => $d->where('name', 'LIKE', "%$search%"));
+                })->orWhereHas('pickupPoint', fn($d) => $d->where('name', 'LIKE', "%$search%"));
             });
         }
 
@@ -138,59 +104,61 @@ class TransportationRequestController extends Controller
         if ($offset >= $total && $total > 0) {
             $offset = floor(($total - 1) / $limit) * $limit;
         }
-        $sql->orderBy($sort, $order)->skip($offset)->take($limit);
-        $res = $sql->get();
+        $res = $sql->orderBy($sort, $order)->skip($offset)->take($limit)->get();
 
-        $bulkData          = [];
-        $bulkData['total'] = $total;
-        $rows              = [];
-        $no                = $offset + 1;
-
-        $baseUrl                = url('/');
-        $baseUrlWithoutScheme   = preg_replace("(^https?://)", "", $baseUrl);
-        $baseUrlWithoutScheme   = str_replace("www.", "", $baseUrlWithoutScheme);
+        $rows = [];
+        $no   = $offset + 1;
 
         foreach ($res as $row) {
-            $operate = BootstrapTableService::editButton(route('transportation-requests.update', $row->id));
-            if (!$row->user->hasrole('Student')) {
-                $operate .= BootstrapTableService::button(
-                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M9.16992 14.8299L14.8299 9.16992" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M14.8299 14.8299L9.16992 9.16992" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>',
-                    route('transportation-requests.cancel', $row->id),
-                    ['btn', 'btn-xs', 'btn-gradient-dark', 'btn-rounded', 'btn-icon', 'cancel-service'],
-                    ['data-id' => $row->id, 'title' => trans('end_transportation_service')]
-                );
+            // Get payment info for this user
+            $payment = TransportationPayment::where('user_id', $row->user_id)
+                ->whereIn('status', ['paid', 'partial'])
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $feeAmount   = (float) ($row->transportationFee->fee_amount ?? 0);
+            $paidAmount  = TransportationPayment::where('user_id', $row->user_id)
+                ->whereIn('status', ['paid', 'partial'])
+                ->sum('amount');
+            $dueAmount   = max(0, $feeAmount - $paidAmount);
+
+            if ($paidAmount >= $feeAmount && $feeAmount > 0) {
+                $payStatus = 'Paid';
+            } elseif ($paidAmount > 0) {
+                $payStatus = 'Partial (₹' . number_format($paidAmount, 0) . ' / ₹' . number_format($feeAmount, 0) . ')';
             } else {
-                $operate .= BootstrapTableService::button(
-                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M12 2V8L14 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M12 8L10 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M7 12C3 12 3 13.79 3 16V17C3 19.76 3 22 8 22H16C20 22 21 19.76 21 17V16C21 13.79 21 12 17 12C16 12 15.72 12.21 15.2 12.6L14.18 13.68C13 14.94 11 14.94 9.81 13.68L8.8 12.6C8.28 12.21 8 12 7 12Z" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M5 12V8.00004C5 5.99004 5 4.33004 8 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M19 12V8.00004C19 5.99004 19 4.33004 16 4.04004" stroke="white" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>',
-                    route('transportation-requests.fee-receipt', $row->id),
-                    ['btn', 'btn-xs', 'btn-gradient-info', 'btn-rounded', 'btn-icon', 'generate-paid-fees-pdf'],
-                    ['target' => "_blank", 'data-id' => $row->id, 'title' => trans('generate_pdf') . ' ' . trans('fees')]
-                );
+                $payStatus = 'Unpaid';
             }
 
-            $role = 'Staff';
-            if ($row->user->hasrole('Student'))      $role = 'Student';
-            elseif ($row->user->hasrole('Teacher'))  $role = 'Teacher';
+            $role = 'Student';
+            if ($row->user) {
+                if ($row->user->hasRole('Teacher'))      $role = 'Teacher';
+                elseif (!$row->user->hasRole('Student')) $role = 'Staff';
+            }
 
-            $tempRow           = $row->toArray();
-            $tempRow['role']   = $role;
-            $tempRow['no']     = $no++;
-            $tempRow['operate'] = $operate;
+            // Action buttons
+            $operate = BootstrapTableService::editButton(route('transportation-requests.update', $row->id));
+            // if ($payment && $row->user->hasrole('Student')) {
+            //     $operate .= BootstrapTableService::button(
+            //         '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2V8L14 6" stroke="white" stroke-width="1.5"/><path d="M12 8L10 6" stroke="white" stroke-width="1.5"/><path d="M7 12C3 12 3 13.79 3 16V17C3 19.76 3 22 8 22H16C20 22 21 19.76 21 17V16C21 13.79 21 12 17 12" stroke="white" stroke-width="1.5"/></svg>',
+            //         route('transportation-requests.fee-receipt', $payment->id),
+            //         ['btn', 'btn-xs', 'btn-gradient-info', 'btn-rounded', 'btn-icon'],
+            //         ['target' => '_blank', 'title' => trans('generate_pdf') . ' ' . trans('fees')]
+            //     );
+            // }
+
+            $tempRow                   = $row->toArray();
+            $tempRow['no']             = $no++;
+            $tempRow['role']           = $role;
+            $tempRow['payment_status'] = $payStatus;
+            $tempRow['paid_amount']    = $paidAmount;
+            $tempRow['due_amount']     = $dueAmount;
+            $tempRow['fee_amount']     = $feeAmount;
+            $tempRow['operate']        = $operate;
             $rows[] = $tempRow;
         }
 
-        $bulkData['rows'] = $rows;
-        return response()->json($bulkData);
+        return response()->json(['total' => $total, 'rows' => $rows]);
     }
 
     public function update(Request $request, $id)

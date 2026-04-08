@@ -110,6 +110,7 @@ function transportationRequestQueryParams(p) {
         shift_id: $('#filter_shift_id').val(),
         status_filter: $('#filter_status').val() || 'paid',
         route_vehicle_id: $('#filter_vehicle_route_id').val(),
+        payment_status: $('#filter_status').val(),
     };
 }
 

@@ -797,7 +797,9 @@ class TrasportationApiController extends Controller
                             "name" => $transportationPayment->pickupPoint->name,
                         ],
                         "plan" => [
-                            "duration" => $transportationPayment->transportationFee->duration . " Days",
+                            "duration" => $transportationPayment->transportationFee
+                                ? $transportationPayment->transportationFee->duration . " Days"
+                                : "N/A",
                             "validity" => (!empty($transportationPayment->paid_at) && !empty($transportationPayment->expiry_date))
                                 ? date("Y-m-d", strtotime($transportationPayment->paid_at)) . " - " . date("Y-m-d", strtotime($transportationPayment->expiry_date))
                                 : "N/A",

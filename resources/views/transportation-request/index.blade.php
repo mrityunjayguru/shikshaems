@@ -34,57 +34,58 @@
                             </div>
                         </div>
                         <div class="row" id="toolbar">
-                            @php
-                                $pickupPoints = $transportationRequests->pluck('pickupPoint')->unique('id');
-                            @endphp
                             <div class="form-group mb-2 mr-3" style="min-width: 150px;">
                                 <label for="filter_pickup_point_id" class="filter-menu">{{ __('pickup_point') }}</label>
                                 <select name="filter_pickup_point_id" id="filter_pickup_point_id"
-                                    class="form-control select2-dropdown select2-hidden-accessible">
-                                    <option value=""> {{ __('select_pickup_point') }}</option>
-                                    @foreach ($pickupPoints as $request)
-                                        <option value="{{ $request->id }}">{{ $request->name }}</option>
+                                    class="form-control select2-dropdown">
+                                    <option value="">{{ __('select_pickup_point') }}</option>
+                                    @foreach ($pickupPoints as $pp)
+                                        <option value="{{ $pp->id }}">{{ $pp->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            @php
-                                $shifts = $transportationRequests->pluck('shift')->filter()->unique('id');
-                            @endphp
+
                             @if ($shifts->isNotEmpty())
                                 <div class="form-group mb-2 mr-3">
                                     <label for="filter_shift_id" class="filter-menu">{{ __('Shift') }}</label>
                                     <select name="filter_shift_id" id="filter_shift_id"
-                                        class="form-control select2-dropdown select2-hidden-accessible">
-                                        <option value=""> {{ __('Select Shift') }}</option>
+                                        class="form-control select2-dropdown">
+                                        <option value="">{{ __('Select Shift') }}</option>
                                         @foreach ($shifts as $shift)
-                                            <option value="{{ $shift->id ?? '' }}">{{ $shift->name ?? '' }}</option>
+                                            <option value="{{ $shift->id }}">{{ $shift->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                             @endif
-                            <div class="form-group mb-2 mr-3">
+
+                            <div class="form-group mb-2 mr-3" style="min-width: 180px;">
                                 <label for="filter_vehicle_route_id" class="filter-menu">{{ __('vehicle_route') }}</label>
                                 <select name="filter_vehicle_route_id" id="filter_vehicle_route_id"
-                                    class="form-control select2-dropdown select2-hidden-accessible">
-                                    <option value=""> {{ __('select_vehicle/route') }}</option>
+                                    class="form-control select2-dropdown">
+                                    <option value="">{{ __('select_vehicle/route') }}</option>
+                                    @foreach ($routeVehicles as $rv)
+                                        <option value="{{ $rv->id }}">
+                                            {{ $rv->vehicle->name ?? '' }} ({{ $rv->route->name ?? '' }})
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
-                            {{-- Status Filter --}}
+
                             <div class="form-group mb-2 mr-3" style="min-width: 130px;">
-                                <label for="filter_status" class="filter-menu">{{ __('Status') }}</label>
+                                <label for="filter_status" class="filter-menu">{{ __('Payment Status') }}</label>
                                 <select id="filter_status" class="form-control select2-dropdown">
+                                    <option value="">{{ __('All') }}</option>
                                     <option value="paid">{{ __('Paid') }}</option>
+                                    <option value="partial">{{ __('Partial') }}</option>
                                     <option value="unpaid">{{ __('Unpaid') }}</option>
                                 </select>
                             </div>
-                            <div class="form-group mb-2">
+
+                            {{-- <div class="form-group mb-2">
                                 <button id="update-status" class="btn btn-success" disabled>
                                     <span class="update-status-btn-name">{{ __('assign') }}</span>
                                 </button>
-                            </div>
-                        </div>
-                        <div class="col-12 text-right">
-                            <b><a href="#" class="table-list-type active mr-2 text-danger" data-id="0">{{__('unassigned')}}</a></b> | <a href="#" class="ml-2 table-list-type text-success" data-id="1">{{__("assigned")}}</a>
+                            </div> --}}
                         </div>
                         <table aria-describedby="mydesc" class='table' id='table_list' data-toggle="table"
                             data-url="{{ route('transportation-requests.show', [1]) }}" data-click-to-select="true"
@@ -92,23 +93,29 @@
                             data-search="true" data-toolbar="#toolbar" data-show-columns="true" data-show-refresh="true"
                             data-trim-on-search="false" data-mobile-responsive="true" data-sort-name="id"
                             data-sort-order="desc" data-maintain-selected="true" data-export-data-type='all'
-                            data-export-options='{ "fileName": "{{__('transportation_requests') }}-<?= date(' d-m-y') ?>" ,"ignoreColumn":["operate"]}'
+                            data-export-options='{ "fileName": "{{ __('transportation_requests') }}-<?= date(' d-m-y') ?>"
+                            ,"ignoreColumn":["operate"]}'
                             data-show-export="true" data-query-params="transportationRequestQueryParams" data-escape="true">
                             <thead>
                                 <tr>
-                                    <th data-field="state" data-checkbox="true"></th>
-                                    <th scope="col" data-field="id" data-sortable="true" data-visible="false">{{ __('id') }}
+                                    {{-- <th data-field="state" data-checkbox="true"></th> --}}
+                                    <th scope="col" data-field="id" data-sortable="true" data-visible="false">
+                                        {{ __('id') }}
                                     </th>
                                     <th scope="col" data-field="no">{{ __('no.') }}</th>
-                                    <th scope="col" data-field="user.full_name" data-formatter="StudentNameFormatter">
+                                    <th scope="col" data-field="user.full_name" data-formatter="">
                                         {{ __('name') }}
                                     </th>
                                     <th scope="col" data-field="role">
                                         {{ __('role') }}
                                     </th>
-                                    <th scope="col" data-field="pickup_point.name">{{__('pickup_point')}}</th>
+                                    <th scope="col" data-field="pickup_point.name">{{ __('pickup_point') }}</th>
+                                    <th scope="col" data-field="payment_status">{{ __('Payment Status') }}</th>
+                                    <th scope="col" data-field="fee_amount" data-align="right">{{ __('Fee Amount') }}</th>
+                                    <th scope="col" data-field="paid_amount" data-align="right">{{ __('Paid') }}</th>
+                                    <th scope="col" data-field="due_amount" data-align="right">{{ __('Due') }}</th>
                                     @if ($shifts->isNotEmpty())
-                                        <th scope="col" data-field="shift.name">{{__('Shift')}}</th>
+                                        <th scope="col" data-field="shift.name">{{ __('Shift') }}</th>
                                     @endif
                                     <th scope="col" data-field="operate" data-formatter="actionColumnFormatter"
                                         data-events="transportationRequestEvents" data-escape="false">{{ __('action') }}
@@ -122,8 +129,8 @@
         </div>
 
         {{-- Pending table removed — shown in main table with status filter --}}
-        <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editTransportationRequestLabel"
-            aria-hidden="true">
+        <div class="modal fade" id="editModal" tabindex="-1" role="dialog"
+            aria-labelledby="editTransportationRequestLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -166,7 +173,8 @@
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('close') }}</button>
+                            <button type="button" class="btn btn-secondary"
+                                data-dismiss="modal">{{ __('close') }}</button>
                             <input type="submit" class="btn btn-theme" value="{{ __('submit') }}">
                         </div>
                     </form>
@@ -180,7 +188,7 @@
     <script>
         function updateUserStatus(tableId, buttonClass) {
             var selectedRows = $(tableId).bootstrapTable('getSelections');
-            var selectedRowsValues = selectedRows.map(function (row) {
+            var selectedRowsValues = selectedRows.map(function(row) {
                 return row.id;
             });
             userIds = JSON.stringify(selectedRowsValues);
@@ -195,20 +203,20 @@
         }
 
         $('#table_list').bootstrapTable({
-            onCheck: function (row) {
+            onCheck: function(row) {
                 updateUserStatus("#table_list", '#update-status');
             },
-            onUncheck: function (row) {
+            onUncheck: function(row) {
                 updateUserStatus("#table_list", '#update-status');
             },
-            onCheckAll: function (rows) {
+            onCheckAll: function(rows) {
                 updateUserStatus("#table_list", '#update-status');
             },
-            onUncheckAll: function (rows) {
+            onUncheckAll: function(rows) {
                 updateUserStatus("#table_list", '#update-status');
             }
         });
-        $("#update-status").on('click', function (e) {
+        $("#update-status").on('click', function(e) {
             Swal.fire({
                 title: window.trans["Are you sure"],
                 text: window.trans["Change Status For Selected Users"],
@@ -242,28 +250,31 @@
             })
         })
         const selectVehicleRouteText = @json(__('select_vehicle/route'));
-        $(document).ready(function () {
+        $(document).ready(function() {
             // Status filter change — refresh table
-            $('#filter_status').on('change', function () {
+            $('#filter_status').on('change', function() {
                 $('#table_list').bootstrapTable('refresh');
             });
 
             // Route vehicle filter change — refresh table
-            $('#filter_vehicle_route_id').on('change', function () {
+            $('#filter_vehicle_route_id').on('change', function() {
                 $('#table_list').bootstrapTable('refresh');
             });
             const shiftSelect = document.getElementById("filter_shift_id");
             if (shiftSelect) {
-                $('#filter_pickup_point_id').on('select2:select', function (e) {
+                $('#filter_pickup_point_id').on('select2:select', function(e) {
                     const shiftId = document.getElementById("filter_shift_id").value;
                     const pickupPointId = document.getElementById("filter_pickup_point_id").value;
                     if (shiftId && pickupPointId) {
                         getRouteVehicle(pickupPointId, shiftId)
                     } else {
-                        $('#filter_vehicle_route_id').empty().append($('<option>', { value: '', text: "{{ __('select_vehicle/route') }}" })).val('').trigger('change');
+                        $('#filter_vehicle_route_id').empty().append($('<option>', {
+                            value: '',
+                            text: "{{ __('select_vehicle/route') }}"
+                        })).val('').trigger('change');
                     }
                 })
-                $('#filter_shift_id').on('select2:select', function (e) {
+                $('#filter_shift_id').on('select2:select', function(e) {
                     const shiftId = document.getElementById("filter_shift_id").value;
                     const pickupPointId = document.getElementById("filter_pickup_point_id").value;
                     if (shiftId && pickupPointId) {
@@ -273,23 +284,25 @@
                     }
                 })
             } else {
-                $('#filter_pickup_point_id').on('select2:select', function (e) {
+                $('#filter_pickup_point_id').on('select2:select', function(e) {
                     const pickupPointId = document.getElementById("filter_pickup_point_id").value;
                     getRouteVehicle(pickupPointId, shiftId = 'null')
                 });
             }
         });
+
         function getRouteVehicle(pickupPointId) {
             $('#filter_vehicle_route_id').select2({
                 placeholder: selectVehicleRouteText,
                 allowClear: true,
                 width: '100%',
-                templateResult: function (data) {
+                templateResult: function(data) {
                     if (!data.id) return data.text;
 
                     let remaining = $(data.element).data('remaining');
                     let capacity = $(data.element).data('capacity');
-                    let text = $(data.element).data('vehiclename') + ' (' + $(data.element).data('routename') + $(data.element).data('shiftname') + ')';
+                    let text = $(data.element).data('vehiclename') + ' (' + $(data.element).data('routename') +
+                        $(data.element).data('shiftname') + ')';
 
                     // Choose color
                     let color = 'green';
@@ -304,12 +317,13 @@
                         `<span>${text} - <span style="color:${color}">${remaining} out of ${capacity} seats are left</span></span>`
                     );
                 },
-                templateSelection: function (data) {
+                templateSelection: function(data) {
                     if (!data.id) return data.text;
 
                     let remaining = $(data.element).data('remaining');
                     let capacity = $(data.element).data('capacity');
-                    let text = $(data.element).data('vehiclename') + ' (' + $(data.element).data('routename') + $(data.element).data('shiftname') + ')';
+                    let text = $(data.element).data('vehiclename') + ' (' + $(data.element).data('routename') +
+                        $(data.element).data('shiftname') + ')';
 
                     let color = 'green';
                     if (remaining <= 0) {
@@ -325,18 +339,25 @@
             });
             Callajax(pickupPointId)
         }
+
         function Callajax(pickupPointId) {
             const vehicleRouteSelect = $('#filter_vehicle_route_id');
 
             // Clear old options
             vehicleRouteSelect.empty().append(
-                $('<option>', { value: '', text: selectVehicleRouteText })
+                $('<option>', {
+                    value: '',
+                    text: selectVehicleRouteText
+                })
             );
             fetch(`/transportation-requests/get-vehicle-routes/${pickupPointId}`)
                 .then(response => response.json())
                 .then(result => {
                     vehicleRouteSelect.empty().append(
-                        $('<option>', { value: '', text: "{{ __('select_vehicle/route') }}" })
+                        $('<option>', {
+                            value: '',
+                            text: "{{ __('select_vehicle/route') }}"
+                        })
                     );
 
                     if (Array.isArray(result.data)) {
@@ -344,18 +365,19 @@
                             let capacity = item.vehicle.capacity || 0;
                             let assigned = result.assignedCounts[item.id] || 0;
                             let remainingSeats = capacity - assigned;
-                            let shiftName = (item.route && item.route.shift && item.route.shift.name) ? ` - ${item.route.shift.name}` : '';
+                            let shiftName = (item.route && item.route.shift && item.route.shift.name) ?
+                                ` - ${item.route.shift.name}` : '';
 
                             vehicleRouteSelect.append(
                                 $('<option>', {
                                     value: item.id,
                                     text: `${item.vehicle.name} (${item.route.name})`
                                 })
-                                    .attr('data-vehiclename', item.vehicle.name)
-                                    .attr('data-shiftName', shiftName) 
-                                    .attr('data-routename', item.route.name)
-                                    .attr('data-capacity', capacity)
-                                    .attr('data-remaining', remainingSeats)
+                                .attr('data-vehiclename', item.vehicle.name)
+                                .attr('data-shiftName', shiftName)
+                                .attr('data-routename', item.route.name)
+                                .attr('data-capacity', capacity)
+                                .attr('data-remaining', remainingSeats)
                             );
                         });
                     }

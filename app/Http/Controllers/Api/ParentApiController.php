@@ -3019,10 +3019,10 @@ class ParentApiController extends Controller
                         $query->where('student_id', $studentId)
                             ->with([
                                 'compulsory_fee' => function ($q) {
-                                    $q->where('status', 1);
+                                    $q->where(fn($q2) => $q2->where('status', 1)->orWhere('status', 'Success')->orWhereNull('status'));
                                 },
                                 'optional_fee' => function ($q) {
-                                    $q->where('status', 1);
+                                    $q->whereIn('status', [1, 'Success', 'paid'])->orWhereNull('status');
                                 }
                             ]);
                     }
@@ -3034,57 +3034,107 @@ class ParentApiController extends Controller
             $totalFees = 0; // Total fees (compulsory + optional)
             $feesHistory = [];
 
+            // Session months for month-wise calculation
+            $sessionStart = Carbon::parse($currentSessionYear->start_date)->startOfMonth();
+            $sessionEnd   = Carbon::parse($currentSessionYear->end_date)->endOfMonth();
+            $today        = Carbon::today();
+            $sessionMonthsMap = [];
+            $mPtr = $sessionStart->copy(); $mCnt = 1;
+            while ($mPtr <= $sessionEnd && $mCnt <= 12) {
+                $sessionMonthsMap[$mCnt] = ['month_name' => $mPtr->format('F'), 'date' => $mPtr->copy()];
+                $mPtr->addMonth(); $mCnt++;
+            }
+            $currentSM = 0;
+            foreach ($sessionMonthsMap as $mNo => $mData) {
+                if ($today->month == $mData['date']->month && $today->year == $mData['date']->year) {
+                    $currentSM = $mNo; break;
+                }
+            }
+            if ($today->lt($sessionStart)) $currentSM = 0;
+            if ($today->gt($sessionEnd))   $currentSM = count($sessionMonthsMap);
+
             foreach ($fees as $fee) {
-                $compulsoryFeesAmount = $fee->fees_class_type->where('optional', 0)->sum('amount');
-                $optionalFeesAmount = $fee->fees_class_type->where('optional', 1)->sum('amount');
-
-                // Total fees for this fee group
-                $totalFees += $compulsoryFeesAmount + $optionalFeesAmount;
-
-                // Check if fees_paid exists for this fee
                 $feesPaid = $fee->fees_paid->first();
 
+                // ---- COMPULSORY (month-wise) ----
+                foreach ($fee->fees_class_type->where('optional', 0) as $ct) {
+                    $monthlyAmt = round($ct->amount / 12, 2);
+
+                    $paidMonthRecords = \App\Models\CompulsoryFeeMonth::whereHas('compulsory_fee', function ($q) use ($studentId, $fee) {
+                        $q->where('student_id', $studentId)
+                          ->whereHas('fees_paid', fn($q2) => $q2->where('fees_id', $fee->id));
+                    })->get()->groupBy('month_number')->map(function ($recs) {
+                        $hasFull = $recs->contains('is_partial', false);
+                        return (object)[
+                            'month_number' => $recs->first()->month_number,
+                            'month_name'   => $recs->first()->month_name,
+                            'is_partial'   => !$hasFull,
+                            'amount'       => round($recs->sum('amount'), 2),
+                        ];
+                    })->sortKeys();
+
+                    $paidMonthNos = $paidMonthRecords->keys()->toArray();
+                    $lastPaidM    = $paidMonthRecords->last();
+                    $partialRem   = ($lastPaidM && $lastPaidM->is_partial) ? round($monthlyAmt - $lastPaidM->amount, 2) : 0;
+
+                    // Fees till current month
+                    $feesThisMonth = round($currentSM * $monthlyAmt, 2);
+                    $paidThisMonth = round(array_sum(array_map(fn($m) => $paidMonthRecords->get($m)?->amount ?? 0, $paidMonthNos)), 2);
+
+                    $pendingMonths = [];
+                    for ($i = 1; $i <= $currentSM; $i++) {
+                        if (!in_array($i, $paidMonthNos)) $pendingMonths[] = $i;
+                    }
+                    $pendingAmt = round(count($pendingMonths) * $monthlyAmt + $partialRem, 2);
+
+                    $totalFees += $feesThisMonth;
+                    $totalPaid += $paidThisMonth;
+                    $totalDue  += $pendingAmt;
+                }
+
+                // ---- OPTIONAL ----
+                foreach ($fee->fees_class_type->where('optional', 1) as $ct) {
+                    $totalFees += $ct->amount;
+                    $isPaid = $feesPaid?->optional_fee
+                        ->where('fees_class_id', $ct->id)
+                        ->whereIn('status', ['paid', 'Success', 1])
+                        ->isNotEmpty();
+                    if ($isPaid) {
+                        $totalPaid += $ct->amount;
+                    } else {
+                        $totalDue += $ct->amount;
+                    }
+                }
+
                 if ($feesPaid) {
-                    // Calculate paid amount from compulsory fees
-                    $compulsoryPaidAmount = $feesPaid->compulsory_fee->sum('amount');
-
-                    // Calculate paid amount from optional fees
-                    $optionalPaidAmount = $feesPaid->optional_fee->sum('amount');
-
-                    $totalPaidForThisFee = $compulsoryPaidAmount + $optionalPaidAmount;
-                    $totalPaid += $totalPaidForThisFee;
-
-                    // Add to fees history
                     $compulsoryFees = $feesPaid->compulsory_fee;
-                    $optionalFees = $feesPaid->optional_fee;
+                    $optionalFees   = $feesPaid->optional_fee;
 
-                    // Process compulsory fees history
                     foreach ($compulsoryFees as $compulsory) {
                         $feesHistory[] = [
-                            'date' => $compulsory->date,
-                            'receipt_no' => 'R-' . $compulsory->id,
-                            'fees_name' => $fee->name,
-                            'fees_type' => 'Compulsory',
-                            'amount' => $compulsory->amount,
-                            'due_charges' => $compulsory->due_charges ?? 0,
-                            'total_paid' => $compulsory->amount + ($compulsory->due_charges ?? 0),
-                            'mode' => $compulsory->mode_name,
+                            'date'             => $compulsory->date,
+                            'receipt_no'       => 'R-' . $compulsory->id,
+                            'fees_name'        => $fee->name,
+                            'fees_type'        => 'Compulsory',
+                            'amount'           => $compulsory->amount,
+                            'due_charges'      => $compulsory->due_charges ?? 0,
+                            'total_paid'       => $compulsory->amount + ($compulsory->due_charges ?? 0),
+                            'mode'             => $compulsory->mode_name,
                             'installment_name' => $compulsory->installment_fee->name ?? null
                         ];
                     }
 
-                    // Process optional fees history
                     foreach ($optionalFees as $optional) {
                         $feesTypeName = $optional->fees_class_type->fees_type->name ?? 'Optional Fee';
                         $feesHistory[] = [
-                            'date' => $optional->date,
-                            'receipt_no' => 'R-' . $optional->id,
-                            'fees_name' => $fee->name,
-                            'fees_type' => $feesTypeName,
-                            'amount' => $optional->amount,
-                            'due_charges' => 0,
-                            'total_paid' => $optional->amount,
-                            'mode' => $optional->mode_name,
+                            'date'             => $optional->date,
+                            'receipt_no'       => 'R-' . $optional->id,
+                            'fees_name'        => $fee->name,
+                            'fees_type'        => $feesTypeName,
+                            'amount'           => $optional->amount,
+                            'due_charges'      => 0,
+                            'total_paid'       => $optional->amount,
+                            'mode'             => $optional->mode_name,
                             'installment_name' => null
                         ];
                     }
@@ -3092,8 +3142,46 @@ class ParentApiController extends Controller
             }
 
             // Calculate due (outstanding) = Total Fees - Paid
-            // If negative or zero, show 0
             $totalDue = max(0, $totalFees - $totalPaid);
+
+            // -----------------------------------------------
+            // TRANSPORTATION FEE
+            // -----------------------------------------------
+            $transportRequest = \App\Models\TransportationRequest::where('user_id', $studentId)
+                ->where('session_year_id', $sessionYearId)
+                ->whereNotIn('status', [2, 'cancelled', 'rejected'])
+                ->with('transportationFee')
+                ->first();
+
+            if ($transportRequest && $transportRequest->transportationFee) {
+                $transportFeeTotal = (float) $transportRequest->transportationFee->fee_amount;
+                $totalFees += $transportFeeTotal;
+
+                $transportPayments = \App\Models\TransportationPayment::where('user_id', $studentId)
+                    ->whereIn('status', ['paid', 'partial'])
+                    ->orderBy('id')
+                    ->get();
+
+                $transportPaidTotal = $transportPayments->sum('amount');
+                $totalPaid += $transportPaidTotal;
+                $totalDue  = max(0, $totalFees - $totalPaid);
+
+                // Add each transport payment to history
+                foreach ($transportPayments as $tp) {
+                    $feesHistory[] = [
+                        'date'             => $tp->paid_at ? date('Y-m-d', strtotime($tp->paid_at)) : date('Y-m-d', strtotime($tp->created_at)),
+                        'receipt_no'       => 'T-' . $tp->id,
+                        'fees_name'        => 'Transportation Fee',
+                        'fees_type'        => 'Transportation',
+                        'amount'           => (float) $tp->amount,
+                        'due_charges'      => 0,
+                        'total_paid'       => (float) $tp->amount,
+                        'mode'             => $tp->paymentTransaction ? $tp->paymentTransaction->payment_gateway : 'Cash',
+                        'installment_name' => null,
+                        'status'           => $tp->status,
+                    ];
+                }
+            }
 
             // Sort fees history by date (newest first)
             usort($feesHistory, function ($a, $b) {
@@ -3106,8 +3194,8 @@ class ParentApiController extends Controller
                 'session_year' => $currentSessionYear->name,
                 'summary' => [
                     'total_fees' => number_format($totalFees, 2),
-                    'paid' => number_format($totalPaid, 2),
-                    'due' => number_format($totalDue, 2)
+                    'paid'       => number_format($totalPaid, 2),
+                    'due'        => number_format($totalDue, 2)
                 ],
                 'fees_history' => $feesHistory
             ];
@@ -3264,6 +3352,23 @@ class ParentApiController extends Controller
                         }
                     ])
                     ->get();
+                $sessionStart    = Carbon::parse($currentSessionYear->start_date)->startOfMonth();
+                $sessionEnd      = Carbon::parse($currentSessionYear->end_date)->endOfMonth();
+                $today           = Carbon::today();
+                $sessionMonthsC  = [];
+                $mPtr = $sessionStart->copy(); $mCnt = 1;
+                while ($mPtr <= $sessionEnd && $mCnt <= 12) {
+                    $sessionMonthsC[$mCnt] = ['date' => $mPtr->copy()];
+                    $mPtr->addMonth(); $mCnt++;
+                }
+                $currentSM = 0;
+                foreach ($sessionMonthsC as $mNo => $mData) {
+                    if ($today->month == $mData['date']->month && $today->year == $mData['date']->year) {
+                        $currentSM = $mNo; break;
+                    }
+                }
+                if ($today->lt($sessionStart)) $currentSM = 0;
+                if ($today->gt($sessionEnd))   $currentSM = count($sessionMonthsC);
 
                 // Calculate total payment due
                 $totalDue = 0;
@@ -3271,44 +3376,64 @@ class ParentApiController extends Controller
                 $totalPaid = 0;
 
                 foreach ($fees as $fee) {
-                    // Get compulsory and optional fees amount
-                    $compulsoryAmount = $fee->fees_class_type->where('optional', 0)->sum('amount');
-                    $optionalAmount = $fee->fees_class_type->where('optional', 1)->sum('amount');
+                    // Compulsory — month-wise pending
+                    foreach ($fee->fees_class_type->where('optional', 0) as $ct) {
+                        $monthlyAmt = round($ct->amount / 12, 2);
 
-                    // Total fees for this fee group
-                    $totalFees += $compulsoryAmount + $optionalAmount;
+                        $paidMonths = \App\Models\CompulsoryFeeMonth::whereHas('compulsory_fee', function ($q) use ($studentId, $fee) {
+                            $q->where('student_id', $studentId)
+                              ->whereHas('fees_paid', fn($q2) => $q2->where('fees_id', $fee->id));
+                        })->get()->groupBy('month_number')->map(function ($recs) {
+                            return !$recs->contains('is_partial', false)
+                                ? (object)['is_partial' => true, 'amount' => round($recs->sum('amount'), 2)]
+                                : (object)['is_partial' => false, 'amount' => round($recs->sum('amount'), 2)];
+                        });
 
-                    // Check if already paid
-                    $feesPaid = $fee->fees_paid->first();
+                        $paidMonthNos = $paidMonths->keys()->toArray();
+                        $lastPaidM    = $paidMonths->sortKeys()->last();
+                        $partialRem   = ($lastPaidM && $lastPaidM->is_partial) ? round($monthlyAmt - $lastPaidM->amount, 2) : 0;
 
-                    if ($feesPaid) {
-                        // Calculate paid amount (compulsory + optional)
-                        // Only count successful payments (status = 1)
-                        $compulsoryPaid = $feesPaid->compulsory_fee()
-                            ->where('status', 1)
-                            ->sum('amount');
-                        $optionalPaid = $feesPaid->optional_fee()
-                            ->where('status', 1)
-                            ->sum('amount');
+                        $pendingCnt = 0;
+                        for ($i = 1; $i <= $currentSM; $i++) {
+                            if (!in_array($i, $paidMonthNos)) $pendingCnt++;
+                        }
 
-                        $totalPaid += $compulsoryPaid + $optionalPaid;
+                        $totalFees += round($currentSM * $monthlyAmt, 2); // fees till current month
+                        $totalPaid += round(count($paidMonthNos) * $monthlyAmt - $partialRem, 2);
+                        $totalDue  += round($pendingCnt * $monthlyAmt + $partialRem, 2);
+                    }
 
-                        \Log::info("Fees Paid Calculation", [
-                            'fee_id' => $fee->id,
-                            'fee_name' => $fee->name,
-                            'compulsory_amount' => $compulsoryAmount,
-                            'optional_amount' => $optionalAmount,
-                            'compulsory_paid' => $compulsoryPaid,
-                            'optional_paid' => $optionalPaid,
-                            'total_for_this_fee' => $compulsoryAmount + $optionalAmount,
-                            'paid_for_this_fee' => $compulsoryPaid + $optionalPaid
-                        ]);
+                    // Optional — full amount if unpaid
+                    foreach ($fee->fees_class_type->where('optional', 1) as $ct) {
+                        $feesPaidRecord = $fee->fees_paid->first();
+                        $optPaid = $feesPaidRecord
+                            ? $feesPaidRecord->optional_fee
+                                ->where('fees_class_id', $ct->id)
+                                ->whereIn('status', ['paid', 'Success', 1])
+                                ->isNotEmpty()
+                            : false;
+                        if (!$optPaid) $totalDue += $ct->amount;
                     }
                 }
 
-                // Due = Total Fees - Paid
-                // If negative or zero, show 0
-                $totalDue = max(0, $totalFees - $totalPaid);
+                // Add unpaid transportation fee
+                $transportRequest = \App\Models\TransportationRequest::where('user_id', $studentId)
+                    ->where('session_year_id', $currentSessionYear->id)
+                    ->whereNotIn('status', [2, 'cancelled', 'rejected'])
+                    ->with('transportationFee')
+                    ->first();
+
+                if ($transportRequest && $transportRequest->transportationFee) {
+                    $transportFeeAmount = (float) $transportRequest->transportationFee->fee_amount;
+
+                    // How much already paid (paid + partial)
+                    $transportPaidAmount = \App\Models\TransportationPayment::where('user_id', $studentId)
+                        ->whereIn('status', ['paid', 'partial'])
+                        ->sum('amount');
+
+                    $transportDue = max(0, $transportFeeAmount - $transportPaidAmount);
+                    $totalDue += $transportDue;
+                }
 
                 \Log::info("Final Calculation for Student", [
                     'student_id' => $studentId,
@@ -3853,9 +3978,9 @@ class ParentApiController extends Controller
     public function payMultipleFees(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'child_id' => 'required|integer',
-            'payments' => 'required|array|min:1',
-            'payments.*.fees_id' => 'required|integer',
+            'child_id'           => 'required|integer',
+            'payments'           => 'nullable|array',  // optional — may be empty if only transport
+            'payments.*.fees_id' => 'required_with:payments|integer',
             'payments.*.compulsory_ids' => 'nullable|array',
             'payments.*.compulsory_ids.*' => 'integer',
             'payments.*.optional_ids' => 'nullable|array',
@@ -3903,8 +4028,8 @@ class ParentApiController extends Controller
             $grandTotal = 0;
             $feesBreakdown = [];
 
-            // Process each fee payment
-            foreach ($request->payments as $paymentItem) {
+            // Process each fee payment (optional — may be empty if only transport)
+            foreach ($request->payments ?? [] as $paymentItem) {
                 $feesId = $paymentItem['fees_id'];
                 $compulsoryIds = $paymentItem['compulsory_ids'] ?? [];
                 $optionalIds = $paymentItem['optional_ids'] ?? [];
@@ -3934,7 +4059,7 @@ class ParentApiController extends Controller
                     ])
                     ->first();
 
-                if (!$fees) {
+                if (!$fees){
                     ResponseService::errorResponse("Fees not found with ID: {$feesId}");
                 }
 
@@ -3974,28 +4099,75 @@ class ParentApiController extends Controller
                         ResponseService::errorResponse("No Compulsory Fees Found for fees ID: {$feesId}");
                     }
 
+                    // Session year months build karo
+                    $sessionStart      = Carbon::parse($sessionYear->start_date)->startOfMonth();
+                    $sessionEnd        = Carbon::parse($sessionYear->end_date)->endOfMonth();
+                    $today             = Carbon::today();
+                    $sessionMonthsMap  = [];
+                    $monthPtr          = $sessionStart->copy();
+                    $mCounter          = 1;
+                    while ($monthPtr <= $sessionEnd && $mCounter <= 12) {
+                        $sessionMonthsMap[$mCounter] = ['month_name' => $monthPtr->format('F'), 'date' => $monthPtr->copy()];
+                        $monthPtr->addMonth();
+                        $mCounter++;
+                    }
+
+                    // Current session month number
+                    $currentSessionMonth = 0;
+                    foreach ($sessionMonthsMap as $mNo => $mData) {
+                        if ($today->month == $mData['date']->month && $today->year == $mData['date']->year) {
+                            $currentSessionMonth = $mNo;
+                            break;
+                        }
+                    }
+                    if ($today->lt($sessionStart)) $currentSessionMonth = 0;
+                    if ($today->gt($sessionEnd))   $currentSessionMonth = count($sessionMonthsMap);
+
                     foreach ($compulsoryFeesData as $row) {
-                        $compulsoryAmount += $row->amount;
-                        // $compulsoryFeeDetails[] = [
-                        //     'id' => $row->id,
-                        //     'amount' => $row->amount,
-                        //     'name' => $row->fees_type->name ?? 'Compulsory Fee',
-                        //     'fees_id' => $feesId
-                        // ];
+                        $yearlyAmount  = (float) $row->amount;
+                        $monthlyAmount = round($yearlyAmount / 12, 2);
+
+                        // Paid months from compulsory_fee_months
+                        $paidMonthRecords = \App\Models\CompulsoryFeeMonth::whereHas('compulsory_fee', function ($q) use ($studentData, $feesId) {
+                            $q->where('student_id', $studentData->user_id)
+                              ->whereHas('fees_paid', fn($q2) => $q2->where('fees_id', $feesId));
+                        })->get()->groupBy('month_number')->map(function ($records) {
+                            $hasFull = $records->contains('is_partial', false);
+                            return (object)[
+                                'month_number' => $records->first()->month_number,
+                                'is_partial'   => !$hasFull,
+                                'amount'       => round($records->sum('amount'), 2),
+                            ];
+                        });
+
+                        $paidMonthNumbers = $paidMonthRecords->keys()->toArray();
+
+                        // Partial month remaining
+                        $lastPaid = $paidMonthRecords->sortKeys()->last();
+                        $partialRemaining = ($lastPaid && $lastPaid->is_partial)
+                            ? round($monthlyAmount - $lastPaid->amount, 2)
+                            : 0;
+
+                        // Pending months till current session month
+                        $pendingMonths = [];
+                        for ($i = 1; $i <= $currentSessionMonth; $i++) {
+                            if (!in_array($i, $paidMonthNumbers)) {
+                                $pendingMonths[] = $i;
+                            }
+                        }
+
+                        $pendingAmount = round(count($pendingMonths) * $monthlyAmount + $partialRemaining, 2);
+                        $compulsoryAmount += $pendingAmount;
+
                         $compulsoryFeeDetails[] = [
-                            'id' => $row->id,
-                            'amount' => $row->amount,
-                            'name' => $row->fees_type->name ?? 'Compulsory Fee',
-                            'fees_id' => $feesId,
-                            'compulsory_fee_months' => $row->compulsory_fee_months->map(function ($month) {
-                                return [
-                                    'id' => $month->id,
-                                    'month_number' => $month->month_number,
-                                    'month_name' => $month->month_name,
-                                    'amount' => $month->amount,
-                                    'is_partial' => $month->is_partial,
-                                ];
-                            })->values()->toArray()
+                            'id'                    => $row->id,
+                            'amount'                => $pendingAmount,
+                            'yearly_amount'         => $yearlyAmount,
+                            'monthly_amount'        => $monthlyAmount,
+                            'pending_months'        => $pendingMonths,
+                            'pending_months_names'  => array_map(fn($m) => $sessionMonthsMap[$m]['month_name'] ?? '', $pendingMonths),
+                            'name'                  => $row->fees_type->name ?? 'Compulsory Fee',
+                            'fees_id'               => $feesId,
                         ];
                     }
 
@@ -4100,36 +4272,44 @@ class ParentApiController extends Controller
                 ];
             }
 
-            if ($grandTotal <= 0) {
-                ResponseService::errorResponse("Total amount must be greater than 0");
-            }
-
             // Transportation fee — add to grand total if requested
             $transportationData = null;
             if ($request->pay_transportation) {
                 $transportRequest = \App\Models\TransportationRequest::where('user_id', $studentData->user_id)
                     ->where('session_year_id', $sessionYear->id)
-                    ->whereIn('status', [0, 1])
+                    ->whereNotIn('status', [2, 'cancelled', 'rejected'])
                     ->with('transportationFee')
                     ->first();
 
                 $transportPaid = \App\Models\TransportationPayment::where('user_id', $studentData->user_id)
-                    ->where('session_year_id', $sessionYear->id)
                     ->where('status', 'paid')
                     ->first();
 
+                // Also check partial
+                $transportPartialPaid = \App\Models\TransportationPayment::where('user_id', $studentData->user_id)
+                    ->whereIn('status', ['paid', 'partial'])
+                    ->sum('amount');
+
                 if ($transportRequest && !$transportPaid && $transportRequest->transportationFee) {
-                    $transportAmount = (float) $transportRequest->transportationFee->fee_amount;
-                    $grandTotal += $transportAmount;
-                    $transportationData = [
-                        'transportation_request_id' => $transportRequest->id,
-                        'amount'                    => $transportAmount,
-                        'pickup_point_id'           => $transportRequest->pickup_point_id,
-                        'route_vehicle_id'          => $transportRequest->route_vehicle_id,
-                        'shift_id'                  => $transportRequest->shift_id,
-                        'transportation_fee_id'     => $transportRequest->transportation_fee_id,
-                    ];
+                    $transportFeeTotal = (float) $transportRequest->transportationFee->fee_amount;
+                    $transportDue      = max(0, $transportFeeTotal - $transportPartialPaid);
+
+                    if ($transportDue > 0) {
+                        $grandTotal += $transportDue;
+                        $transportationData = [
+                            'transportation_request_id' => $transportRequest->id,
+                            'amount'                    => $transportDue,
+                            'pickup_point_id'           => $transportRequest->pickup_point_id,
+                            'route_vehicle_id'          => $transportRequest->route_vehicle_id,
+                            'shift_id'                  => $transportRequest->shift_id,
+                            'transportation_fee_id'     => $transportRequest->transportation_fee_id,
+                        ];
+                    }
                 }
+            }
+
+            if ($grandTotal <= 0) {
+                ResponseService::errorResponse("Total amount must be greater than 0");
             }
 
             // Create Payment Transaction
