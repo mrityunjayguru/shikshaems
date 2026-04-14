@@ -12,10 +12,17 @@ class Diary extends Model
 {
     use HasFactory, SoftDeletes, DateFormatTrait;
 
-    protected $guarded = [];
-
-    public function diary_category()
-    {
+    protected $fillable = [
+        'diary_category_id',
+        'user_id',
+        'subject_id',
+        'title',
+        'date',
+        'description',
+        'session_year_id',
+    ];
+    
+    public function diary_category(){
         return $this->belongsTo(DiaryCategory::class);
     }
 

@@ -367,7 +367,7 @@ class DriverHelperController extends Controller
                     ->orwhere('last_name', 'LIKE', "%$search%")
                     ->orwhere('email', 'LIKE', "%$search%")
                     ->orwhere('mobile', 'LIKE', "%$search%")
-                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
             })->Owner();
         }
 

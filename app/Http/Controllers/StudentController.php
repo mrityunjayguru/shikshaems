@@ -272,13 +272,13 @@ class StudentController extends Controller
                                     ->orwhere('last_name', 'LIKE', "%$search%")
                                     ->orwhere('email', 'LIKE', "%$search%")
                                     ->orwhere('dob', 'LIKE', "%$search%")
-                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                             })->orWhereHas('guardian', function ($q) use ($search) {
                                 $q->where('first_name', 'LIKE', "%$search%")
                                     ->orwhere('last_name', 'LIKE', "%$search%")
                                     ->orwhere('email', 'LIKE', "%$search%")
                                     ->orwhere('dob', 'LIKE', "%$search%")
-                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                             });
                     });
                 });
@@ -434,13 +434,13 @@ class StudentController extends Controller
                                     ->orwhere('last_name', 'LIKE', "%$search%")
                                     ->orwhere('email', 'LIKE', "%$search%")
                                     ->orwhere('dob', 'LIKE', "%$search%")
-                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                             })->orWhereHas('guardian', function ($q) use ($search) {
                                 $q->where('first_name', 'LIKE', "%$search%")
                                     ->orwhere('last_name', 'LIKE', "%$search%")
                                     ->orwhere('email', 'LIKE', "%$search%")
                                     ->orwhere('dob', 'LIKE', "%$search%")
-                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                             });
                     });
                 });
@@ -605,6 +605,9 @@ class StudentController extends Controller
             }
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e, "Student Controller -> Store Bulk method");
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                ResponseService::errorResponse('Duplicate entry found. A student with the same admission number or email already exists. Please check your file and try again.');
+            }
             ResponseService::errorResponse();
         }
     }
@@ -630,7 +633,7 @@ class StudentController extends Controller
                 $query->where('id', 'LIKE', "%$search%")->orwhere('email', 'LIKE', "%$search%")
                     ->orwhere('first_name', 'LIKE', "%$search%")
                     ->orwhere('last_name', 'LIKE', "%$search%")
-                    ->orWhereRaw("concat(users.first_name,' ',users.last_name) LIKE '%" . $search . "%'");
+                    ->orWhereRaw("concat(users.first_name,' ',users.last_name) LIKE ?", ["%{$search}%"]);
             });
         }
 
@@ -1059,13 +1062,13 @@ class StudentController extends Controller
                                     ->orwhere('last_name', 'LIKE', "%$search%")
                                     ->orwhere('email', 'LIKE', "%$search%")
                                     ->orwhere('dob', 'LIKE', "%$search%")
-                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                             })->orWhereHas('guardian', function ($q) use ($search) {
                                 $q->where('first_name', 'LIKE', "%$search%")
                                     ->orwhere('last_name', 'LIKE', "%$search%")
                                     ->orwhere('email', 'LIKE', "%$search%")
                                     ->orwhere('dob', 'LIKE', "%$search%")
-                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                             });
                     });
                 })

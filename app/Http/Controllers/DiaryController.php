@@ -107,7 +107,7 @@ class DiaryController extends Controller
                             ->orWhereHas('user', function ($q) use ($search) {
                                 $q->where('first_name', 'LIKE', "%$search%")
                                     ->orwhere('last_name', 'LIKE', "%$search%")
-                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                             });
                     });
                 });
@@ -295,7 +295,7 @@ class DiaryController extends Controller
                         ->orWhereHas('diary_students.student', function ($q) use ($search) {
                             $q->where('first_name', 'LIKE', "%$search%")
                                 ->orWhere('last_name', 'LIKE', "%$search%")
-                                ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                         });
                 });
             })

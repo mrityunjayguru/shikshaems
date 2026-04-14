@@ -426,7 +426,10 @@ class ExamController extends Controller
 
 
             // Get Student ids according to Subject is elective or compulsory
-            $classSubject = $this->classSubject->findById($request->class_subject_id);
+            $classSubject = \App\Models\ClassSubject::withTrashed()->find($request->class_subject_id);
+            if (!$classSubject) {
+                return response()->json(['error' => true, 'message' => 'Class Subject not found. Please reconfigure the exam timetable.']);
+            }
             if ($classSubject->type == "Elective") {
                 $studentIds = $this->studentSubject->builder()->where(['class_section_id' => $request->class_section_id, 'class_subject_id' => $classSubject->id])->pluck('student_id');
             } else {
@@ -455,7 +458,7 @@ class ExamController extends Controller
                 }
             ])
                 ->when($search, function ($q) use ($search) {
-                    $q->whereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                    $q->whereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                 })
                 ->whereHas('student', function ($q) use ($sessionYear) {
                     $q->where('session_year_id', $sessionYear->id);
@@ -519,19 +522,31 @@ class ExamController extends Controller
 
             $isClassTeacher = ClassTeacher::where('teacher_id', $teacherId)->where('class_section_id', $request->class_section_id)->first();
 
-
             if ($isClassTeacher) {
-                $exam_timetable = ExamTimetable::with(['class_subject', 'subject_teacher'])
+                $exam_timetable = ExamTimetable::with(['class_subject.subject', 'subject_teacher'])
                     ->where('exam_id', $exam_id)
                     ->get();
             } else {
-                $exam_timetable = ExamTimetable::with(['class_subject', 'subject_teacher'])
+                $exam_timetable = ExamTimetable::with(['class_subject.subject', 'subject_teacher'])
                     ->whereHas('subject_teacher', function ($query) use ($teacherId, $request) {
                         $query->where('teacher_id', $teacherId)->where('class_section_id', $request->class_section_id);
                     })
                     ->where('exam_id', $exam_id)
                     ->get();
             }
+
+            // Manually attach subject name if eager load failed (orphan class_subject_id)
+            $exam_timetable->each(function ($timetable) {
+                if (!$timetable->class_subject) {
+                    $classSubject = \App\Models\ClassSubject::withTrashed()
+                        ->with('subject')
+                        ->where('id', $timetable->class_subject_id)
+                        ->first();
+                    if ($classSubject) {
+                        $timetable->setRelation('class_subject', $classSubject);
+                    }
+                }
+            });
 
             $response = array('error' => false, 'message' => trans('data_fetch_successfully'), 'data' => $exam_timetable);
         } catch (Throwable $e) {
@@ -552,7 +567,6 @@ class ExamController extends Controller
         ResponseService::noPermissionThenRedirect('exam-result');
         $exams = $this->exam->builder()->with('class.medium')->where('publish', 1);
         $sessionYears = $this->sessionYear->all();
-        // $classSections = $this->classSection->all(['*'], ['class', 'class.stream', 'section', 'medium']);
 
         $classSections = $this->classSection->builder()->with('class.stream', 'section', 'medium');
         if (Auth::user()->hasRole('Teacher')) {
@@ -563,6 +577,8 @@ class ExamController extends Controller
 
         $classSections = $classSections->get();
         $exams = $exams->get()->append(['prefix_name']);
+
+        \Log::info('ExamResult: exams count=' . $exams->count() . ', publish=1 filter active. If 0, publish exams first.');
 
         return view('exams.show_exam_result', compact('exams', 'sessionYears', 'classSections'));
     }
@@ -594,7 +610,7 @@ class ExamController extends Controller
                         ->orwhere('obtained_marks', 'LIKE', "%$search%")
                         ->orwhere('percentage', 'LIKE', "%$search%")
                         ->orWhereHas('user', function ($q) use ($search) {
-                            $q->whereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                            $q->whereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                         });
                 })->where('exam_id', $request->exam_id)->Owner();
             });
@@ -1066,7 +1082,10 @@ class ExamController extends Controller
             $exam = $this->exam->builder()->with('timetable')->where('id', $request->exam_id)->first();
 
             // Get Student ids according to Subject is elective or compulsory
-            $classSubject = $this->classSubject->findById($request->class_subject_id);
+            $classSubject = \App\Models\ClassSubject::withTrashed()->with('subject')->find($request->class_subject_id);
+            if (!$classSubject) {
+                return redirect()->route('exam.bulk-upload-marks')->with('error', 'Class Subject not found. Please reconfigure the exam timetable.');
+            }
 
 
             if ($classSubject->type == "Elective") {

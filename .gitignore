@@ -30,7 +30,7 @@ Homestead.json
 *.json
 firebase-adminsdk*.json
 shiksha-ems-firebase-adminsdk*.json
-
+.trunk
 
 #/.phpstorm.meta.php
 #/_ide_helper.php
@@ -53,3 +53,4 @@ shiksha-ems-firebase-adminsdk*.json
 
 # Log files
 *.log
+.kiro

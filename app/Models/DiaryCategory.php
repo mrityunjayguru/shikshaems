@@ -11,7 +11,10 @@ class DiaryCategory extends Model
 {
     use HasFactory, SoftDeletes, DateFormatTrait;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'session_year_id',
+    ];
 
     public function diary()
     {

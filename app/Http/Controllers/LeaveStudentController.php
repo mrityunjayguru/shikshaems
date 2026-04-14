@@ -37,7 +37,7 @@ class LeaveStudentController extends Controller
                 $query->when($search, function ($query) use ($search) {
                     $query->where(function ($query) use ($search) {
                         $query->where('id', 'LIKE', "%$search%")->orwhere('reason', 'LIKE', "%$search%")->orwhere('from_date', 'LIKE', "%$search%")->orwhere('to_date', 'LIKE', "%$search%")->orwhereHas('user', function ($q) use ($search) {
-                            $q->whereRaw('concat(first_name," ",last_name) like ?', "%$search%");
+                            $q->whereRaw('concat(first_name," ",last_name) like ?', ["%$search%"]);
                         });
                     });
                 });

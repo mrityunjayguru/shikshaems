@@ -326,7 +326,20 @@ class ApiController extends Controller
                     DB::connection('school')->reconnect();
                     DB::setDefaultConnection('school');
 
+                    // Check if user exists with this email
+                    $userExists = \App\Models\User::where('email', $request->email)->first();
+                    \Log::info('ForgotPassword: user lookup', [
+                        'email'      => $request->email,
+                        'user_found' => $userExists ? true : false,
+                        'school'     => $school->name,
+                        'mail_host'  => config('mail.mailers.smtp.host'),
+                        'mail_user'  => config('mail.mailers.smtp.username'),
+                        'app_url'    => config('app.url'),
+                    ]);
+
                     $response = Password::sendResetLink(['email' => $request->email]);
+
+                    \Log::info('ForgotPassword: Password::sendResetLink response', ['response' => $response]);
 
                     if ($response == Password::RESET_LINK_SENT) {
                         ResponseService::successResponse("Forgot Password email send successfully");
@@ -974,7 +987,7 @@ class ApiController extends Controller
 
             $dates = collect($request->leave_details)
                 ->pluck('date')
-                ->map(fn($d) => Carbon\Carbon::parse($d));
+                ->map(fn($d) => Carbon::parse($d));
 
             $from_date = $dates->min()->toDateString();
             $to_date = $dates->max()->toDateString();

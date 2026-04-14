@@ -543,7 +543,7 @@ class AssignmentController extends Controller
                         ->orwhere('points', 'LIKE', "%$search%")
                         ->orwhere('feedback', 'LIKE', "%$search%")
                         ->orWhereHas('student', function ($query) use ($search) {
-                            $query->whereRaw("concat(users.first_name,' ',users.last_name) LIKE '%" . $search . "%'");
+                            $query->whereRaw("CONCAT(users.first_name,' ',users.last_name) LIKE ?", ["%{$search}%"]);
                         });
                 });
             });
@@ -685,7 +685,7 @@ class AssignmentController extends Controller
                         })->orWhereHas('assignment', function ($query) use ($search) {
                             $query->where('name', 'LIKE', "%$search%");
                         })->orWhereHas('student', function ($query) use ($search) {
-                            $query->whereRaw("concat(users.first_name,' ',users.last_name) LIKE '%" . $search . "%'");
+                            $query->whereRaw("CONCAT(users.first_name,' ',users.last_name) LIKE ?", ["%{$search}%"]);
                         });
                 });
             })

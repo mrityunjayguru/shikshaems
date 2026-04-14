@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Sanctum\PersonalAccessToken;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -22,7 +23,14 @@ class APISwitchDatabase
     {
         $schoolCode = $request->header('school-code');
         if ($schoolCode) {
-            $school = School::on('mysql')->where('code',$schoolCode)->first();
+            // Rate limit school-code lookups to prevent enumeration attacks
+            $rateLimitKey = 'school-code:' . $request->ip();
+            if (RateLimiter::tooManyAttempts($rateLimitKey, 60)) {
+                return response()->json(['error' => true, 'message' => 'Too many requests. Please try again later.', 'code' => 429], 429);
+            }
+            RateLimiter::hit($rateLimitKey, 60);
+
+            $school = School::on('mysql')->where('code', $schoolCode)->first();
 
             if ($school) {
                 DB::setDefaultConnection('school');

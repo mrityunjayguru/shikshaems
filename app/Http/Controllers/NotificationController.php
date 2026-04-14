@@ -258,7 +258,7 @@ class NotificationController extends Controller
                 $query->when($search, function ($q) use ($search) {
                     $q->where('first_name', 'LIKE', "%$search%")
                         ->orwhere('last_name', 'LIKE', "%$search%")
-                        ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'")
+                        ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"])
                         ->Owner();
                 });
             });

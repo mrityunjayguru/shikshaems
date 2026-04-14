@@ -196,13 +196,13 @@ class ReportsController extends Controller
                                     ->orWhere('last_name', 'LIKE', "%$search%")
                                     ->orWhere('email', 'LIKE', "%$search%")
                                     ->orWhere('dob', 'LIKE', "%$search%")
-                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                             })->orWhereHas('guardian', function ($q) use ($search) {
                                 $q->where('first_name', 'LIKE', "%$search%")
                                     ->orWhere('last_name', 'LIKE', "%$search%")
                                     ->orWhere('email', 'LIKE', "%$search%")
                                     ->orWhere('dob', 'LIKE', "%$search%")
-                                    ->orWhereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                                    ->orWhereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                             });
                     });
                 });
@@ -1138,7 +1138,7 @@ class ReportsController extends Controller
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($q) use ($search) {
                     $q->whereHas('user', function ($q) use ($search) {
-                        $q->whereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                        $q->whereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                     });
                 });
             })
@@ -1467,7 +1467,7 @@ class ReportsController extends Controller
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($q) use ($search) {
                     $q->whereHas('user', function ($q) use ($search) {
-                        $q->whereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'");
+                        $q->whereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"]);
                     });
                 });
             });

@@ -148,7 +148,7 @@ class AttendanceController extends Controller
         if ($date != '' && $attendanceQuery->count() > 0) {
             $attendanceQuery->when($search, function ($query) use ($search) {
                 $query->where('id', 'LIKE', "%$search%")->orWhereHas('user', function ($q) use ($search) {
-                    $q->whereRaw("concat(users.first_name,' ',users.last_name) LIKE '%" . $search . "%'");
+                    $q->whereRaw("CONCAT(users.first_name,' ',users.last_name) LIKE ?", ["%{$search}%"]);
                 });
             })->where('date', $date)->whereHas('user.student', function ($q) use ($sessionYear) {
                 $q->where('session_year_id', $sessionYear->id);
@@ -163,7 +163,7 @@ class AttendanceController extends Controller
                 })
                 ->when($search, function ($query) use ($search) {
                     $query->where('id', 'LIKE', "%$search%")->orWhereHas('user', function ($q) use ($search) {
-                        $q->whereRaw("concat(users.first_name,' ',users.last_name) LIKE '%" . $search . "%'")->where('deleted_at', NULL);
+                        $q->whereRaw("CONCAT(users.first_name,' ',users.last_name) LIKE ?", ["%{$search}%"])->where('deleted_at', NULL);
                     });
                 })->where('session_year_id', $sessionYear->id)->where('class_section_id', $class_section_id);
 
@@ -228,7 +228,7 @@ class AttendanceController extends Controller
                         $query->where('id', 'LIKE', "%$search%")
                             ->orwhere('student_id', 'LIKE', "%$search%")
                             ->orWhereHas('user', function ($q) use ($search) {
-                                $q->whereRaw("concat(first_name,' ',last_name) LIKE '%" . $search . "%'")
+                                $q->whereRaw("CONCAT(first_name,' ',last_name) LIKE ?", ["%{$search}%"])
                                     ->orwhere('first_name', 'LIKE', "%$search%")
                                     ->orwhere('last_name', 'LIKE', "%$search%");
                             })->orWhereHas('user.student', function ($q) use ($search) {

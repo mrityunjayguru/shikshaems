@@ -1987,7 +1987,7 @@ class ParentApiController extends Controller
             'fees_id' => 'required',
             'installment_ids' => 'nullable|array',
             'installment_ids.*' => 'required|integer',
-            'advance' => 'present|numeric',
+            'advance' => 'present|numeric|min:0',
             'payment_method' => 'required|in:Stripe,Razorpay,Flutterwave,Paystack',
         ]);
         if ($validator->fails()) {

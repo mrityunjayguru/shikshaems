@@ -178,16 +178,16 @@ function changeEnv($data = array()) {
 }
 
 function findExamGrade($percentage) {
-    // $grades = Grade::Owner()->get();
     $grades = app(GradesInterface::class)->builder()->get();
-    if (count($grades)) {
-        foreach ($grades as $row) {
-            if (round($percentage,2) >= floor($row['starting_range']) && round($percentage,2) <= floor($row['ending_range'])) {
-                return $row->grade;
-            }
+    if ($grades->isEmpty()) {
+        return null; // No grades configured
+    }
+    foreach ($grades as $row) {
+        if (round($percentage, 2) >= floor($row['starting_range']) && round($percentage, 2) <= floor($row['ending_range'])) {
+            return $row->grade;
         }
     }
-    return '';
+    return null; // No matching grade range found
 }
 
 function resizeImage($image) {

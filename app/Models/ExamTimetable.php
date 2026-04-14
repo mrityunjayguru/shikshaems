@@ -39,7 +39,7 @@ class ExamTimetable extends Model
 
     public function class_subject()
     {
-        return $this->belongsTo(ClassSubject::class, 'class_subject_id');
+        return $this->belongsTo(ClassSubject::class, 'class_subject_id')->withTrashed();
     }
 
     public function exam()

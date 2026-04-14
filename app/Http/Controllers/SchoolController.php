@@ -367,7 +367,7 @@ class SchoolController extends Controller
                             ->orWhere('domain', 'LIKE', "%$search%")
                             ->orWhere('code', 'LIKE', "%$search%")
                             ->orWhereHas('user', function ($query) use ($search) {
-                                $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", "%$search%");
+                                $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
                             });
                     });
                     $query->where(function ($query) use ($search) {
@@ -379,7 +379,7 @@ class SchoolController extends Controller
                             ->orWhere('domain', 'LIKE', "%$search%")
                             ->orWhere('code', 'LIKE', "%$search%")
                             ->orWhereHas('user', function ($query) use ($search) {
-                                $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", "%$search%");
+                                $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
                             });
                     });
                 });

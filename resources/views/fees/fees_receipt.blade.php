@@ -122,9 +122,9 @@
                 </td>
 
                 <td width="50%" align="center">
-                    <strong style="font-size:18px;">{{ $school['school_name'] }}</strong><br>
-                    <small>{{ $school['school_address'] }}</small><br>
-                    <small>(Affiliated to CBSE, School Code: {{ $school['school_code'] ?? 'XXXXX' }})</small>
+                    <div style="font-size:18px; font-weight:bold; margin-bottom:2px;">{{ $school['school_name'] }}</div>
+                    <div style="font-size:11px; margin-bottom:1px;">{{ $school['school_address'] }}</div>
+                    <div style="font-size:11px;">(Affiliated to CBSE, School Code: {{ $school['school_code'] ?? 'XXXXX' }})</div>
                 </td>
 
                 <td width="25%" align="right">
@@ -142,7 +142,7 @@
         <table width="100%" class="info-row">
             <tr>
                 <td width="50%" valign="top">
-                    <strong>Receipt Date:</strong> {{ date('d M Y h:i A') }}
+                    <strong>Receipt Date:</strong> {{ $feesPaid->date ? \Carbon\Carbon::parse($feesPaid->date)->format('d M Y') : '-' }}
                 </td>
                 <td width="50%" valign="top">
                     @php
@@ -461,7 +461,7 @@
                         <strong>Discount Type:</strong> NA<br>
                         <strong>Discount Fee:</strong> 0<br>
                         <strong>Transaction ID:</strong> {{ $feesPaid->transaction_id ?? '-' }}<br>
-                        <strong>Date:</strong> {{ $feesPaid->date ?? '-' }}<br>
+                        <strong>Date:</strong> {{ $feesPaid->date ? \Carbon\Carbon::parse($feesPaid->date)->format('d M Y') : '-' }}<br>
                     </td>
                 </tr>
             </tbody>

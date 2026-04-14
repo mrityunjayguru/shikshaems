@@ -175,9 +175,16 @@ class SubscriptionWebhookController extends Controller
 
             if ($metadata && isset($data->event) && $data->event == 'payment.captured') {
 
-                //checks the signature
-                // $expectedSignature = hash_hmac("SHA256", $webhookBody, $webhookSecret);
-                // $api->utility->verifyWebhookSignature($webhookBody, $expectedSignature, $webhookSecret);
+                // Verify webhook signature
+                $expectedSignature = hash_hmac("sha256", $webhookBody, $webhookSecret);
+                $receivedSignature = $request->header('X-Razorpay-Signature');
+                
+                if (!hash_equals($expectedSignature, $receivedSignature)) {
+                    Log::error("Razorpay Webhook : Signature verification failed");
+                    http_response_code(403);
+                    exit();
+                }
+
                 $paymentTransactionData = PaymentTransaction::where('id', $metadata->payment_transaction_id)->first();
                 
                 if ($paymentTransactionData == null) {

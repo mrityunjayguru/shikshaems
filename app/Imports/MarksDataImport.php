@@ -91,8 +91,8 @@ class FirstSheetImport implements ToCollection, WithHeadingRow
                 $marks_percentage = ($row['obtained_marks'] / $row['total_marks']) * 100;
                 $exam_grade = findExamGrade($marks_percentage);
 
-                if ($exam_grade == null) {
-                    throw new \Exception('Grades data does not exist');
+                if ($exam_grade === '' || $exam_grade === null) {
+                    throw new \Exception('Grades are not configured. Please add grade ranges in Settings → Grades before uploading marks.');
                 }
 
                 $existingMark = $examMarks->builder()

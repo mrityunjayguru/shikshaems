@@ -10,5 +10,12 @@ class BusLocation extends Model
     use HasFactory;
 
     protected $connection = 'school';
-    protected $guarded = [];
+    protected $fillable = [
+        'device_id',
+        'trip_id',
+        'device_time',
+        'latitude',
+        'longitude',
+        'speed',
+    ];
 }

@@ -152,6 +152,7 @@ class FirstSheetImport implements ToCollection, WithHeadingRow
         $userService = app(UserService::class);
         $sessionYear = $sessionYear->findById($this->sessionYearID);
         DB::beginTransaction();
+        $studentCounter = null; // track last used counter within this import batch
         foreach ($collection as $row) {
          
             // Check free trial package
@@ -178,7 +179,17 @@ class FirstSheetImport implements ToCollection, WithHeadingRow
             $guardian = $userService->createOrUpdateParent($row['guardian_first_name'], $row['guardian_last_name'], $row['guardian_email'], $row['guardian_mobile'], $row['guardian_gender']);
         
             $get_student = $student->builder()->where('session_year_id', $sessionYear->id)->select('id')->latest('id')->pluck('id')->first();
-            $admission_no = $sessionYear->name . '0' .  Auth::user()->school_id . '0' . ($get_student + 1);
+            $lastId = max((int)$get_student, (int)$studentCounter);
+            $studentCounter = $lastId + 1;
+
+            // Keep incrementing until a unique admission_no is found
+            do {
+                $admission_no = $sessionYear->name . '0' . Auth::user()->school_id . '0' . $studentCounter;
+                $exists = \App\Models\User::where('email', $admission_no)->exists();
+                if ($exists) {
+                    $studentCounter++;
+                }
+            } while ($exists);
             $extraDetails = array();
             // Check that Extra Details Exists
             if (!empty($extraDetailsFields)) {

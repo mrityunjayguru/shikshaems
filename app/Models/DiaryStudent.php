@@ -11,7 +11,11 @@ class DiaryStudent extends Model
 {
     use HasFactory, SoftDeletes, DateFormatTrait;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'diary_id',
+        'student_id',
+        'class_section_id',
+    ];
 
     public function diary()
     {

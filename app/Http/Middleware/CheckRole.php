@@ -14,12 +14,14 @@ use Illuminate\Support\Facades\Session;
 class CheckRole {
     /**
      * Handle an incoming request.
+     * Usage in routes: ->middleware('Role:admin') or ->middleware('Role:admin,teacher')
      *
      * @param Request $request
      * @param Closure(Request): (Response|RedirectResponse) $next
+     * @param string ...$roles  Allowed roles (optional)
      * @return Response|RedirectResponse
      */
-    public function handle(Request $request, Closure $next) {
+    public function handle(Request $request, Closure $next, string ...$roles) {
         $school_database_name = Session::get('school_database_name');
         if ($school_database_name) {
             DB::setDefaultConnection('school');
@@ -33,11 +35,21 @@ class CheckRole {
             DB::setDefaultConnection('mysql');
         }
 
-        if (Auth::user()) {
-
-            return $next($request);
+        if (!Auth::check()) {
+            return response()->view('auth.login');
         }
-        return response()->view('auth.login');
 
+        // If specific roles are required, verify the user has one of them
+        if (!empty($roles)) {
+            $user = Auth::user();
+            $userRoles = $user->getRoleNames()->toArray();
+            $hasRole = !empty(array_intersect($roles, $userRoles));
+
+            if (!$hasRole) {
+                abort(403, 'Unauthorized. Required role: ' . implode(' or ', $roles));
+            }
+        }
+
+        return $next($request);
     }
 }
