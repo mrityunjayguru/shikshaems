@@ -16,7 +16,6 @@ use App\Repositories\SystemSetting\SystemSettingInterface;
 use App\Services\CachingService;
 use App\Services\ResponseService;
 use Carbon\Carbon;
-use dacoto\EnvSet\Facades\EnvSet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -96,11 +95,8 @@ class SystemSettingsController extends Controller {
                 User::where('id', Auth::user()->id)->update(['two_factor_enabled' => $request->two_factor_verification ? 1 : 0]);
             }
             
-            EnvSet::setKey('timezone', $request->time_zone);
-            EnvSet::save();
-
-            EnvSet::setKey('APP_NAME', $request->system_name);
-            EnvSet::save();
+            $this->updateEnvKey('TIMEZONE', $request->time_zone);
+            $this->updateEnvKey('APP_NAME', '"' . $request->system_name . '"');
 
             $this->systemSettings->upsert($data, ["name"], ["data"]);
             
@@ -719,11 +715,8 @@ class SystemSettingsController extends Controller {
         // ]);
 
         try {            
-            EnvSet::setKey('RECAPTCHA_SITE_KEY', $request->input('RECAPTCHA_SITE_KEY'));
-            EnvSet::setKey('RECAPTCHA_SECRET_KEY', $request->input('RECAPTCHA_SECRET_KEY'));
-            // EnvSet::setKey('RECAPTCHA_SITE', $request->input('RECAPTCHA_SITE'));
-            
-            EnvSet::save();
+            $this->updateEnvKey('RECAPTCHA_SITE_KEY', $request->input('RECAPTCHA_SITE_KEY'));
+            $this->updateEnvKey('RECAPTCHA_SECRET_KEY', $request->input('RECAPTCHA_SECRET_KEY'));
             ResponseService::successResponse("Data Stored Successfully");
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e, "System Settings Controller -> Third Party Api method");
@@ -806,5 +799,24 @@ class SystemSettingsController extends Controller {
             ResponseService::logErrorResponse($e, "System Settings Controller -> Server Configuration Update method");
             ResponseService::errorResponse();
         }
+    }
+
+    private function updateEnvKey(string $key, string $value): void
+    {
+        $envPath = base_path('.env');
+        $content = file_get_contents($envPath);
+
+        // Escape special characters in value for regex
+        $escapedKey = preg_quote($key, '/');
+
+        if (preg_match("/^{$escapedKey}=.*/m", $content)) {
+            // Key exists — replace it
+            $content = preg_replace("/^{$escapedKey}=.*/m", "{$key}={$value}", $content);
+        } else {
+            // Key doesn't exist — append it
+            $content .= "\n{$key}={$value}";
+        }
+
+        file_put_contents($envPath, $content);
     }
 }

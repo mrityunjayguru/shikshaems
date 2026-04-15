@@ -231,7 +231,7 @@
                                     </div>
                                 </div>
 
-                                {{-- @if ($school ?? '')
+                                @if ($school ?? '')
                                     <div class="form-group d-none">
                                         <label for="school_code" class="text-[#808080]">School Code</label>
                                         <input id="school_code" type="text"
@@ -240,14 +240,14 @@
                                             placeholder="Enter School Code">
                                     </div>
                                 @else
-                                    <div class="form-group">
+                                    <div class="form-group school_code d-none">
                                         <label for="school_code" class="text-[#808080]">School Code</label>
                                         <input id="school_code" type="text"
                                             class="form-control rounded-[4px] form-control-lg" name="code"
                                             value="{{ old('school_code') }}" autocomplete="school_code" autofocus
                                             placeholder="Enter School Code">
                                     </div>
-                                @endif --}}
+                                @endif
 
 
                                 @if (Route::has('password.request'))
@@ -432,7 +432,7 @@
         $(document).ready(function() {
 
             function toggleFields(role) {
-
+                
                 if (role === 'schooladmin') {
                     $('#emailField').removeClass('d-none');
                     $('#mobileField').addClass('d-none');
@@ -452,6 +452,7 @@
             // On radio change
             $('input[name="role"]').on('change', function() {
                 toggleFields(this.value);
+                $('.school_code').removeClass('d-none');
             });
 
             // On page load → School Admin already checked
