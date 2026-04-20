@@ -1,124 +1,49 @@
-<footer class="commonMT">
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-6 col-md-6 col-lg-6">
-                <div class="companyInfoWrapper">
-                    <div>
-                        <a href="{{ url('/') }}">
-                            <img src="{{ $settings['horizontal_logo'] ?? asset('assets/landing_page_images/sems-logo-main.svg') }}"
-                                class="logo" alt="">
-                        </a>
-                    </div>
-                    <div>
-                        <span class="commonDesc">
-                            {{ $settings['short_description'] ?? '' }}
-                        </span>
-                    </div>
+  <!-- Footer section -->
+    <footer class="footer">
+        <div class="footer__container">
+            <!-- Brand Info -->
+            <div class="footer__brand">
+                <a href="#" class="footer__logo">
+                    <img src="{{asset('assets/icons/home-icons/footer-logo.svg')}}" alt="ShikshaEMS Logo" />
+                </a>
+                <div class="footer__contact-info">
+                    <p class="footer__locations">Delhi NCR | Mumbai | Ranchi</p>
+                    <p class="footer__phone">+91 9876 543 210</p>
+                    <p class="footer__email">hello@designdemonz.com</p>
                 </div>
             </div>
 
-            <div class="col-sm-6 col-md-6 col-lg-2">
-                <div class="linksWrapper usefulLinksDiv">
-                    <span class="title">{{ __('links') }}</span>
-                    <span><a href="{{ url('/') }}">{{ __('home') }}</a></span>
-                    <span><a href="{{ url('/#features') }}">{{ __('features') }}</a></span>
-                    <span><a href="{{ url('/#pricing') }}">{{ __('pricing') }}</a></span>
-                    @if (count($faqs))
-                        <span><a href="{{ url('/#faq') }}">{{ __('faqs') }}</a></span>
-                    @endif
-                </div>
+            <!-- Quick Links -->
+            <div class="footer__links">
+                <h4 class="footer__heading">Quick Links</h4>
+                <ul class="footer__list">
+                    <li><a href="#">About ShikshaEMS</a></li>
+                    <li><a href="#">Features</a></li>
+                    <li><a href="#">Pricing</a></li>
+                </ul>
             </div>
 
-            <div class="col-sm-6 col-md-6 col-lg-2">
-                <div class="linksWrapper">
-                    <span class="title">{{ __('info') }}</span>
-                    <span>
-                        <a href="{{ url('/#about-us') }}">
-                            {{ __('about_us') }}
-                        </a>
-                    </span>
-                    <span>
-                        <a href="{{ url('/#contact-us') }}">
-                            {{ __('contact') }}
-                        </a>
-                    </span>
-
-                    <span>
-                        <a href="{{ url('page/type/privacy-policy') }}">
-                            {{ __('privacy_policy') }}
-                        </a>
-                    </span>
-
-                    <span>
-                        <a href="{{ url('page/type/terms-conditions') }}">
-                            {{ __('terms_condition') }}
-                        </a>
-                    </span>
-
-                    <span>
-                        <a href="{{ url('page/type/refund-cancellation') }}">
-                            {{ __('refund_cancellation') }}
-                        </a>
-                    </span>
-                </div>
+            <!-- Resources -->
+            <div class="footer__links">
+                <h4 class="footer__heading">Resources</h4>
+                <ul class="footer__list">
+                    <li><a href="#">Watch a demo</a></li>
+                    <li><a href="#">Download brochure</a></li>
+                    <li><a href="#">Support</a></li>
+                    <li><a href="#">Success stories</a></li>
+                </ul>
             </div>
 
-            @if (isset($settings['facebook']) || isset($settings['instragram']) || isset($settings['linkedin']))
-                <div class="col-sm-6 col-md-6 col-lg-2">
-                    <div class="linksWrapper">
-                        <span class="title">{{ __('follow') }}</span>
 
-                        @if (isset($settings['facebook']))
-                            <span class="iconsWrapper">
-                                <a href="{{ $settings['facebook'] }}" target="_blank">
-                                    <span>
-                                        <img src="{{ asset('assets/landing_page_images/facebook.svg') }}" alt="">
-                                    </span>
-                                    <span>
-                                        {{ __('facebook') }}
-                                    </span>
-                                </a>
-                            </span>
-                        @endif
-
-                        @if (isset($settings['instagram']))
-                            <span class="iconsWrapper">
-                                <a href="{{ $settings['instagram'] }}" target="_blank">
-                                    <span>
-                                        <img src="{{ asset('assets/landing_page_images/instagram.svg') }}" alt="">
-                                    </span>
-                                    <span>
-                                        {{ __('instagram') }}
-                                    </span>
-                                </a>
-                            </span>
-                        @endif
-
-                        @if (isset($settings['linkedin']))
-                            <span class="iconsWrapper">
-                                <a href="{{ $settings['linkedin'] }}" target="_blank">
-                                    <span>
-                                        <img src="{{ asset('assets/landing_page_images/linkedin1.svg') }}" alt="">
-                                    </span>
-                                    <span>
-                                        {{ __('linkedin') }}
-                                    </span>
-                                </a>
-                            </span>
-                        @endif
-                    </div>
-                </div>
-            @endif
-
-            <hr>
-
-            <div class="col-12 copyright">
-                @if (isset($settings['footer_text']) && $settings['footer_text'])
-                    <span class="copyright footer-text"><span class="me-1">&copy; {{ date('Y') }}</span>
-                        {!! $settings['footer_text'] !!}</span>
-                @endif
+            <!-- Social Links -->
+            <div class="footer__social">
+                <a href="#" class="social-link"><img src="{{asset('assets/icons/home-icons/linkedin.svg')}}" alt="LinkedIn" /></a>
+                <a href="#" class="social-link"><img src="{{asset('assets/icons/home-icons/facebook.svg')}}" alt="Facebook" /></a>
+                <a href="#" class="social-link"><img src="{{asset('assets/icons/home-icons/instagram.svg')}}" alt="Instagram" /></a>
             </div>
-
         </div>
-    </div>
-</footer>
+    </footer>
+    <!-- footer bedge -->
+ <div class="footer__badge">
+    <p>© 2026 ShikshaEMS | Brillovate Pvt. Ltd. All rights reserved. Privacy Policy | Crafted by DesignDemonz</p>
+</div>

@@ -123,6 +123,9 @@ Auth::routes(['verify' => true]);
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::get('/', [Controller::class, 'index'])->name('index')->middleware(['CheckForMaintenanceMode', '2fa']);
+Route::get('/support', [Controller::class, 'support'])->name('support')->middleware(['CheckForMaintenanceMode', '2fa']);
+Route::get('/features-page', [Controller::class, 'features'])->name('features.page')->middleware(['CheckForMaintenanceMode', '2fa']);
+Route::get('/schedule-demo', [Controller::class, 'scheduleDemo'])->name('schedule.demo')->middleware(['CheckForMaintenanceMode', '2fa']);
 
 // 2fa code verification
 Route::get('/2fa', [AuthController::class, 'twoFactorAuthentication'])->name('auth.2fa');

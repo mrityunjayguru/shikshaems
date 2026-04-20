@@ -1,173 +1,219 @@
+// Wait for the DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
 
+  // ── Hamburger / Mobile Menu ─────────────────────────────────────
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const navMenuContainer = document.getElementById('navMenuContainer');
 
-// for swiperSection
-$(document).ready(function () {
-    let rtlDir;
-    if ($('html').attr('dir') === 'rtl') {
-        rtlDir = true
-    }
-    else {
-        rtlDir = false;
-    }
-  // Initialize each carousel separately
-  $(".swiperSect .slider-content.owl-carousel").each(function () {
-      var owl = $(this).owlCarousel({
-          loop: true,
-          rtl: rtlDir,
-          autoplay: true,
-          autoplayTimeout: 1500,
-          autoplaySpeed: 2000,
-          margin: 30,
-          nav: false,
-          responsive: {
-              0: {
-                  items: 1,
-              },
-              600: {
-                  items: 3,
-              },
-              1000: {
-                  items: 5,
-              },
-          },
-      });
-
-      // Custom navigation buttons for this specific carousel
-      $(this)
-          .closest(".commonSlider")
-          .find(".prev")
-          .click(function () {
-              owl.trigger("prev.owl.carousel");
-          });
-
-      $(this)
-          .closest(".commonSlider")
-          .find(".next")
-          .click(function () {
-              owl.trigger("next.owl.carousel");
-          });
-  });
-});
-
-// for pricingSection
-$(document).ready(function () {
-    let rtlDir;
-    if ($('html').attr('dir') === 'rtl') {
-        rtlDir = true
-    }
-    else {
-        rtlDir = false;
-    }
-  // Initialize each carousel separately
-  $(".pricing .slider-content.owl-carousel").each(function () {
-      var owl = $(this).owlCarousel({
-          loop: false,
-          rtl: rtlDir,
-          autoplay: false,
-          autoplayTimeout: 1000,
-          autoplaySpeed: 2000,
-          margin: 30,
-          nav: false,
-          dots: true,
-          responsive: {
-              0: {
-                  items: 1,
-              },
-              600: {
-                  items: 2,
-              },
-              1000: {
-                  items: 3,
-              },
-          },
-      });
-
-      // Custom navigation buttons for this specific carousel
-      $(this)
-          .closest(".commonSlider")
-          .find(".prev")
-          .click(function () {
-              owl.trigger("prev.owl.carousel");
-          });
-
-      $(this)
-          .closest(".commonSlider")
-          .find(".next")
-          .click(function () {
-              owl.trigger("next.owl.carousel");
-          });
-  });
-});
-
-
-
-
-// for counter
-
-document.addEventListener("DOMContentLoaded", function () {
-  const counters = document.querySelectorAll('.numb');
-
-  const observer = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-          if (entry.isIntersecting) {
-              const target = +entry.target.getAttribute('data-target');
-              entry.target.innerText = 0;
-              const updateCounter = () => {
-                  const value = +entry.target.innerText;
-                  const increment = target / 150; // Adjust the speed of the counter by changing the denominator
-
-                  if (value < target) {
-                      entry.target.innerText = Math.ceil(value + increment);
-                      setTimeout(updateCounter, 10); // Adjust the interval for smoother animation
-                  } else {
-                      entry.target.innerText = target;
-                  }
-              };
-
-              updateCounter();
-              observer.unobserve(entry.target);
-          }
-      });
-  });
-
-  counters.forEach(counter => {
-      observer.observe(counter);
-  });
-});
-var buttonClicked = false;
-
-$('.view-more-feature').click(function (e) { 
-    e.preventDefault();
-    $('.default-feature-list').slideToggle(500);
-    if (buttonClicked) {
-        this.textContent = lang_view_more_features;
-        buttonClicked = false;
-    } else {
-        this.textContent = lang_view_less_features;
-        buttonClicked = true;
-    }
-});
-
-// landing page school logos display slider
-$(document).ready(function () {
-    let schoolCount = $('#school-count').val();
-    $('.school-logo-owl-carousel').owlCarousel({
-        loop:  schoolCount > 5 ? true : false,
-        margin:10,
-        nav:false,
-        autoplaySpeed:1000,
-        items:5,
-        autoplay: schoolCount > 5 ? true : false,
-        responsive:{
-            0:{
-                items:1
-            },
-            600:{
-                items:3
-            },
-            1000:{
-                items:5
-            }
-        }
+  if (hamburgerBtn && navMenuContainer) {
+    hamburgerBtn.addEventListener('click', () => {
+      hamburgerBtn.classList.toggle('is-open');
+      navMenuContainer.classList.toggle('is-open');
+      // Lock body scroll while menu is open
+      document.body.style.overflow = navMenuContainer.classList.contains('is-open') ? 'hidden' : '';
     });
+
+    // Handle dropdown toggles on mobile and close menu on normal link click
+    navMenuContainer.querySelectorAll('.navbar__menu-item').forEach(item => {
+      const link = item.querySelector('a');
+      
+      if (item.classList.contains('_has-dropdown')) {
+        link.addEventListener('click', (e) => {
+          if (window.innerWidth <= 768) {
+            e.preventDefault(); // Prevent jump to top
+            item.classList.toggle('is-active');
+          }
+        });
+      } else {
+        link.addEventListener('click', () => {
+          hamburgerBtn.classList.remove('is-open');
+          navMenuContainer.classList.remove('is-open');
+          document.body.style.overflow = '';
+        });
+      }
+    });
+
+    // Also close menu when clicking on dropdown items
+    navMenuContainer.querySelectorAll('.dropdown-item').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburgerBtn.classList.remove('is-open');
+        navMenuContainer.classList.remove('is-open');
+        document.body.style.overflow = '';
+      });
+    });
+  }
+
+  // ── GSAP Setup ──────────────────────────────────────────────────
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Hero Section Animations
+  gsap.from('.hero__title', {
+    opacity: 0,
+    y: 30,
+    duration: 1,
+    ease: 'power2.out',
+    delay: 0.4
+  });
+
+  gsap.from('.hero__badge', {
+    opacity: 0,
+    scale: 0.9,
+    duration: 0.8,
+    ease: 'back.out(1.7)',
+    delay: 0.6
+  });
+
+  gsap.from('.hero__description', {
+    opacity: 0,
+    y: 20,
+    duration: 1,
+    ease: 'power2.out',
+    delay: 0.8
+  });
+
+  gsap.from('.hero__ctas', {
+    opacity: 0,
+    y: 20,
+    duration: 1,
+    ease: 'power2.out',
+    delay: 1
+  });
+
+  // Trust Bar Animation (Loads with Hero on Desktop)
+  if (window.innerWidth > 768) {
+    gsap.from('.trust-bar', {
+      opacity: 0,
+      y: 20,
+      duration: 1,
+      ease: 'power2.out',
+      delay: 1.2
+    });
+  }
+
+  // Section Fade-In Animations
+  const sections = ['.offer', '.testimonials', '.contact', '.demo-cta', 'footer'];
+
+  // Special handling for features section (content below trust bar)
+  gsap.from('.features__container', {
+    opacity: 0,
+    y: 30,
+    duration: 1.2,
+    ease: 'power2.out',
+    scrollTrigger: {
+      trigger: '.features__container',
+      start: 'top 85%',
+      toggleActions: 'play none none none'
+    }
+  });
+
+  // Mobile handling for trust bar (keep it as part of features scroll trigger if needed, or handle separately)
+  if (window.innerWidth <= 768) {
+    gsap.from('.trust-bar', {
+      opacity: 0,
+      y: 30,
+      duration: 1.2,
+      ease: 'power2.out',
+      scrollTrigger: {
+        trigger: '.trust-bar',
+        start: 'top 85%',
+        toggleActions: 'play none none none'
+      }
+    });
+  }
+
+  sections.forEach(section => {
+    gsap.from(section, {
+      opacity: 0,
+      y: 30,
+      duration: 1.2,
+      ease: 'power2.out',
+      scrollTrigger: {
+        trigger: section,
+        start: 'top 85%',
+        toggleActions: 'play none none none'
+      }
+    });
+  });
+
+  // Comp Features Header fade-in (separate from pinned section)
+  gsap.from('.comp-features__header', {
+    opacity: 0,
+    y: 30,
+    duration: 1.2,
+    ease: 'power2.out',
+    scrollTrigger: {
+      trigger: '.comp-features',
+      start: 'top 90%',
+      toggleActions: 'play none none none'
+    }
+  });
+
+  // Staggered card animations
+  const cardSections = [
+    { trigger: '.offer__grid',          target: '.offer-card' },
+    { trigger: '.features__container',  target: '.feature-item' },
+    { trigger: '.comp-features__grid',  target: '.comp-feature-card' }
+  ];
+
+  cardSections.forEach(cs => {
+    gsap.from(cs.target, {
+      opacity: 0,
+      y: 20,
+      duration: 0.8,
+      stagger: 0.2,
+      ease: 'power2.out',
+      scrollTrigger: {
+        trigger: cs.trigger,
+        start: 'top 80%',
+        toggleActions: 'play none none none'
+      }
+    });
+  });
+
+  // ── Comprehensive Features Horizontal Scroll (desktop/tablet only) ──
+  const isMobile = () => window.innerWidth <= 768;
+
+  const grid = document.querySelector('.comp-features__grid');
+  const container = document.querySelector('.comp-features');
+
+  if (grid && container && !isMobile()) {
+    gsap.to(grid, {
+      x: () => {
+        const horizontalDistance = grid.scrollWidth - window.innerWidth + 170; // 170 = left padding
+        return -horizontalDistance;
+      },
+      ease: 'none',
+      scrollTrigger: {
+        trigger: '.comp-features',
+        start: 'top top',
+        end: () => `+=${grid.scrollWidth - window.innerWidth + 500}`,
+        scrub: 1,
+        pin: true,
+        invalidateOnRefresh: true,
+        anticipatePin: 1
+      }
+    });
+  }
+
+  // ── Swiper Initialization ────────────────────────────────────────
+  new Swiper('.testimonial-swiper', {
+    slidesPerView: 2,
+    spaceBetween: 30,
+    loop: true,
+    navigation: {
+      nextEl: '.testimonial-next',
+      prevEl: '.testimonial-prev'
+    },
+    breakpoints: {
+      320: {
+        slidesPerView: 1,
+        spaceBetween: 20
+      },
+      1024: {
+        slidesPerView: 2,
+        spaceBetween: 30
+      }
+    }
+  });
+
 });

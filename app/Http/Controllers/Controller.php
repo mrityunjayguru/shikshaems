@@ -290,6 +290,15 @@ class Controller extends BaseController
         // End school website
     }
 
+    public function support(){
+        return view('support');
+    }
+    public function features(){
+        return view('features');
+    }
+    public function scheduleDemo(){
+        return view('schedule_demo');
+    }
     public function school_website($school)
     {
 

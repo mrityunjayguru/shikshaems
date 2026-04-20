@@ -1,42 +1,353 @@
-@extends('layouts.master')
-
-@section('title')
-    {{ __('features') }}
-@endsection
+@extends('layouts.home_page.master')
 
 @section('content')
-    <div class="content-wrapper">
-        <div class="page-header">
-            <h3 class="page-title">
-                {{ __('features') }}
-            </h3>
+    <section class="about-page">
+        <div class="about-hero">
+            <h1 class="about-hero__title">Features</h1>
         </div>
-        <div class="row">
-            <div class="col-md-12 grid-margin stretch-card">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">{{ __('list') . ' ' . __('features') }}</h4>
-                        <table aria-describedby="mydesc" class='table' id='table_list' data-toggle="table"
-                               data-url="{{ route('features.show') }}" data-click-to-select="true"
-                               data-side-pagination="server" data-pagination="true"
-                               data-page-list="[5, 10, 20, 50, 100, 200]" data-search="true" data-show-columns="true"
-                               data-show-refresh="true" data-fixed-columns="false" data-fixed-number="2"
-                               data-fixed-right-number="1" data-trim-on-search="false" data-mobile-responsive="true"
-                               data-sort-name="id" data-sort-order="asc" data-maintain-selected="true"
-                               data-export-data-type='all' data-query-params="queryParams"
-                               data-toolbar="#toolbar" data-export-options='{ "fileName": "features-list-<?= date('d-m-y') ?>" ,"ignoreColumn":["operate"]}' data-show-export="true" data-escape="true">
-                            <thead>
-                            <tr>
-                                <th scope="col" data-field="id" data-sortable="true" data-visible="false">{{ __('id') }}</th>
-                                <th scope="col" data-field="no">{{ __('no.') }}</th>
-                                <th scope="col" data-field="name" data-sortable="true">{{ __('name') }}</th>
-                                <th scope="col" data-field="permission" data-formatter="featurePermissionFormatter" data-sortable="false" data-escape="false">{{ __('permission') }}</th>
-                            </tr>
-                            </thead>
-                        </table>
+
+        <div class="about-container">
+            <div class="about-header">
+                <div class="badge-how">One Platform. Every Need.</div>
+                <h2 class="about-title"><span class="text-purple">ERP</span> Features</h2>
+                <p class="about-subtitle">Manage your institute effortlessly.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
                     </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
                 </div>
             </div>
         </div>
-    </div>
-@endsection
+        <div class="about-container">
+            <div class="about-header about-header--parent">
+                <div class="about-header__left">
+                    <div class="badge-how badge-how--orange">One Platform. Every Need.</div>
+                    <h2 class="about-title"><span class="text-purple">Parent & Student</span> App</h2>
+                    <p class="about-subtitle">Stay informed. Stay connected.</p>
+                </div>
+                <div class="about-header__right">
+                    <div class="app-badges">
+                        <a href="#" class="app-badge">
+                            <img src="/icons/apple.svg" alt="Apple" class="app-badge__icon">
+                            <div class="app-badge__text">
+                                <span class="app-badge__small">Download on the</span>
+                                <span class="app-badge__large">App Store</span>
+                            </div>
+                        </a>
+                        <a href="#" class="app-badge">
+                            <img src="/icons/playstore.svg" alt="Play Store" class="app-badge__icon">
+                            <div class="app-badge__text">
+                                <span class="app-badge__small">GET IT ON</span>
+                                <span class="app-badge__large">Google Play</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-container">
+            <div class="about-header about-header--parent">
+                <div class="about-header__left">
+                    <div class="badge-how badge-how--blue">One Platform. Every Need.</div>
+                    <h2 class="about-title"><span class="text-purple">Teacher & Staff</span> App</h2>
+                    <p class="about-subtitle">Work smarter, not harder.</p>
+                </div>
+                <div class="about-header__right">
+                    <div class="app-badges">
+                        <a href="#" class="app-badge">
+                            <img src="/icons/apple.svg" alt="Apple" class="app-badge__icon">
+                            <div class="app-badge__text">
+                                <span class="app-badge__small">Download on the</span>
+                                <span class="app-badge__large">App Store</span>
+                            </div>
+                        </a>
+                        <a href="#" class="app-badge">
+                            <img src="/icons/playstore.svg" alt="Play Store" class="app-badge__icon">
+                            <div class="app-badge__text">
+                                <span class="app-badge__small">GET IT ON</span>
+                                <span class="app-badge__large">Google Play</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+
+                <div class="feature-card-item">
+                    <div class="feature-card-item__header">
+                        <div class="feature-card-item__icon-box">
+                            <img src="{{asset('assets/icons/home-icons/server.svg')}}" alt="Admissions management">
+                        </div>
+                        <h3 class="feature-card-item__title">Admissions management</h3>
+                    </div>
+                    <p class="feature-card-item__description">Simplify student enrollment with automated processes and
+                        credential generation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="demo-cta">
+        <div class="demo-cta__container">
+            <h2 class="demo-cta__title">
+                Get a guided walkthrough and discover how it transforms your school management.
+            </h2>
+            <div class="demo-cta__actions">
+                <button class="btn-demo-yellow">Schedule Demo</button>
+                <p class="demo-cta__subtitle">See ShikshaEMS in action</p>
+            </div>
+        </div>
+    </section>
+@endsection   

@@ -32,6 +32,7 @@
 </head>
 
 <body class="sidebar-fixed">
+    @include('layouts.home_page.nav')
     <div class="container-scroller">
 
         @yield('content')

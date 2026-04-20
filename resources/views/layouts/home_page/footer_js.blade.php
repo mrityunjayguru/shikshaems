@@ -1,4 +1,6 @@
 <script src="{{ asset('assets/home_page/js/script.js') }}"></script>
+<script src="{{ asset('assets/home_page/js/contect.js') }}"></script>
+<script src="{{ asset('assets/home_page/js/about.js') }}"></script>
 
 
 <!-- bootstrap  -->
